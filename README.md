@@ -5,12 +5,12 @@ To get write permission access to this repo, first clone it using the _token_ th
 will be given to you in the first lecture. All of your work shall be uploaded into
 a separate branch named according to your family name. In seuqence :
 
-Clone repository :
-git clone https://REPLACE_WITH_TOKEN_HERE@github.com/didiersmets/MU5MAM30_2025.git
-Move into it :
-cd MU5MAM30_2025
-Create and switch to a new branch named after your family name :
-git checkout -B YOUR_FAMILY_NAME
+Clone repository :\
+git clone https://REPLACE_WITH_TOKEN_HERE@github.com/didiersmets/MU5MAM30_2025.git\
+Move into it :\
+cd MU5MAM30_2025\
+Create and switch to a new branch named after your family name :\
+git checkout -B YOUR_FAMILY_NAME\
 
 
 ![test_viewer](./data/test_viewer.jpg?raw=true "Test FEM viewer")
