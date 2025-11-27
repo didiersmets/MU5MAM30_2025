@@ -17,5 +17,17 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	/* Your implementation goes here ! */
+	/* Computation of ||AB x AC|| */
+	double det = pow((AB[1] * AC[2] - AB[2] * AC[1]), 2) + pow((AB[2] * AC[0] - AB[0] * AC[2]), 2) + pow((AB[0] * AC[1] - AB[1] * AC[0]), 2);
+	det = pow(det, 0.5);
+
+	if (det == 0)
+		throw std::runtime_error("The two vectors must be linearly independent.");
+	else
+	{
+		/* Computation of the coefficients */
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
+				M[3 * i + j] = (i == j) ? det / 12 : det / 24;
+	}
 }
