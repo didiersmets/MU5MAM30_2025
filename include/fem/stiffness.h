@@ -23,5 +23,27 @@
  */
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-	/* Your implementation goes here */
+	/* Computation of ||AB x AC|| */
+	double det = pow((AB[1] * AC[2] - AB[2] * AC[1]), 2) + pow((AB[2] * AC[0] - AB[0] * AC[2]), 2) + pow((AB[0] * AC[1] - AB[1] * AC[0]), 2);
+	det = pow(det, 0.5);
+	
+	if (det == 0)
+		throw std::runtime_error("The two vectors must be linearly independent.");
+	else
+	{
+		/* Computation of the upper coefficients */
+		S[0] = norm2(AC - AB) / (2 * det);
+		S[1] = -dot(AC, AC - AB) / (2 * det);
+		S[2] = dot(AB, AC - AB) / (2 * det);
+
+		S[4] = norm2(AC) / (2 * det);
+		S[5] = -dot(AB, AC) / (2 * det);
+
+		S[8] = norm2(AB) / (2 * det);
+
+		/* Computation of the lower coefficients */
+		for (int j = 0; j < 3; j++)
+			for (int i = j + 1; i < 3; i++)
+				S[3 * i + j] = S[3 * j + i];
+	}
 }
