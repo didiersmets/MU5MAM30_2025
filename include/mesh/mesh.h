@@ -4,7 +4,8 @@
 #include "array.h"
 #include "vec3.h"
 
-struct Mesh {
+struct Mesh
+{
 	TArray<Vec3> positions;
 	TArray<uint32_t> indices;
 	TArray<float> attr;
