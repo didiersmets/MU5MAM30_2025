@@ -22,7 +22,7 @@
  * Return value : the number of unique vertices (obviously <= count)
  *
  */
-size_t build_position_remap(const Vec3 *pos, size_t count, uint32_t *remap);
+size_t build_position_remap(const TArray<Vec3> *pos, size_t count, uint32_t *remap);
 
 /* Builds the position remap, rebuild the mesh positions array according to
  * that remap, i.e.
