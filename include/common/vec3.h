@@ -5,9 +5,11 @@
 
 #include <assert.h>
 #include <cmath>
+#include <iostream>
 
 template <typename T>
-struct TVec3 {
+struct TVec3
+{
 	/* Members */
 	T x;
 	T y;
@@ -189,7 +191,7 @@ template <typename T>
 inline TVec3<T> cross(const TVec3<T> &a, const TVec3<T> &b)
 {
 	return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z,
-		a.x * b.y - a.y * b.x};
+			a.x * b.y - a.y * b.x};
 }
 
 template <typename T>
@@ -227,5 +229,17 @@ template <typename T>
 TVec3<T> abs(const TVec3<T> &a)
 {
 	return {a.x < 0 ? -a.x : a.x, a.y < 0 ? -a.y : a.y,
-		a.z < 0 ? -a.z : a.z};
+			a.z < 0 ? -a.z : a.z};
 }
+
+/* New struct to deal with performant search */
+struct Vec3Hash
+{
+	std::size_t operator()(const Vec3 &a) const noexcept
+	{
+		std::size_t hx = std::hash<uint32_t>{}(std::bit_cast<uint32_t>(a.x));
+		std::size_t hy = std::hash<uint32_t>{}(std::bit_cast<uint32_t>(a.y));
+		std::size_t hz = std::hash<uint32_t>{}(std::bit_cast<uint32_t>(a.z));
+		return hx ^ (hy << 1) ^ (hz << 2);
+	}
+};

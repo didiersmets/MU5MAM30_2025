@@ -6,26 +6,26 @@
 
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 using namespace std;
+
 
 size_t build_position_remap(const TArray<Vec3> *pos, size_t count, uint32_t *remap)
 {
-    size_t j = -1;
-    size_t erased = 0;
-    for (size_t i = 0; i < count; i++)
+    unordered_map<Vec3, uint32_t, Vec3Hash> last_seen;    
+    size_t unique_vertices = 0;
+
+    for (size_t i = 0; i < count; ++i)
     {
-        remap[i] = i;
-        j = 0;
-        while (j < i && !((*pos)[i] == (*pos)[j]))
-            j += 1;
-        if (j != i)
-        {
-            remap[i] = j;
-            erased += 1;
-        }
+        auto it = last_seen.find((*pos)[i]);
+        if (it != last_seen.end())
+            remap[i] = last_seen[(*pos)[i]]; 
+        else
+            remap[i] = unique_vertices++;
+        last_seen[(*pos)[i]] = remap[i];
     }
 
-    return count - erased;
+    return unique_vertices;
 }
 
 void remove_duplicate_vertices(Mesh &m)
@@ -42,22 +42,8 @@ void remove_duplicate_vertices(Mesh &m)
     TArray<uint32_t> new_idx(index_count);
 
     /* Fill the new positions array */
-    size_t k = 0;
     for (size_t i = 0; i < old_vertex_count; i++)
-        if (remap[i] == i)
-        {
-            new_pos[k] = m.positions[i];
-            k += 1;
-        }
-
-    /* Correct the indices to take the new positions into account */
-    for (size_t i = 0; i < old_vertex_count; i++)
-    {
-        size_t j = 0;
-        while (!(m.positions[i] == new_pos[j]))
-            j += 1;
-        remap[i] = j;
-    }
+        new_pos[remap[i]] = m.positions[i];
 
     /* Fill the new indices array */
     for (size_t j = 0; j < index_count; j++)
