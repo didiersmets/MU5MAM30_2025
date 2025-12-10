@@ -2,7 +2,7 @@
 
 #include "vec3.h"
 #include "mass.h"
-/users
+
 /* Given a triangle ABC, computes the (symmetric) 3x3 mass M s.t.
  *
  *   M_{ij} := \int_{ABC} \phi_i \phi_j
