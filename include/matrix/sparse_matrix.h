@@ -30,5 +30,6 @@ struct CSRMatrix : public Matrix {
 	TArray<double> data; /* Size = nnz  */
 	void mvp(const double *__restrict x, double *__restrict y) const;
 	double sum() const;
-	double &operator()(uint32_t i, uint32_t j);
+	double operator()(uint32_t i, uint32_t j);
+	void initialize(const CSRPattern &P, const TArray<double> &data_); /* Initialize from a pattern */
 };
