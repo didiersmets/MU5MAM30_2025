@@ -24,7 +24,7 @@ int load_sphere(Mesh &m, size_t subdiv);
  * @param face face number (UP=0, DOWN=1, FRONT=2, RIGHT=3, BACK=4, LEFT=5)
  */
 template <typename T, int face>
-void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new_edges);
+void build_face(const double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new_edges);
 
 
 
@@ -43,144 +43,9 @@ void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new
  */
 
 
- template <typename T>
- void _build_face1(double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& new_edges) {
-
-    /* When building a triangle there are two possible shapes, alternating
-     * Depending on which shape is in construction, index_top_point and index_prev_point
-     * have slight different meanings, here shown.
-     *
-     * TRIANGLE 1:
-     * Given the construction of a following triangle (x are vertices, A B and C are 
-     * vertices of the triangle in construction:
-     *     A    x    x    x  
-     *     | \
-     *     |  \
-     *     B -- C    x    x
-     * then index_top_point  - 1    =    index(A)
-     *      index_prev_point        =    index(B)
-     *      index_prev_point + 1    =    index(C)
-     *
-     * TRIANGLE 2:
-     * Given the construction of a triangle (x are vertices, A B and C are vertices of 
-     * the triangle in construction:
-     *     x    A    x    x  
-     *        / |
-     *       /  |
-     *     B -- C    x    x
-     * then index_top_point          =    index(A)
-     *      index_prev_point         =    index(B)
-     *      index_prev_point + 1     =    index(C)
-    */
-
-    uint32_t index_top_point  = mesh.vertex_count();
-    uint32_t index_cur_point  = mesh.vertex_count();
-
-
-    /* ============================== HANDLING FIRST ROW ============================= */
-    new_edges.left.push_back(index_cur_point);
-    for ( T j = 1; j >= -1; j -= h ) {
-        p[col] = j;
-        #ifdef DEBUG
-        mesh.positions.push_back(p);
-        #else
-        mesh.positions.push_back(normalized(p));
-        #endif
-        new_edges.up.push_back(index_cur_point);
-
-        index_cur_point++;
-    }
-    new_edges.right.push_back(index_cur_point-1);
-
-    /* ============================== HANDLING CENTRAL ROWs ============================= */
-    for ( T i = 1 - h; i >= -1+h; i -= h ) {
-        p[row] = i;
-        p[col] = 1;
-
-
-        // adding first point (no triangle creation)
-        #ifdef DEBUG
-        mesh.positions.push_back(p);
-        #else
-        mesh.positions.push_back(normalized(p));
-        #endif
-        new_edges.left.push_back(index_cur_point);
-
-        index_top_point++;
-        index_cur_point++;
-
-        // adding other points and triangles
-        for ( T j = 1-h; j >= -1; j -= h ) {
-            // adding point
-            p[col] = j;
-            #ifdef DEBUG
-            mesh.positions.push_back(p);
-            #else
-            mesh.positions.push_back(normalized(p));
-            #endif
-
-            /* TRIANGLE 1 */
-            mesh.indices.push_back(index_top_point-1);               // A
-            mesh.indices.push_back(index_cur_point-1);                // B
-            mesh.indices.push_back(index_cur_point);            // C
-            
-            /* TRIANGLE 2 */
-            mesh.indices.push_back(index_top_point-1);                 // A
-            mesh.indices.push_back(index_cur_point);                // B
-            mesh.indices.push_back(index_top_point);            // C
-
-            index_top_point++;
-            index_cur_point++;
-        }
-        new_edges.right.push_back(index_cur_point - 1);
-    }
-
-    /* ============================== HANDLING FINAL ROW ============================= */
-    p[row] = -1;
-    p[col] = 1;
-
-
-    // adding first point (no triangle creation)
-    #ifdef DEBUG
-    mesh.positions.push_back(p);
-    #else
-    mesh.positions.push_back(normalized(p));
-    #endif
-    new_edges.left.push_back(index_cur_point);
-    new_edges.down.push_back(index_cur_point);
-
-    index_top_point++;
-    index_cur_point++;
-
-    // adding other points and triangles
-    for ( T j = 1-h; j >= -1; j -= h ) {
-        // adding point
-        p[col] = j;
-        #ifdef DEBUG
-        mesh.positions.push_back(p);
-        #else
-        mesh.positions.push_back(normalized(p));
-        #endif
-        new_edges.down.push_back(index_cur_point);
-
-        /* TRIANGLE 1 */
-        mesh.indices.push_back(index_top_point-1);               // A
-        mesh.indices.push_back(index_cur_point-1);                // B
-        mesh.indices.push_back(index_cur_point);            // C
-        
-        /* TRIANGLE 2 */
-        mesh.indices.push_back(index_top_point-1);                 // A
-        mesh.indices.push_back(index_cur_point);                // B
-        mesh.indices.push_back(index_top_point);            // C
-
-        index_top_point++;
-        index_cur_point++;
-    }
-    new_edges.right.push_back(index_cur_point - 1);
- }
 
  template <typename T>
- void _build_face0(double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& new_edges) {
+ void _build_face0(const double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& new_edges) {
 
 
     /* When building a triangle there are two possible shapes, alternating
@@ -318,7 +183,143 @@ void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new
  }
 
  template <typename T>
- void _build_face2(double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& old_edges, FaceBoundary& new_edges) {
+ void _build_face1(const double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& new_edges) {
+
+    /* When building a triangle there are two possible shapes, alternating
+     * Depending on which shape is in construction, index_top_point and index_prev_point
+     * have slight different meanings, here shown.
+     *
+     * TRIANGLE 1:
+     * Given the construction of a following triangle (x are vertices, A B and C are 
+     * vertices of the triangle in construction:
+     *     A    x    x    x  
+     *     | \
+     *     |  \
+     *     B -- C    x    x
+     * then index_top_point  - 1    =    index(A)
+     *      index_prev_point        =    index(B)
+     *      index_prev_point + 1    =    index(C)
+     *
+     * TRIANGLE 2:
+     * Given the construction of a triangle (x are vertices, A B and C are vertices of 
+     * the triangle in construction:
+     *     x    A    x    x  
+     *        / |
+     *       /  |
+     *     B -- C    x    x
+     * then index_top_point          =    index(A)
+     *      index_prev_point         =    index(B)
+     *      index_prev_point + 1     =    index(C)
+    */
+
+    uint32_t index_top_point  = mesh.vertex_count();
+    uint32_t index_cur_point  = mesh.vertex_count();
+
+
+    /* ============================== HANDLING FIRST ROW ============================= */
+    new_edges.left.push_back(index_cur_point);
+    for ( T j = 1; j >= -1; j -= h ) {
+        p[col] = j;
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        new_edges.up.push_back(index_cur_point);
+
+        index_cur_point++;
+    }
+    new_edges.right.push_back(index_cur_point-1);
+
+    /* ============================== HANDLING CENTRAL ROWs ============================= */
+    for ( T i = 1 - h; i >= -1+h; i -= h ) {
+        p[row] = i;
+        p[col] = 1;
+
+
+        // adding first point (no triangle creation)
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        new_edges.left.push_back(index_cur_point);
+
+        index_top_point++;
+        index_cur_point++;
+
+        // adding other points and triangles
+        for ( T j = 1-h; j >= -1; j -= h ) {
+            // adding point
+            p[col] = j;
+            #ifdef DEBUG
+            mesh.positions.push_back(p);
+            #else
+            mesh.positions.push_back(normalized(p));
+            #endif
+
+            /* TRIANGLE 1 */
+            mesh.indices.push_back(index_top_point-1);               // A
+            mesh.indices.push_back(index_cur_point-1);                // B
+            mesh.indices.push_back(index_cur_point);            // C
+            
+            /* TRIANGLE 2 */
+            mesh.indices.push_back(index_top_point-1);                 // A
+            mesh.indices.push_back(index_cur_point);                // B
+            mesh.indices.push_back(index_top_point);            // C
+
+            index_top_point++;
+            index_cur_point++;
+        }
+        new_edges.right.push_back(index_cur_point - 1);
+    }
+
+    /* ============================== HANDLING FINAL ROW ============================= */
+    p[row] = -1;
+    p[col] = 1;
+
+
+    // adding first point (no triangle creation)
+    #ifdef DEBUG
+    mesh.positions.push_back(p);
+    #else
+    mesh.positions.push_back(normalized(p));
+    #endif
+    new_edges.left.push_back(index_cur_point);
+    new_edges.down.push_back(index_cur_point);
+
+    index_top_point++;
+    index_cur_point++;
+
+    // adding other points and triangles
+    for ( T j = 1-h; j >= -1; j -= h ) {
+        // adding point
+        p[col] = j;
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        new_edges.down.push_back(index_cur_point);
+
+        /* TRIANGLE 1 */
+        mesh.indices.push_back(index_top_point-1);               // A
+        mesh.indices.push_back(index_cur_point-1);                // B
+        mesh.indices.push_back(index_cur_point);            // C
+        
+        /* TRIANGLE 2 */
+        mesh.indices.push_back(index_top_point-1);                 // A
+        mesh.indices.push_back(index_cur_point);                // B
+        mesh.indices.push_back(index_top_point);            // C
+
+        index_top_point++;
+        index_cur_point++;
+    }
+    new_edges.right.push_back(index_cur_point - 1);
+ }
+
+ template <typename T>
+ void _build_face2(const double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& old_edges, FaceBoundary& new_edges) {
 
     uint32_t index_top_point = mesh.vertex_count();
     uint32_t index_cur_point = mesh.vertex_count(); // points to the first place free
@@ -427,6 +428,332 @@ void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new
 
  }
 
+ template <typename T>
+ void _build_face3(const double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& old_edges, FaceBoundary& new_edges) {
+    uint32_t index_top_point = mesh.vertex_count();
+    uint32_t index_cur_point = mesh.vertex_count(); // points to the first place free
+
+    /* ============================== HANDLING FIRST 2 ROWS ============================= */
+    // First 2 rows are done here
+    // The first two triangles of this part are handled out of loop
+    p[row] = 1 - h;
+    
+    // new_edges.left.push_back(old_edges.up[0]);
+    // new_edges.left.push_back(old_edges.left[1]);
+
+    // --- First 2 triangles
+    /* TRIANGLE 1 */
+    mesh.indices.push_back(old_edges.up[0]);               // A
+    mesh.indices.push_back(old_edges.left[1]);                // C
+    mesh.indices.push_back(index_cur_point);            // D
+    
+    /* TRIANGLE 2 */
+    mesh.indices.push_back(old_edges.up[0]);             // A
+    mesh.indices.push_back(index_cur_point);            // D
+    mesh.indices.push_back(old_edges.up[1]);                 // B
+
+    // index_cur_point++;
+
+    for ( int j = 2; j <= 2.0/h; j++ ) {
+        p[col] = -1 + j*h;
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        
+        /* TRIANGLE 1 */
+        printf("%u\n", old_edges.up[2.0/h-j+1]);
+        mesh.indices.push_back(old_edges.up[2.0/h-j+1]);               // A
+        mesh.indices.push_back(index_cur_point - 1);                // C
+        mesh.indices.push_back(index_cur_point);            // D
+        
+        /* TRIANGLE 2 */
+        mesh.indices.push_back(old_edges.up[2.0/h-j+1]);             // A
+        mesh.indices.push_back(index_cur_point);            // D
+        mesh.indices.push_back(old_edges.up[2.0/h-j]);                 // B
+
+        index_cur_point++;
+    }
+
+    new_edges.right.push_back(old_edges.up[0]);
+    new_edges.right.push_back(index_cur_point);
+
+    index_cur_point++;
+    /* ============================== HANDLING CENTRAL ROWS ============================= */
+    int row_counter = 2;
+    
+    for ( T i = 1 - 2*h; i >= -1 + h; i -= h ) {
+        p[row] = i;
+        p[col] = -1;
+
+        //new_edges.left.push_back(old_edges.left[row_counter]);
+
+        // Triangles touching the left border
+        /* TRIANGLE 1 */
+        mesh.indices.push_back(old_edges.left[row_counter]);               // A
+        mesh.indices.push_back(old_edges.left[row_counter+1]);                // C
+        mesh.indices.push_back(index_cur_point);            // D
+        
+        /* TRIANGLE 2 */
+        mesh.indices.push_back(old_edges.left[row_counter]);             // A
+        mesh.indices.push_back(index_cur_point);            // D
+        mesh.indices.push_back(index_top_point);                 // B
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+
+        index_cur_point++;
+
+        index_top_point++;
+
+        // adding other points and triangles
+        for ( T j = -1+2*h; j <= 1; j += h ) {
+            // adding point
+            p[col] = j;
+            #ifdef DEBUG
+            mesh.positions.push_back(p);
+            #else
+            mesh.positions.push_back(normalized(p));
+            #endif
+
+            /* TRIANGLE 1 */
+            mesh.indices.push_back(index_top_point - 1);               // A
+            mesh.indices.push_back(index_cur_point - 1);                // C
+            mesh.indices.push_back(index_cur_point);            // D
+            
+            /* TRIANGLE 2 */
+            mesh.indices.push_back(index_top_point - 1);             // A
+            mesh.indices.push_back(index_cur_point + 1);            // D
+            mesh.indices.push_back(index_top_point);                 // B
+
+            index_top_point++;
+            index_cur_point++;
+
+        }
+
+        new_edges.right.push_back(index_cur_point-1);
+        row_counter++;
+    }
+
+    /* ============================== HANDLING FINAL ROW ============================= */
+    // new_edges.left.push_back(old_edges.down[0]);
+
+    /* TRIANGLE 1 */
+    mesh.indices.push_back(old_edges.left[1.0/h-1]);               // A
+    mesh.indices.push_back(old_edges.down[2.0/h]);                // C
+    mesh.indices.push_back(old_edges.down[2.0/h-1]);            // D
+    
+    /* TRIANGLE 2 */
+    mesh.indices.push_back(old_edges.left[1.0/h-1]);             // A
+    mesh.indices.push_back(old_edges.down[2.0/h-1]);            // D
+    mesh.indices.push_back(index_top_point);                 // B
+
+    index_top_point++;
+
+    //for ( int j = 1; j <= 2.0/h; j++ ) {
+    for ( int j = 2.0/h-2; j >= 0; j-- ) {
+        /* TRIANGLE 1 */
+        mesh.indices.push_back(index_top_point - 1);               // A
+        mesh.indices.push_back(old_edges.down[j+1]);                // C
+        mesh.indices.push_back(old_edges.down[j]);            // D
+        
+        /* TRIANGLE 2 */
+        mesh.indices.push_back(index_top_point - 1);             // A
+        mesh.indices.push_back(old_edges.down[j]);            // D
+        mesh.indices.push_back(index_top_point);                 // B
+
+        index_top_point++;
+    }
+    new_edges.right.push_back(old_edges.down[2.0/h]);
+
+ }
+
+ template <typename T>
+ void _build_face4(const double h, Mesh &mesh, int row, int col, TVec3<T> p, FaceBoundary& old_edges, FaceBoundary& new_edges) {
+
+    /* When building a triangle there are two possible shapes, alternating
+     * Depending on which shape is in construction, index_top_point and index_prev_point
+     * have slight different meanings, here shown.
+     *
+     * TRIANGLE 1:
+     * Given the construction of a following triangle (x are vertices, A B and C are 
+     * vertices of the triangle in construction:
+     *     A    x    x    x  
+     *     | \
+     *     |  \
+     *     B -- C    x    x
+     * then index_top_point  - 1    =    index(A)
+     *      index_prev_point        =    index(B)
+     *      index_prev_point + 1    =    index(C)
+     *
+     * TRIANGLE 2:
+     * Given the construction of a triangle (x are vertices, A B and C are vertices of 
+     * the triangle in construction:
+     *     x    A    x    x  
+     *        / |
+     *       /  |
+     *     B -- C    x    x
+     * then index_top_point          =    index(A)
+     *      index_prev_point         =    index(B)
+     *      index_prev_point + 1     =    index(C)
+    */
+
+    uint32_t index_top_point  = mesh.vertex_count();
+    uint32_t index_cur_point  = mesh.vertex_count();
+
+
+    /* ============================== HANDLING FIRST ROW ============================= */
+    new_edges.left.push_back(index_cur_point);
+    for ( T j = 1; j >= -1; j -= h ) {
+        p[col] = j;
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        new_edges.up.push_back(index_cur_point);
+
+        index_cur_point++;
+    }
+    new_edges.right.push_back(index_cur_point-1);
+
+    // First 2 rows are done here
+    // The first two triangles of this part are handled out of loop
+    p[row] = 1 - h;
+    
+    // new_edges.left.push_back(old_edges.up[0]);
+    // new_edges.left.push_back(old_edges.left[1]);
+
+    // --- First 2 triangles
+    /* TRIANGLE 1 */
+    mesh.indices.push_back(old_edges.up[0]);               // A
+    mesh.indices.push_back(old_edges.left[1]);                // C
+    mesh.indices.push_back(index_cur_point);            // D
+    
+    /* TRIANGLE 2 */
+    mesh.indices.push_back(old_edges.up[0]);             // A
+    mesh.indices.push_back(index_cur_point);            // D
+    mesh.indices.push_back(old_edges.up[1]);                 // B
+
+    // index_cur_point++;
+
+    for ( int j = 2; j <= 2.0/h; j++ ) {
+        p[col] = -1 + j*h;
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        
+        /* TRIANGLE 1 */
+        printf("%u\n", old_edges.up[2.0/h-j+1]);
+        mesh.indices.push_back(old_edges.up[2.0/h-j+1]);               // A
+        mesh.indices.push_back(index_cur_point - 1);                // C
+        mesh.indices.push_back(index_cur_point);            // D
+        
+        /* TRIANGLE 2 */
+        mesh.indices.push_back(old_edges.up[2.0/h-j+1]);             // A
+        mesh.indices.push_back(index_cur_point);            // D
+        mesh.indices.push_back(old_edges.up[2.0/h-j]);                 // B
+
+        index_cur_point++;
+    }
+
+    new_edges.right.push_back(old_edges.up[0]);
+    new_edges.right.push_back(index_cur_point);
+
+    index_cur_point++;
+    /* ============================== HANDLING CENTRAL ROWs ============================= */
+    for ( T i = 1 - h; i >= -1+h; i -= h ) {
+        p[row] = i;
+        p[col] = 1;
+
+
+        // adding first point (no triangle creation)
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        new_edges.left.push_back(index_cur_point);
+
+        index_top_point++;
+        index_cur_point++;
+
+        // adding other points and triangles
+        for ( T j = 1-h; j >= -1; j -= h ) {
+            // adding point
+            p[col] = j;
+            #ifdef DEBUG
+            mesh.positions.push_back(p);
+            #else
+            mesh.positions.push_back(normalized(p));
+            #endif
+
+            /* TRIANGLE 1 */
+            mesh.indices.push_back(index_top_point-1);               // A
+            mesh.indices.push_back(index_cur_point-1);                // B
+            mesh.indices.push_back(index_cur_point);            // C
+            
+            /* TRIANGLE 2 */
+            mesh.indices.push_back(index_top_point-1);                 // A
+            mesh.indices.push_back(index_cur_point);                // B
+            mesh.indices.push_back(index_top_point);            // C
+
+            index_top_point++;
+            index_cur_point++;
+        }
+        new_edges.right.push_back(index_cur_point - 1);
+    }
+
+    /* ============================== HANDLING FINAL ROW ============================= */
+    p[row] = -1;
+    p[col] = 1;
+
+
+    // adding first point (no triangle creation)
+    #ifdef DEBUG
+    mesh.positions.push_back(p);
+    #else
+    mesh.positions.push_back(normalized(p));
+    #endif
+    new_edges.left.push_back(index_cur_point);
+    new_edges.down.push_back(index_cur_point);
+
+    index_top_point++;
+    index_cur_point++;
+
+    // adding other points and triangles
+    for ( T j = 1-h; j >= -1; j -= h ) {
+        // adding point
+        p[col] = j;
+        #ifdef DEBUG
+        mesh.positions.push_back(p);
+        #else
+        mesh.positions.push_back(normalized(p));
+        #endif
+        new_edges.down.push_back(index_cur_point);
+
+        /* TRIANGLE 1 */
+        mesh.indices.push_back(index_top_point-1);               // A
+        mesh.indices.push_back(index_cur_point-1);                // B
+        mesh.indices.push_back(index_cur_point);            // C
+        
+        /* TRIANGLE 2 */
+        mesh.indices.push_back(index_top_point-1);                 // A
+        mesh.indices.push_back(index_cur_point);                // B
+        mesh.indices.push_back(index_top_point);            // C
+
+        index_top_point++;
+        index_cur_point++;
+    }
+    new_edges.right.push_back(index_cur_point - 1);
+ }
+
+
 /**
  * @brief Builds a generic cube face 2x2 of the cube and projects it into the sphere.
  * 
@@ -437,7 +764,7 @@ void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new
  * @param face face number (UP=0, DOWN=1, FRONT=2, RIGHT=3, BACK=4, LEFT=5)
  */
 template <typename T, int face>
-void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new_edges) {
+void build_face(const double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new_edges) {
     int row, col;
     //TVec3<T> p(-1,1,1); // top left point
     TVec3<T>p(0,0,0);
@@ -456,11 +783,11 @@ void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new
     } else if    ( face == 4 ) {     // BACK
         row = 2; col = 0;  // y, x
         p.x = 1; p.y = 1; p.z = 1;
-        // _build_face4<T>(h, mesh, row, col, p, old_edges, new_edges);
+        _build_face4<T>(h, mesh, row, col, p, old_edges, new_edges);
     } else if    ( face == 3 ) {     // RIGHT
         row = 2; col = 1;  // y, x
         p.x = 1; p.y = -1; p.z = 1;
-        // _build_face3<T>(h, mesh, row, col, p, old_edges, new_edges);
+        _build_face3<T>(h, mesh, row, col, p, old_edges, new_edges);
     } else if    ( face == 5 ) {     // LEFT
         row = 2; col = 1;  // y, x
         p.x = -1; p.y = 1; p.z = -1;
@@ -472,7 +799,7 @@ void build_face(double h, Mesh &mesh, FaceBoundary& old_edges, FaceBoundary& new
 
 int load_sphere(Mesh &m, size_t subdiv) {
     // ======================== MESH CREATION =========================
-    double h = 2.0 / subdiv;
+    const double h = 2.0 / subdiv;
     FaceBoundary in, out_up, out_down, out_front, out_right, out_back, out_left;
 
     build_face<float,0>(h, m, in, out_up);
@@ -497,12 +824,18 @@ int load_sphere(Mesh &m, size_t subdiv) {
     print_vector(out_front.down);
     print_vector(out_front.right);
     print_vector(out_front.left);
+    printf("\n");
 
-    // in.up   = out_up.right;
-    // in.down = out_down.left;
-    // in.left = out_front.right;
-    // in.right.clear();
-    // build_face<float,3>(subdiv, m, in, out_right);
+    in.up   = out_up.right;
+    in.down = out_down.left;
+    in.left = out_front.right;
+    in.right.clear();
+    build_face<float,3>(h, m, in, out_right);
+    print_vector(out_right.up);
+    print_vector(out_right.down);
+    print_vector(out_right.right);
+    print_vector(out_right.left);
+    printf("\n");
 
     // in.up   = out_up.up; 
     // in.down = out_down.up;

@@ -10,6 +10,6 @@ int main() {
     load_sphere(mesh, subdiv);
 
     // print_mesh_info(mesh);
-    print_square_mesh(mesh, 3, row_size);
+    print_square_mesh(mesh, 4, row_size);
 
 }
