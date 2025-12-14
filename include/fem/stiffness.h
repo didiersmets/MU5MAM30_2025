@@ -21,7 +21,8 @@
  * Hiden for now.
  *
  */
-void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
+
+void inline stiffness(const Vec3 &AB, const Vec3 &AC, double *__restrict S)
 {
 	/* Computation of ||AB x AC|| */
 	double det = norm(cross(AB, AC));
@@ -30,19 +31,12 @@ void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 		throw std::runtime_error("The two vectors must be linearly independent.");
 	else
 	{
-		/* Computation of the upper coefficients */
-		S[0] = norm2(AC - AB) / (2 * det);
-		S[1] = -dot(AC, AC - AB) / (2 * det);
-		S[2] = dot(AB, AC - AB) / (2 * det);
-
-		S[4] = norm2(AC) / (2 * det);
-		S[5] = -dot(AB, AC) / (2 * det);
-
-		S[8] = norm2(AB) / (2 * det);
-
-		/* Computation of the lower coefficients */
-		for (int j = 0; j < 3; j++)
-			for (int i = j + 1; i < 3; i++)
-				S[3 * i + j] = S[3 * j + i];
+		Vec3 BC = AC - AB;
+		S[0] = norm2(BC) / (2 * det); // A <-> A
+		S[1] = norm2(AC) / (2 * det); // B <-> B
+		S[2] = norm2(AB) / (2 * det); // C <-> C
+		S[3] = -dot(AC, BC) / (2 * det); // A <-> B
+		S[4] = -dot(AB, AC) / (2 * det); // B <-> C
+		S[5] = dot(AB, BC) / (2 * det); // C <-> A
 	}
 }
