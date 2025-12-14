@@ -17,5 +17,18 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	/* Your implementation goes here ! */
+	double aire = 1/2 * norm(cross(AB, AC)); // cross correspond au produit vectoriel en 3D, les fonctions norm et cross sont définies dans vec3.h
+	double coeff = aire / double(12);
+	int n = 3; 
+	for (int i = 0; i<n; i++){
+		for (int j = 0; j<n; j++){
+			if (i == j){
+				M[3*i + j] = 2*coeff;
+				}
+			else{
+				M[3*i + j] = coeff;
+			}
+		}
+	}
+	
 }
