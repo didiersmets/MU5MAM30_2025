@@ -2,28 +2,6 @@
 
 #include "vec3.h"
 
-/* Solves a 2 by 2 linear system made like so:
- *     | a   b |  | x |   -  | rh1 |
- *     | c   d |  | y |   -  | rh2 |
- * using gaussian elimination
- */
-template <typename T>
-void inline ge_2by2(T a, T b, T c, T d, T rh1, T rh2, T* x, T* y) {
-    T factor = c / a;
-
-    T d2   = d   - factor * b;
-    T rh2_ = rh2 - factor * rh1;
-
-    // Solving for y
-    T y_val = rh2_ / d2;
-
-    // Back substitution to obtain x
-    T x_val = (rh1 - b * y_val) / a;
-
-    *x = x_val;
-    *y = y_val;
-}
-
 /* Given a triangle ABC, computes the (symmetric) 3x3 mass M s.t.
  *
  *   M_{ij} := \int_{ABC} \phi_i \phi_j
@@ -37,10 +15,47 @@ void inline ge_2by2(T a, T b, T c, T d, T rh1, T rh2, T* x, T* y) {
  *
  * Hiden for now.
  */
+template <typename T>
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	T a, b, c, d, rh1, rh2;
-	
+    // 1. Passing from triangle in 3D to triangle in 2D
+                                    // A = (0, 0)
+	T x_b = norm(AB);               // B = (||AB||, 0)
+    T x_c = dot(AC, AB) / x_b;      // C = (AC . AB / ||AB||, 
+    //                                      ||AC - (AC . AB / ||AB||^2) * AB ||)
+    T x_y = norm(AC - (x_c / norm(AB)) * AB);
 
+    // 2. Passing from any-shape triangle in 2D to "canonic" 2D triangle:
+    /*  C = (0, 1)
+     *  | \
+     *  |   \
+     *  A ---- B = (1, 0)   and A = (0, 0)
+     *
+     * This transformation is performed with the following matrix:
+     *       | 1/x_b   -x_c/(x_b*y_c) |                                  | x_b   x_c |
+     * tau = |                        |   obtained by inverting tau^-1 = |           |
+     *       |  0         1/y_c       |                                  |  0    y_c |
+     */
 
+    T tau_det = 1/(x_b*y_c);    // Jacobian of the trasformation is the determinant of 
+                                // the matrix
+
+    // Phi_A = -x -y -1  --> grad(Phi_A) = (-1, -1)
+    // Phi_B = x         --> grad(Phi_B) = (1, 0)
+    // Phi_C = y         --> grad(Phi_C) = (0, 1)
+
+    // Finally, the integration:
+
+    // diagonal
+    M[0*3 + 0] = (1.0/12.0) * tau_det;  // int(Phi_A * Phi_A)
+    M[1*3 + 1] = (1.0/12.0) * tau_det;  // int(Phi_B * Phi_B)
+    M[2*3 + 2] = (1.0/12.0) * tau_det;  // int(Phi_C * Phi_C)
+    // upper triangle
+    M[0*3 + 1] = (1.0/24.0) * tau_det;  // int(Phi_A * Phi_B)
+    M[0*3 + 2] = (1.0/24.0) * tau_det;  // int(Phi_A * Phi_C)
+    M[1*3 + 2] = (1.0/24.0) * tau_det;  // int(Phi_B * Phi_C)
+    // lower triangle (simmetric)
+    M[1*3 + 0] = (1.0/24.0) * tau_det;  // int(Phi_B * Phi_A)
+    M[2*3 + 0] = (1.0/24.0) * tau_det;  // int(Phi_C * Phi_A)
+    M[2*3 + 1] = (1.0/24.0) * tau_det;  // int(Phi_B * Phi_C)
 }
