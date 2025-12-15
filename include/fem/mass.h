@@ -1,7 +1,7 @@
 #pragma once
 
 #include "vec3.h"
-#include <cassert>
+#include "sys_utils.h"
 
 /* Given a triangle ABC, computes the (symmetric) 3x3 mass M s.t.
  *
@@ -32,12 +32,10 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
     
     // safety checks for best practices 
 	// asserts are compiled out (no overhead) in release mode
-	assert(M != nullptr && "Mass matrix pointer is null");
+	ASSERT(M != nullptr);
 
-    assert(std::isfinite(AB.x) && std::isfinite(AB.y) && std::isfinite(AB.z) 
-		&& "AB vector contains invalid values");
-	assert(std::isfinite(AC.x) && std::isfinite(AC.y) && std::isfinite(AC.z) 
-		&& "AC vector contains invalid values");
+    ASSERT(std::isfinite(AB.x) && std::isfinite(AB.y) && std::isfinite(AB.z));
+	ASSERT(std::isfinite(AC.x) && std::isfinite(AC.y) && std::isfinite(AC.z));
 
 	// Compute area of triangle ABC
 	// Area = 0.5 * |AB x AC|
@@ -45,8 +43,7 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 	double area = 0.5 * norm(crossProduct_AB_AC);
 	
 	constexpr double epsilon = 1e-14;
-	assert(std::isfinite(area) && area > epsilon
-		&& "Computed area is invalid or triangle is degenerate");
+	ASSERT(std::isfinite(area) && area > epsilon);
 
 	// Mass matrix coefficients
 	double diag_entries = area / 6.0;
