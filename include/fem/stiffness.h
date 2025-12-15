@@ -37,9 +37,9 @@ void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
      *  A ---- B = (1, 0)   and A = (0, 0)
      *
      * This transformation is performed with the following matrix:
-     *       | 1/x_b   -x_c/(x_b*y_c) |                                  | x_b   x_c |
-     * tau = |                        |   obtained by inverting tau^-1 = |           |
-     *       |  0         1/y_c       |                                  |  0    y_c |
+     *       | x_b   x_c |              | 1/x_b   -x_c/(x_b*y_c) |                         
+     * tau = |           | and tau^-1 = |                        |   
+     *       |  0    y_c |              |  0         1/y_c       |                         
      */
 
     T tau_det = 1/(x_b*y_c);    // Jacobian of the trasformation is the determinant of 
@@ -49,12 +49,16 @@ void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
     // Phi_B = x         --> grad(Phi_B) = (1, 0)
     // Phi_C = y         --> grad(Phi_C) = (0, 1)
 
-    // Finally, the integration:              | (x_b + x_c)^2  x_c*y_c |   | a     b |
-	// We need to build tau^(-1) * tau^(-T) = |                        | = |         |
-	//										  |    x_c*y_c       y_c^2 |   | b     c |
-	T a = (x_b + x_c) * (x_b + x_c);
-	T b = x_c * y_c;
-	T c = y_c * y_c;
+    // Finally, the integration:              | 1/x_b^2 * (1+(x_c/y_c)^2 - 2*x_c/y_c    -x_c/(x_b^2*y_c)) |   
+	// We need to build tau^(-1) * tau^(-T) = |                                                           | 
+	//										  |    -x_c/(x_b^2*y_c)                           1/y_c^2     |   
+    //                                    
+    //                                        | a     b |
+    //                                      = |         |
+    //                                        | b     c |
+	T a = 1/(x_b*x_b) * ( 1 + (x_c/y_c)*(x_c/y_c) - 2*x_c / y_c );
+	T b = -x_c / (x_b*y_c*y_c);
+	T c = 1/(y_c*y_c);
 
     // diagonal
     S[0*3 + 0] = (a+b+c) * tau_det / 2;  // int(grad(Phi_A) * grad(Phi_A))

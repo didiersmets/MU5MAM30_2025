@@ -32,12 +32,12 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
      *  A ---- B = (1, 0)   and A = (0, 0)
      *
      * This transformation is performed with the following matrix:
-     *       | 1/x_b   -x_c/(x_b*y_c) |                                  | x_b   x_c |
-     * tau = |                        |   obtained by inverting tau^-1 = |           |
-     *       |  0         1/y_c       |                                  |  0    y_c |
+     *          | x_b   x_c |
+     * tau    = |           |
+     *          |  0    y_c |
      */
 
-    T tau_det = 1/(x_b*y_c);    // Jacobian of the trasformation is the determinant of 
+    T tau_det = x_b*y_c;    // Jacobian of the trasformation is the determinant of 
                                 // the matrix
 
     // Phi_A = -x -y -1  --> grad(Phi_A) = (-1, -1)
