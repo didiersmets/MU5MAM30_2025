@@ -30,8 +30,6 @@
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
     
-    // safety checks for best practices 
-	// asserts are compiled out (no overhead) in release mode
 	ASSERT(M != nullptr);
 
     ASSERT(std::isfinite(AB.x) && std::isfinite(AB.y) && std::isfinite(AB.z));
