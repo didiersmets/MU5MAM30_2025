@@ -1,6 +1,6 @@
 #pragma once
-#include "array.h"
-#include "vec3.h"
+#include "common/array.h"
+#include "common/vec3.h"
 
 #include <stdint.h>
 struct Mesh

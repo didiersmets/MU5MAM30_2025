@@ -17,7 +17,7 @@ positions after removal: [A, B, C, D]
 indices after update: [0, 1, 2, 2, 1, 3]
 */
 
-#include "duplicate_verts.h"
+#include "mesh/duplicate_verts.h"
 
 #include <cstdlib>  // Required for malloc/free
 

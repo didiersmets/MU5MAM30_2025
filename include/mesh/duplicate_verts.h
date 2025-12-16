@@ -1,10 +1,10 @@
 #pragma once
 
+#include "common/vec3.h"
+#include "mesh.h"
+
 #include <stddef.h>
 #include <stdint.h>
-
-#include "mesh.h"
-#include "vec3.h"
 
 /* @param (IN) pos   : pointer to vertices
  * @param (IN) count : number of vertices
@@ -22,7 +22,7 @@
  * Return value : the number of unique vertices (obviously <= count)
  *
  */
-size_t build_position_remap(const Vec3 *pos, size_t count, uint32_t *remap);
+size_t build_position_remap(const Vec3* pos, size_t count, uint32_t* remap);
 
 /* Builds the position remap, rebuild the mesh positions array according to
  * that remap, i.e.
@@ -30,4 +30,4 @@ size_t build_position_remap(const Vec3 *pos, size_t count, uint32_t *remap);
  *     new_idx[j] = remap[old_idx[j]] for all 0 <= j < index_count
  * After completion, the size of m.positions is set to new_vertex_count.
  */
-void remove_duplicate_vertices(Mesh &m);
+void remove_duplicate_vertices(Mesh& m);
