@@ -1,10 +1,18 @@
 #include <iostream>
-#include "vec3.h"
-#include "stiffness.h"
+#include "common/vec3.h"
+#include "fem/mass.h"
+#include "fem/stiffness.h"
+
 
 int main() {
     Vec3d AB = {1,0,0};
     Vec3d AC = {0,1,0};
+    double M[6];
+    mass(AB, AC, M);
+
+    std::cout << "Matriz de masa:\n";
+    for(int i=0;i<6;i++) std::cout << M[i] << " ";
+    std::cout << "\n";
 
     double S[6];
     stiffness(AB, AC, S);
@@ -19,3 +27,4 @@ int main() {
 
     return 0;
 }
+
