@@ -55,25 +55,3 @@ double CSRMatrix::sum() const
 
     return sum;
 }
-
-// -----------------------------------
-void CSRMatrix::initialize(const CSRPattern &P, const TArray<double> &data_)
-{
-    /* Data from pattern */
-    rows = P.rows;
-    cols = P.cols;
-    nnz = P.nnz;
-
-    row_start = new uint32_t[P.row_start.size];
-    for (size_t i = 0; i < P.row_start.size; i++)
-        row_start[i] = P.row_start[i];
-    
-    col = new uint32_t[P.col.size];
-    for (size_t i = 0; i < P.col.size; i++)
-        col[i] = P.col[i];
-
-    /* Non-zero coefficients */
-    data.resize(nnz);
-    for (size_t i = 0; i < nnz; i++)
-        data[i] = data_[i];
-}
