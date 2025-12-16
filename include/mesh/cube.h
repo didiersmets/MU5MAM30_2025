@@ -2,6 +2,12 @@
 #include "duplicate_verts.h"
 #include "mesh.h"
 
+/*
+This structure stores only the "skin" of the object.
+ * There are no internal vertices (volume is empty).
+ * Ideal for surface-only PDEs (Laplace-Beltrami).
+ */
+
 int load_cube(Mesh& m, size_t subdiv);
 
 /**

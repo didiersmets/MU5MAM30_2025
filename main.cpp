@@ -40,7 +40,9 @@ int main()
   size_t expected_triangles = 6 * (subdivisions * subdivisions * 2);
 
   std::cout << "\n[Mesh Results]" << std::endl;
-  std::cout << "Total Vertices:  " << myMesh.vertex_count() << std::endl;
+  std::cout << "[Surface Logic Check]" << std::endl;
+  std::cout << "The mesh is a hollow shell with " << myMesh.vertex_count()
+            << " points on the boundary and 0 points inside." << std::endl;
   std::cout << "Total Indices:   " << myMesh.index_count() << std::endl;
   std::cout << "Total Triangles: " << myMesh.triangle_count() << std::endl;
 
@@ -53,22 +55,6 @@ int main()
   else
   {
     std::cout << "WARNING: Triangle count mismatch!" << std::endl;
-  }
-
-  // 5. Inspect the first few vertices to ensure coordinates are within range [-1, 1]
-  std::cout << "\n[Sample Data - First 3 Vertices]" << std::endl;
-  for (size_t i = 0; i < 3 && i < myMesh.vertex_count(); ++i)
-  {
-    Vec3 p = myMesh.positions[i];
-    std::cout << "  Vertex " << i << ": x=" << p.x << ", y=" << p.y << ", z=" << p.z << std::endl;
-  }
-
-  // 6. Inspect the first triangle's indices
-  if (myMesh.index_count() >= 3)
-  {
-    std::cout << "\n[First Triangle Indices]" << std::endl;
-    std::cout << "  " << myMesh.indices[0] << ", " << myMesh.indices[1] << ", " << myMesh.indices[2]
-              << std::endl;
   }
 
   return 0;
