@@ -31,6 +31,7 @@ struct TArray {
 	const T &operator[](size_t i) const;
 	void push_back(const T &t);
 	void resize(size_t size);
+	void set(T val);
 	void reserve(size_t capacity);
 	void shrink_to_fit();
 	void clear();
@@ -98,6 +99,14 @@ void TArray<T>::resize(size_t size)
 		capacity = size;
 	}
 	this->size = size;
+}
+
+template <typename T>
+void TArray<T>::set(T val)
+{
+	for (size_t i = 0; i < size; ++i) {
+		data[i] = val;
+	}
 }
 
 template <typename T>
