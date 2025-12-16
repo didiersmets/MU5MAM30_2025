@@ -5,8 +5,6 @@
 
 /* CSR variants */
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P);
-static uint64_t build_key(uint32_t i, uint32_t j);
-
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M);
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S);
 

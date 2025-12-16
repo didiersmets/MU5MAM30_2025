@@ -55,3 +55,40 @@ double CSRMatrix::sum() const
 
     return sum;
 }
+
+// -----------------------------------
+CSRMatrix &CSRMatrix::operator+=(const CSRMatrix &A)
+{
+    assert(A.rows == rows);
+    assert(A.cols == cols);
+    assert(A.nnz == nnz);
+
+    for (size_t i = 0; i < rows; i++)
+    {
+        for (size_t k = row_start[i]; k < row_start[i + 1]; k++)
+            data[k] += A.data[k];
+    }
+    return (*this);
+}
+
+// -----------------------------------
+void CSRMatrix::set(const CSRMatrix &A)
+{
+    /* Data from pattern */
+    rows = A.rows;
+    cols = A.cols;
+    nnz = A.nnz;
+
+    row_start = new uint32_t[A.rows + 1];
+    for (size_t i = 0; i < A.rows + 1; i++)
+        row_start[i] = A.row_start[i];
+
+    col = new uint32_t[A.nnz];
+    for (size_t i = 0; i < A.nnz; i++)
+        col[i] = A.col[i];
+
+    /* Non-zero coefficients */
+    data.resize(A.nnz);
+    for (size_t i = 0; i < A.nnz; i++)
+        data[i] = A.data[i];
+}
