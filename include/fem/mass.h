@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "vec3.h"
 
 /* Given a triangle ABC, computes the (symmetric) 3x3 mass M s.t.
@@ -17,5 +18,19 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	/* Your implementation goes here ! */
+    // cross = AB x AC
+    Vec3d cross;
+    cross.x = AB.y * AC.z - AB.z * AC.y;
+    cross.y = AB.z * AC.x - AB.x * AC.z;
+    cross.z = AB.x * AC.y - AB.y * AC.x;
+
+    double cross_norm = std::sqrt(cross.x*cross.x + cross.y*cross.y + cross.z*cross.z);
+    double area = 0.5 * cross_norm; //l'aire du triangle ABC vaut 1/2 |AB x AC|
+
+    double m_diag = area / 6.0;   // int phi_i^2
+    double m_off  = area / 12.0;  // int phi_i phi_j  (i != j)
+    M[0] = m_diag; M[1] = m_off;  M[2] = m_off;
+    M[3] = m_off;  M[4] = m_diag; M[5] = m_off;
+    M[6] = m_off;  M[7] = m_off;  M[8] = m_diag;
 }
+
