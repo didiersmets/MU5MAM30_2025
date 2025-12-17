@@ -24,4 +24,24 @@
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
 	/* Your implementation goes here */
+	double dot_ABAC = AB.dot(AC);
+	double dot_ABAB = AB.norm2();
+	double dot_ACAC = AC.norm2();
+
+	Vec3d cross_product = AB.cross(AC);
+	double cp_area = cross_product.norm();
+
+	double scaling = -0.5 / cp_area;
+
+	double s_BC = scaling * dot_ABAC;
+	double s_CA = scaling * (dot_ABAB - dot_ABAC);
+	double s_AB = scaling * (dot_ACAC - dot_ABAC);
+
+	S[0] = -(s_AB + s_CA);
+	S[1] = -(s_AB + s_BC);
+	S[2] = -(s_BC + s_CA);
+
+	S[3] = s_AB;
+	S[4] = s_BC;
+	S[5] = s_CA;
 }
