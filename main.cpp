@@ -1,5 +1,6 @@
 #include "include/mesh/cube.h"
 #include "include/mesh/mesh.h"
+#include "include/mesh/sphere.h"
 
 #include <iostream>
 #include <vector>
@@ -23,13 +24,13 @@ int main()
 
   // 3. Load the cube
   // This calls load_overlapping_cube and then remove_duplicate_vertices
-  if (load_cube(myMesh, subdivisions))
+  if (load_sphere(myMesh, subdivisions))
   {
-    std::cout << "Cube successfully generated and optimized." << std::endl;
+    std::cout << "Sphere successfully generated and optimized." << std::endl;
   }
   else
   {
-    std::cerr << "Error: Failed to generate cube mesh." << std::endl;
+    std::cerr << "Error: Failed to generate sphere mesh." << std::endl;
     return -1;
   }
 
