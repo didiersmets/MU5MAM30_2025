@@ -22,13 +22,6 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 	double diag = area / 12.0;
 	double non_diag = area / 24.0;
 
-	M[0] = diag; // M_11
-	M[1] = non_diag; // M_12
-	M[2] = non_diag; // M_13
-	M[3] = non_diag; // M_21
-	M[4] = diag; // M_22
-	M[5] = non_diag; // M_23
-	M[6] = non_diag; // M_31	
-	M[7] = non_diag; // M_32
-	M[8] = diag; // M_33
+	M[0] = diag;
+	M[1] = non_diag;
 }
