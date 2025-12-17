@@ -40,30 +40,9 @@ void inline mass(const Vec3d& AB, const Vec3d& AC, double* __restrict M)
       Recall that the mass matrix is symmetric, so M[i][j] = M[j][i]
   */
 
-  // M[0] = M[0][0]
+  // Diagonal Term
   M[0] = diagonal_term;
 
-  // M[1] = M[0][1]
+  // Non diagonal Term
   M[1] = off_diagonal_term;
-
-  // M[2] = M[0][2]
-  M[2] = off_diagonal_term;
-
-  // M[3] = M[1][0]
-  M[3] = off_diagonal_term;
-
-  // M[4] = M[1][1]
-  M[4] = diagonal_term;
-
-  // M[5] = M[1][2]
-  M[5] = off_diagonal_term;
-
-  // M[6] = M[2][0]
-  M[6] = off_diagonal_term;
-
-  // M[7] = M[2][1]
-  M[7] = off_diagonal_term;
-
-  // M[8] = M[2][2]
-  M[8] = diagonal_term;
 }
