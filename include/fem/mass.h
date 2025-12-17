@@ -17,12 +17,8 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	Vec3d ABC;
-	ABC.x = AB.y*AC.z-AB.z*AC.y;
-	ABC.y = AB.z*AC.x-AB.x*AC.z;
-	ABC.z = AB.x*AC.y-AB.y*AC.x;
-	int 2aire = sqrt(ABC.x**2+ABC.y**2+ABC.z**2)	
-	for( int i = 0;i<3;i++){
-	for(int j =0;i<3;i++){
-		M[3*i+j]=
+	int aire;
+	aire= 1/2* norm(cross(AB,AC);
+	M[	
+	
 }
