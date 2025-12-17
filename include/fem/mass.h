@@ -19,6 +19,14 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 	int aire;
 	aire= 1/2* norm(cross(AB,AC);
-	M[	
-	
+	for(i=0;i<3;i++){
+		for(j=O;i<3;i++){
+			if(i==j){
+				M[i*3+j]=aire/6;
+			}
+			else{
+				M[i*3+j= aire/12;
+			}
+		}	
+	}	
 }
