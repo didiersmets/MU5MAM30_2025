@@ -25,5 +25,9 @@ int load_icosahedron(Mesh &m){
 			m.positions.push_back(Vec3(s1 * phi,0,s2 * 1));
 		}
 	}
+	m.indices.push_back(0);
+	m.indices.push_back(1);
+	m.indices.push_back(4);
+
 	return 0;
 }
