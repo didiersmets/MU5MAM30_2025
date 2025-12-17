@@ -5,9 +5,9 @@
 #include "vec3.h"
 
 struct Mesh {
-	TArray<Vec3> positions;
-	TArray<uint32_t> indices;
-	TArray<float> attr;
+	TArray<Vec3> positions; //coordinates of verts
+	TArray<uint32_t> indices; //every 3 indicies define a triangle
+	TArray<float> attr; //extra data probalbly
 	size_t vertex_count() const { return positions.size; }
 	size_t index_count() const { return indices.size; }
 	size_t triangle_count() const { return indices.size / 3; }

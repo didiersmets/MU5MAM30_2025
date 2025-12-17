@@ -18,5 +18,7 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	/* Your implementation goes here ! */
+	double area = norm(cross(AB, AC))/2;
+	M[0] = area/6; //diagonal coef
+	M[1] = area/12; //coefficients off the diagonal
 }
