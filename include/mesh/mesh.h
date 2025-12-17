@@ -1,8 +1,11 @@
 #pragma once
 #include <stdint.h>
+#include <string>
 
-#include "array.h"
-#include "vec3.h"
+#include "common/array.h"
+#include "common/vec3.h"
+
+using namespace std;
 
 struct Mesh {
 	TArray<Vec3> positions;
@@ -12,3 +15,5 @@ struct Mesh {
 	size_t index_count() const { return indices.size; }
 	size_t triangle_count() const { return indices.size / 3; }
 };
+
+void save_to_obj(Mesh &m, string file_name);
