@@ -23,5 +23,5 @@
  */
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-	/* Your implementation goes here */
+
 }

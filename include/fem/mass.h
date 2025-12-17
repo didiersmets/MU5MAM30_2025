@@ -17,7 +17,7 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	double Area = 0.5 * norm(cross(AB,AC));
+	double Area = 0.5 * norm2(cross(AB,AC));
 	double C1= Area / 6;
 	double C2= Area /12;
 
