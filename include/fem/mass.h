@@ -17,5 +17,16 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	/* Your implementation goes here ! */
+	// Area of triangle ABC
+	double area = 0.5*norm(cross(AB,AC))
+
+	M[0] = 1.0 / 12.0;
+	M[1] = 1.0 / 24.0;
+	M[2] = 1.0 / 24.0;
+	M[3] = 1.0 / 12.0;
+	M[4] = 1.0 / 24.0;
+	M[5] = 1.0 / 12.0;
+	M[6] = 1.0 / 24.0;
+	M[7] = 1.0 / 24.0;
+	M[8] = 1.0 / 12.0;
 }
