@@ -20,6 +20,18 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 	/* Your implementation goes here.
 	 * Use a VTAdjacency structure (see include/matrix/adjacency.h)
 	 */
+
+	 P.symmetric = true;
+	 P.rows = m.vertex_count();
+	 P.cols = m.vertex_count();
+	 VTAdjacency adj(m);
+
+	 P.row_start.resize(P.rows + 1);
+
+	 for( size_t i = 0; i < P.rows; i++ )
+	 {
+		
+	 }
 }
 
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)

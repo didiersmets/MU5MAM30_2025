@@ -18,4 +18,23 @@
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 	/* Your implementation goes here ! */
+		  // Compute the area of the triangle ABC.
+  Vec3d  cross_product = cross(AB, AC);
+  double area          = 0.5 * norm(cross_product);
+
+  // Mii = Area / 6.
+  double diagonal_term = area / 6.0;
+
+  // Mij = Area / 12.
+  double off_diagonal_term = area / 12.0;
+
+  /*
+   * Construct the mass matrix M in row-major order:
+      Recall that the mass matrix is symmetric, so M[i][j] = M[j][i]
+  */
+
+  M[0] = diagonal_term;
+
+  M[1] = off_diagonal_term;
+
 }
