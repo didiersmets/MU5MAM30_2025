@@ -60,7 +60,7 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 
 	/* Your implementation goes here */
 
-	return new_count;
+	return 0;
 }
 
 void remove_duplicate_vertices(Mesh &m)
