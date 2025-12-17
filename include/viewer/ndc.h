@@ -3,8 +3,8 @@
 #ifndef GL_GLEXT_PROTOTYPES
 	#define GL_GLEXT_PROTOTYPES 1
 #endif
-#include <GL/gl.h>
-#include <GL/glext.h>
+#include <OpenGL/gl.h>
+#include <OpenGL/glext.h>
 
 #include "vec3.h"
 
@@ -90,13 +90,16 @@ inline Vec3 nwd_to_ndc(float x, float y, float depth)
 
 inline void set_up_opengl_for_ndc()
 {
-	constexpr GLenum origin = reversed_y ? GL_UPPER_LEFT : GL_LOWER_LEFT;
-	constexpr GLenum depth =
-	    z_zero_one ? GL_ZERO_TO_ONE : GL_NEGATIVE_ONE_TO_ONE;
-	glClipControl(origin, depth);
-	if constexpr (reversed_z) {
-		glDepthFunc(GL_GREATER);
-		glClearDepth(0.0f);
-	}
+#if !defined(__APPLE__)
+    constexpr GLenum origin = reversed_y ? GL_UPPER_LEFT : GL_LOWER_LEFT;
+    constexpr GLenum depth =
+        z_zero_one ? GL_ZERO_TO_ONE : GL_NEGATIVE_ONE_TO_ONE;
+    glClipControl(origin, depth);
+#endif
+
+    if constexpr (reversed_z) {
+        glDepthFunc(GL_GREATER);
+        glClearDepth(0.0f);
+    }
 }
 
