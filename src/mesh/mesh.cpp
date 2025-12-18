@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <fstream>
 
-#include "mesh/mesh.h"
+#include "mesh.h"
 
 using namespace std;
 

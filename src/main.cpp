@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "mesh/mesh.h"
-#include "mesh/sphere.h"
+#include "mesh.h"
+#include "sphere.h"
 
 int main(){
 	Mesh m;
