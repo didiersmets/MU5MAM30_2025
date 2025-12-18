@@ -15,7 +15,7 @@
  *
  * Hiden for now.
  */
-void inline mass(const Vec3 &AB, const Vec3 &AC, double *__restrict M)
+void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 	/* Computation of ||AB x AC|| */
 	double det = norm(cross(AB, AC));
