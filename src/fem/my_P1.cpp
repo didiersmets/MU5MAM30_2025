@@ -1,11 +1,11 @@
 #include "fem_matrix.h"
+#include <vec3.h>
 #include "sparse_matrix.h"
 #include "mass.h"
 #include "stiffness.h"
 #include "P1.h"
 #include <iostream>
 #include <unordered_set>
-#include <vec3.h>
 #include "hash_table.h"
 
 using namespace std;
@@ -186,7 +186,14 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
         Vec3 B = m.positions[b];
         Vec3 C = m.positions[c];
 
-        mass(B - A, C - A, mass_matrix);
+        Vec3d AB = {(double)B[0] - (double)A[0],
+                    (double)B[1] - (double)A[1],
+                    (double)B[2] - (double)A[2]};
+        Vec3d AC = {(double)C[0] - (double)A[0],
+                    (double)C[1] - (double)A[1],
+                    (double)C[2] - (double)A[2]};
+
+        mass(AB, AC, mass_matrix);
 
         add_to_global(a, a, mass_matrix[0]);
         add_to_global(b, b, mass_matrix[4]);
@@ -251,7 +258,14 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
         Vec3 B = m.positions[b];
         Vec3 C = m.positions[c];
 
-        stiffness(B - A, C - A, stiffness_matrix);
+        Vec3d AB = {(double)B[0] - (double)A[0],
+                    (double)B[1] - (double)A[1],
+                    (double)B[2] - (double)A[2]};
+        Vec3d AC = {(double)C[0] - (double)A[0],
+                    (double)C[1] - (double)A[1],
+                    (double)C[2] - (double)A[2]};
+
+        stiffness(AB, AC, stiffness_matrix);
 
         add_to_global(a, a, stiffness_matrix[0]);
         add_to_global(b, b, stiffness_matrix[1]);

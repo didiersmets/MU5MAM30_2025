@@ -60,7 +60,7 @@ void flip_mz_to_pz(const TArray<Vec3> &ref_pos, TArray<Vec3> &pos)
 }
 
 // -----------------------------------
-void load_cube(Mesh &m, size_t subdiv)
+int load_cube(Mesh &m, size_t subdiv)
 {
     size_t nb_points = subdiv;
     double radius = 1.;
@@ -145,4 +145,6 @@ void load_cube(Mesh &m, size_t subdiv)
 
     /* Remove duplicate vertices */
     remove_duplicate_vertices(m);
+
+    return (0);
 }

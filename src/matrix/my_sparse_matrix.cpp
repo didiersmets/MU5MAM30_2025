@@ -19,7 +19,7 @@ void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 }
 
 // -----------------------------------
-double CSRMatrix::operator()(uint32_t i, uint32_t j)
+double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 {
     assert(i < rows);
     assert(j < cols);
