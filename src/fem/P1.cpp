@@ -1,15 +1,19 @@
 #pragma once
 
+#include "fem/P1.h"
+
 #include <stdio.h>
 #include <string.h>
 
-// #include "fem_matrix.h"
-// #include "sparse_matrix.h"
-
-// File: src/fem/P1.cpp
-
-// 1. Include own definitions (to check function prototypes)
-#include "fem/P1.h"
+/*
+#include "P1.h"
+#include "adjacency.h"
+#include "fem_matrix.h"
+#include "mass.h"
+#include "mesh.h"
+#include "sparse_matrix.h"
+#include "stiffness.h"
+*/
 
 void build_P1_mass_matrix(const Mesh& m, FEMatrix& M);
 void build_P1_stiffness_matrix(const Mesh& m, FEMatrix& S);
