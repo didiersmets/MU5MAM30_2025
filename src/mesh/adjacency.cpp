@@ -1,6 +1,8 @@
 #include "mesh.h"
 #include "adjacency.h"
 #include <cstdint>
+#include <iostream>
+using namespace std;
 
 VTAdjacency::VTAdjacency(const Mesh &m)
 {
@@ -50,23 +52,23 @@ void VTAdjacency::set_vtri(uint32_t *idx, size_t nt)
 	for (size_t tri = 0; tri < nt; tri++)
 	{
 		/* Triplet (a, b, c) */
-		k = offset[3 * tri];
-		while (k < offset[3 * tri] + degree[3 * tri] && vtri[k].next != UINT32_MAX)
+		k = offset[idx[3 * tri]];
+		while (k < offset[idx[3 * tri]] + degree[idx[3 * tri]] && vtri[k].next != UINT32_MAX)
 			k++;
 
-		if (k < offset[3 * tri] + degree[3 * tri])
+		if (k < offset[idx[3 * tri]] + degree[idx[3 * tri]])
 		{
-			current_pair.next = idx[3 * tri];
-			current_pair.prev = idx[3 * tri + 1];
+			current_pair.next = idx[3 * tri + 1];
+			current_pair.prev = idx[3 * tri + 2];
 			vtri[k] = current_pair;
 		}
 
 		/* Triplet (b, c, a) */
-		k = offset[3 * tri + 1];
-		while (k < offset[3 * tri + 1] + degree[3 * tri + 1] && vtri[k].next != UINT32_MAX)
+		k = offset[idx[3 * tri + 1]];
+		while (k < offset[idx[3 * tri + 1]] + degree[idx[3 * tri + 1]] && vtri[k].next != UINT32_MAX)
 			k++;
 
-		if (k < offset[3 * tri + 1] + degree[3 * tri + 1])
+		if (k < offset[idx[3 * tri + 1]] + degree[idx[3 * tri + 1]])
 		{
 			current_pair.next = idx[3 * tri + 2];
 			current_pair.prev = idx[3 * tri];
@@ -74,11 +76,11 @@ void VTAdjacency::set_vtri(uint32_t *idx, size_t nt)
 		}
 
 		/* Triplet (c, a, b) */
-		k = offset[3 * tri + 2];
-		while (k < offset[3 * tri + 2] + degree[3 * tri + 2] && vtri[k].next != UINT32_MAX)
+		k = offset[idx[3 * tri + 2]];
+		while (k < offset[idx[3 * tri + 2]] + degree[idx[3 * tri + 2]] && vtri[k].next != UINT32_MAX)
 			k++;
 
-		if (k < offset[3 * tri + 2] + degree[3 * tri + 2])
+		if (k < offset[idx[3 * tri + 2]] + degree[idx[3 * tri + 2]])
 		{
 			current_pair.next = idx[3 * tri];
 			current_pair.prev = idx[3 * tri + 1];
