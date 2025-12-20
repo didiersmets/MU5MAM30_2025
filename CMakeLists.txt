@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
 
 project(MU5MAM30 CXX)
+set(CMAKE_BUILD_TYPE Debug)
+
 
 add_executable(main)
 target_sources(main

@@ -25,6 +25,7 @@ struct TArray {
 	TArray(size_t size);
 	TArray(size_t size, T val);
 	TArray(const TArray<T> &other) = delete;
+	TArray(TArray<T> &&other);
 	TArray &operator=(const TArray<T> &other) = delete;
 	~TArray();
 	T &operator[](size_t i);
@@ -55,6 +56,18 @@ TArray<T>::TArray(size_t size, T val) : size{size}, capacity{size}
 		data[i] = val;
 	}
 };
+
+template <typename T>
+TArray<T>::TArray(TArray<T> &&other)
+{
+	size = other.size;
+	capacity = other.capacity;
+	data = other.data;
+
+	other.size=0;
+	other.capacity=0;
+	other.data=nullptr;
+}
 
 template <typename T>
 inline TArray<T>::~TArray()
