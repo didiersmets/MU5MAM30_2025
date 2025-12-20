@@ -18,8 +18,8 @@
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 	/* Your implementation goes here ! */
-	Vec3d cross_product = AB.cross(AC);
-	double triangle_area = 0.5 * cross_product.norm();
+	Vec3d cross_product = cross(AB, AC);
+	double triangle_area = 0.5 * norm(cross_product);
 
 	double diag_coef = triangle_area / 6.0;
 	double off_diag_coef = triangle_area / 12.0;
