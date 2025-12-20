@@ -27,7 +27,7 @@ add_library(nanofem
 	#        The files mass.h and stiffness.h are specific since they are
 	#        header files, you should complete (or copy them from solutions)
 	#        before building the project.
-	src/fem/P1.cpp
+	solutions/src/fem/P1.cpp
 	src/fem/poisson.cpp
 	#src/fem/navier_stokes.cpp
 	solutions/src/linalg/conjugate_gradient.cpp
@@ -35,11 +35,11 @@ add_library(nanofem
 	src/matrix/fem_matrix.cpp
 	solutions/src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
-	src/mesh/adjacency.cpp
-	src/mesh/cube.cpp
+	solutions/src/mesh/adjacency.cpp
+	solutions/src/mesh/cube.cpp
 	src/mesh/cube2.cpp
-	src/mesh/sphere.cpp
-	src/mesh/duplicate_verts.cpp
+	solutions/src/mesh/sphere.cpp
+	solutions/src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
 )
