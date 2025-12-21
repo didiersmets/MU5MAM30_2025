@@ -11,7 +11,8 @@
 #include "sys_utils.h"
 
 template <typename T>
-struct TArray {
+struct TArray
+{
 	/**
 	 * Members
 	 */
@@ -38,21 +39,22 @@ struct TArray {
 };
 
 template <typename T>
-TArray<T>::TArray() : size{0}, capacity{0}, data{nullptr}
+TArray<T>::TArray() : size(0), capacity(0), data(nullptr)
 {
 }
 
 template <typename T>
-TArray<T>::TArray(size_t size) : size{size}, capacity{size}
+TArray<T>::TArray(size_t size) : size(size), capacity(size)
 {
 	data = static_cast<T *>(safe_malloc(size * sizeof(T)));
 };
 
 template <typename T>
-TArray<T>::TArray(size_t size, T val) : size{size}, capacity{size}
+TArray<T>::TArray(size_t size, T val) : size(size), capacity(size)
 {
 	data = static_cast<T *>(safe_malloc(size * sizeof(T)));
-	for (size_t i = 0; i < size; ++i) {
+	for (size_t i = 0; i < size; ++i)
+	{
 		data[i] = val;
 	}
 };
@@ -83,10 +85,11 @@ inline const T &TArray<T>::operator[](size_t i) const
 template <typename T>
 inline void TArray<T>::push_back(const T &t)
 {
-	if (size >= capacity) {
+	if (size >= capacity)
+	{
 		capacity = capacity ? 2 * capacity : 1;
 		data =
-		    static_cast<T *>(safe_realloc(data, capacity * sizeof(T)));
+			static_cast<T *>(safe_realloc(data, capacity * sizeof(T)));
 	}
 	data[size++] = t;
 }
@@ -94,7 +97,8 @@ inline void TArray<T>::push_back(const T &t)
 template <typename T>
 void TArray<T>::resize(size_t size)
 {
-	if (size > capacity) {
+	if (size > capacity)
+	{
 		data = static_cast<T *>(safe_realloc(data, size * sizeof(T)));
 		capacity = size;
 	}
@@ -104,7 +108,8 @@ void TArray<T>::resize(size_t size)
 template <typename T>
 void TArray<T>::set(T val)
 {
-	for (size_t i = 0; i < size; ++i) {
+	for (size_t i = 0; i < size; ++i)
+	{
 		data[i] = val;
 	}
 }
@@ -112,9 +117,10 @@ void TArray<T>::set(T val)
 template <typename T>
 void TArray<T>::reserve(size_t capacity)
 {
-	if (capacity > this->capacity) {
+	if (capacity > this->capacity)
+	{
 		data =
-		    static_cast<T *>(safe_realloc(data, capacity * sizeof(T)));
+			static_cast<T *>(safe_realloc(data, capacity * sizeof(T)));
 		this->capacity = capacity;
 	}
 }
@@ -122,7 +128,8 @@ void TArray<T>::reserve(size_t capacity)
 template <typename T>
 void TArray<T>::shrink_to_fit()
 {
-	if (capacity > size) {
+	if (capacity > size)
+	{
 		data = static_cast<T *>(safe_realloc(data, size * sizeof(T)));
 		this->capacity = size;
 	}
