@@ -17,8 +17,8 @@ struct TVec3
 
 	/* Constructors */
 	constexpr TVec3() = default;
-	constexpr TVec3(T x, T y, T z);
-	explicit TVec3(const T *t);
+	constexpr TVec3(T x, T y, T z) : x(x), y(y), z(z) {};
+	explicit TVec3(const T *t) : x(t[0]), y(t[1]), z(t[2]) {};
 
 	/* Index Accessor */
 	T &operator[](int n);
@@ -84,16 +84,6 @@ template <typename T>
 TVec3<T> abs(const TVec3<T> &a);
 
 /* Functions implementations */
-
-template <typename T>
-inline constexpr TVec3<T>::TVec3(T x, T y, T z) : x{x}, y{y}, z{z}
-{
-}
-
-template <typename T>
-inline TVec3<T>::TVec3(const T *t) : x{t[0]}, y{t[1]}, z{t[2]}
-{
-}
 
 template <typename T>
 inline const T &TVec3<T>::operator[](int n) const
@@ -231,15 +221,3 @@ TVec3<T> abs(const TVec3<T> &a)
 	return {a.x < 0 ? -a.x : a.x, a.y < 0 ? -a.y : a.y,
 			a.z < 0 ? -a.z : a.z};
 }
-
-/* New struct to deal with performant search */
-struct Vec3Hash
-{
-	std::size_t operator()(const Vec3 &a) const noexcept
-	{
-		std::size_t hx = std::hash<uint32_t>{}(std::bit_cast<uint32_t>(a.x));
-		std::size_t hy = std::hash<uint32_t>{}(std::bit_cast<uint32_t>(a.y));
-		std::size_t hz = std::hash<uint32_t>{}(std::bit_cast<uint32_t>(a.z));
-		return hx ^ (hy << 1) ^ (hz << 2);
-	}
-};
