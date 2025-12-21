@@ -57,8 +57,17 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 {
 	PositionHasher hasher{ pos };
 	HashTable<uint32_t, uint32_t, PositionHasher> vtx_remap(count, hasher);
+	u_int32_t new_count;
 
-	/* Your implementation goes here */
+	for(int i = 0; i < count; i++){
+		uint32_t *crnt_val = vtx_remap.get_or_set(i)
+		if (crnt_val){
+			remap[i] = *crnt_val;
+		} else {
+			remap[i] = new_count;
+			new_count ++ 
+		};
+	};
 
 	return new_count;
 }
@@ -74,6 +83,20 @@ void remove_duplicate_vertices(Mesh &m)
 	/* Remap vertices */
 	/* Your implementation goes here */
 
+	TArray<Vec3> new_positions(new_count);
+
+	for(int i = 0; i < vtx_count; i++){
+		for(j = 0; j =< i;)
+		uint32_t idx = remap[i];
+		new_positions[idx] = vtx_count[i];
+	};
+
+	m.positions = new_positions;
+	size_t idx_count = m.index_count();
+	TArray<u_int32_t> new_inds(idx_count);
+
+	for(int i = 0;)
 	/* Remap indices */
+
 	/* Your implementation goes here */
 }
