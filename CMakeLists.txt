@@ -5,6 +5,10 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 project(MU5MAM30 LANGUAGES CXX C)
 
 find_package(OpenGL REQUIRED)
@@ -146,3 +150,20 @@ target_include_directories(tiny_expr PUBLIC
 
 add_subdirectory(extern/glfw)
 
+###############################################################################
+## Add main.cpp executable to test the functions
+add_executable(main_exec
+    main.cpp
+)
+
+target_link_libraries(main_exec PRIVATE
+    nanofem
+)
+
+target_include_directories(main_exec PRIVATE
+	include/common 
+	include/fem
+	include/matrix 
+	include/mesh 
+	extern
+)
