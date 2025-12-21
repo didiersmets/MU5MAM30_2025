@@ -30,9 +30,7 @@ struct CSRMatrix : public Matrix {
 	TArray<double> data; /* Size = nnz  */
 	void mvp(const double *__restrict x, double *__restrict y) const;
 	double sum() const;
-	void set(const CSRMatrix &A);
 
 	/* Operators */
-	double operator()(uint32_t i, uint32_t j);
-	CSRMatrix &operator+=(const CSRMatrix &A);
+	double &operator()(uint32_t i, uint32_t j);
 };
