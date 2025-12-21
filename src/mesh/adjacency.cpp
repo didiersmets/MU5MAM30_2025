@@ -28,6 +28,7 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 
 void VTAdjacency::set_degree(uint32_t *idx, size_t nt)
 {
+	degree.set(0);
 	for (size_t tri = 0; tri < nt; tri++)
 		for (size_t l = 0; l < 3; l++)
 			degree[idx[3 * tri + l]] += 1;
