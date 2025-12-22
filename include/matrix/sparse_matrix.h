@@ -12,6 +12,7 @@
 
 struct CSRPattern {
 	bool symmetric;
+	// TODO : implement symmetric matrix
 	size_t rows;
 	size_t cols;
 	size_t nnz;
@@ -28,6 +29,9 @@ struct CSRMatrix : public Matrix {
 	uint32_t *row_start; /* pointer to the corresponding data in pattern */
 	uint32_t *col;	     /* pointer to the corresponding data in pattern */
 	TArray<double> data; /* Size = nnz  */
+	// constructors
+	CSRMatrix(CSRPattern &pattern);
+	CSRMatrix(CSRPattern &pattern,double default_val);
 	void mvp(const double *__restrict x, double *__restrict y) const;
 	double sum() const;
 	double &operator()(uint32_t i, uint32_t j);
