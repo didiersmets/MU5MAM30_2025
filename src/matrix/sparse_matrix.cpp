@@ -1,6 +1,7 @@
+#include <utility>
 #include "sparse_matrix.h"
 
-CSRMatrix::CSRMatrix(CSRMatrix &pattern){
+CSRMatrix::CSRMatrix(CSRPattern &pattern){
 	rows = pattern.rows;
 	cols = pattern.cols;
 	symmetric = pattern.symmetric;
@@ -9,10 +10,10 @@ CSRMatrix::CSRMatrix(CSRMatrix &pattern){
 	// memcpy(col,pattern.col.data,pattern.col.size);
 	row_start = pattern.row_start.data;
 	col = pattern.col.data;
-	data = TArray<double>(nnz);
+	data = std::move(TArray<double>(nnz));
 }
 
-CSRMatrix::CSRMatrix(CSRMatrix &pattern,double default_val){
+CSRMatrix::CSRMatrix(CSRPattern &pattern,double default_val){
 	rows = pattern.rows;
 	cols = pattern.cols;
 	symmetric = pattern.symmetric;
@@ -25,11 +26,11 @@ CSRMatrix::CSRMatrix(CSRMatrix &pattern,double default_val){
 }
 
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const{
-	for (size_t row = 0; row<rows;rows++){
+	for (size_t row = 0; row<rows;row++){
 		y[row] = 0;
 		for(uint32_t k = row_start[row]; k<row_start[row+1];k++){
-			uint32_t col = col[k];
-			y[row]+= data[k] * x[col];
+			uint32_t collumn = col[k];
+			y[row]+= data[k] * x[collumn];
 		}
 	}
 }
@@ -41,10 +42,10 @@ double CSRMatrix::sum() const{
 	return acc;
 }
 
-uint32_t find_dichotomic(uint32_t val,const uint32_t*_restrict buf,uint32_t start,uint32_t stop,bool& found){
+uint32_t find_dichotomic(uint32_t val,const uint32_t *buf,uint32_t start,uint32_t stop,bool& found){
 	do {
 		uint32_t mid_pt = (start + stop)/2;
-		uint32_t test_val = vuf[mid_pt];
+		uint32_t test_val = buf[mid_pt];
 		if (val == test_val){
 			found = true;
 			return mid_pt;
@@ -54,14 +55,14 @@ uint32_t find_dichotomic(uint32_t val,const uint32_t*_restrict buf,uint32_t star
 		}else {
 			start = mid_pt+1;
 		}
-	}while (start < stop)
+	}while (start < stop);
 	found = false;
 	return 0;
 }
 
 double &CSRMatrix::operator()(uint32_t i, uint32_t j){
-
+	static double zero = 0.0;
 	bool found = false;
 	uint32_t k = find_dichotomic(j,col,row_start[i],row_start[j],found);
-	return found ? data[k] : 0;
+	return found ? data[k] : zero;
 }
