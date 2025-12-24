@@ -1,12 +1,24 @@
 #include "P1.h"
 
 void qsort(TArray<uint32_t> &a, size_t start, size_t end){
+	if (start >= end-1) return;
 	// todo implement quicksort
+	uint32_t pivot = a[start];
+	size_t mid = start+1;
+	for (size_t i=start+1;i<end;i++){
+		if (a[i]<=pivot){
+			uint32_t temp = a[i];
+			a[i] = a[mid];
+			a[mid] = temp;
+			temp++;
+		}
+	}
+	qsort(a,start,mid);
+	qsort(a,mid,end);
 }
 
-void build_P1_CSRPattern(const Mesh &m, CSRPattern &P){
+void build_P1_CSRPattern(const Mesh &m, CSRPattern &pattern){
 	// TODO : rework : ugly
-	CSRPattern pattern;
 	pattern.rows = m.vertex_count();
 	pattern.cols = pattern.rows;
 	TArray<uint32_t> row_start (pattern.rows+1,0);
@@ -54,8 +66,8 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P){
 		}
 	}
 	for(size_t i = 0;i<pattern.rows;i++) qsort(col,row_start[i],row_start[i+1]);
-	P.row_start = std::move(row_start);
-	P.col = std::move(col);
+	pattern.row_start = std::move(row_start);
+	pattern.col = std::move(col);
 }
 
 void insert_neighour(TArray<uint32_t>row_start,TArray<uint32_t>col,uint32_t v1, uint32_t v2){
