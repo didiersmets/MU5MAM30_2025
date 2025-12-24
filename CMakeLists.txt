@@ -74,7 +74,7 @@ target_sources(sparse_matrix
 	FILES include/matrix/sparse_matrix.h
         )
 target_link_libraries(sparse_matrix
-	PRIVATE array)
+	PRIVATE array stb_image_write)
 add_library(array INTERFACE)
 target_include_directories(array INTERFACE include/common)
 target_sources(array
@@ -90,4 +90,12 @@ target_sources(array
         FILE_SET HEADERS
 	BASE_DIRS include/matrix
 	FILES include/matrix/matrix.h
+        )
+add_library(stb_image_write INTERFACE)
+target_include_directories(stb_image_write INTERFACE extern)
+target_sources(stb_image_write
+	INTERFACE
+        FILE_SET HEADERS
+	BASE_DIRS extern
+	FILES extern/stb_image_write.h
         )

@@ -1,6 +1,11 @@
 #include <utility>
 #include "sparse_matrix.h"
 
+
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+
+
 CSRMatrix::CSRMatrix(CSRPattern &pattern){
 	rows = pattern.rows;
 	cols = pattern.cols;
@@ -66,3 +71,18 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j){
 	uint32_t k = find_dichotomic(j,col,row_start[i],row_start[j],found);
 	return found ? data[k] : zero;
 }
+
+/* Visualisation of non zeros */
+void spy(const CSRPattern &P, uint32_t width, const char *fname){
+	TArray<uint8_t> img(width*width,0);
+	for(size_t r=0;r<P.rows;r++){
+		for(size_t i=P.row_start[r];i<P.row_start[r+1];i++){
+			size_t c = P.col[i];
+			size_t x = r * width/P.rows;
+			size_t y = c * width/P.cols;
+			img[x*width+y] = 255;
+		}
+	}
+	stbi_write_png(fname, width, width, 1, (void *)img.data, width);
+}
+
