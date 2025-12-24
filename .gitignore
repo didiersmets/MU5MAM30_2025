@@ -1,3 +1,9 @@
 *.swp
+*~
 **/build/
 **/.cache/
+.clangd
+CMakeCache.txt
+CMakeFiles
+CMakeLists.txt
+compile_commands.json

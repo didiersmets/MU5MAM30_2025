@@ -1,7 +1,7 @@
 #pragma once
 
-#include "fem_matrix.h"
-#include "sparse_matrix.h"
+#include "matrix/fem_matrix.h"
+#include "matrix/sparse_matrix.h"
 
 void build_P1_mass_matrix(const Mesh &m, FEMatrix &M);
 void build_P1_stiffness_matrix(const Mesh &m, FEMatrix &S);

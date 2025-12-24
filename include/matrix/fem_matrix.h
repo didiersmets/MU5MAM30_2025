@@ -1,8 +1,8 @@
 #pragma once
 
-#include "array.h"
-#include "matrix.h"
-#include "mesh.h"
+#include "common/array.h"
+#include "matrix/matrix.h"
+#include "mesh/mesh.h"
 
 struct FEMatrix : public Matrix {
 	enum FEMType {

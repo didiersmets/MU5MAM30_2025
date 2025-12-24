@@ -1,6 +1,6 @@
 #pragma once
 
-#include "vec3.h"
+#include "common/vec3.h"
 
 /* Given a triangle ABC, computes the (symmetric) 3x3 mass M s.t.
  *

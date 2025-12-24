@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include "sys_utils.h"
+#include "common/sys_utils.h"
 
 /* a trivial hasher (meant for arithmetic types) */
 template <typename K>
