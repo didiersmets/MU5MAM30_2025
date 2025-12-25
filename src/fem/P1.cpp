@@ -21,7 +21,7 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &pattern){
 	// TODO : rework : ugly
 	pattern.rows = m.vertex_count();
 	pattern.cols = pattern.rows;
-	TArray<uint32_t> row_start (pattern.rows+1,0);
+	TArray<uint32_t> row_start (pattern.rows+1,1);
 	for(size_t t=0;t<m.index_count();t+=3){
 		for (int e=0;e<3;e++){
 			uint32_t v = m.indices[t+e];
@@ -29,15 +29,18 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &pattern){
 		}
 	}
 	// cumsum to get row_start
-	for(size_t i=0;i<pattern.rows;i++){
+	for (size_t i=0;i<pattern.rows;i++){
 		row_start[i+1] += row_start[i];
 	}
 	pattern.nnz = row_start[pattern.rows];
 
 	TArray<uint32_t> col(pattern.nnz);
-	TArray<uint32_t> counter(pattern.rows, 0);
+	TArray<uint32_t> counter(pattern.rows, 1);
 
-	for(size_t t=0;t<m.index_count();t+=3){
+	//diagonal
+	for (size_t i = 0;i<pattern.rows;i++) col[row_start[i]]=i;
+
+	for (size_t t=0;t<m.index_count();t+=3){
 		for (int e=0;e<3;e++){
 			uint32_t v1 = m.indices[t+e];
 			uint32_t v2 = m.indices[t+(e+1)%3];
