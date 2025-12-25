@@ -20,6 +20,15 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 	/* Your implementation goes here.
 	 * Use a VTAdjacency structure (see include/matrix/adjacency.h)
 	 */
+	size_t vtx_count = m.vertex_count();
+	size_t tri_count = m.triangle_count();
+	VTAdjacency adj(m);
+
+	P.symmetric = true;
+	P.rows = P.cols = vtx_count;
+	size_t nnz = 0;
+	/*To complete*/
+
 }
 
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
@@ -39,6 +48,7 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 	}
 
 	/* Your implementation goes here */
+
 }
 
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
