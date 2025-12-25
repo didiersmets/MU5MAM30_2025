@@ -19,9 +19,6 @@
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 	double area = norm(cross(AB, AC)) * 0.5;
-	double diag = area / 12.0;
-	double non_diag = area / 24.0;
-
-	M[0] = diag;
-	M[1] = non_diag;
+	M[0] = area / 12.0;
+	M[1]= area / 24.0;
 }
