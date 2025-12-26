@@ -64,7 +64,7 @@ template <typename T>
 inline TVec3<T> cross(const TVec3<T> &a, const TVec3<T> &b);
 
 template <typename T>
-inline T norm(const TVec3<T> a);
+inline T norm2(const TVec3<T> a);
 
 template <typename T>
 inline T norm(const TVec3<T> a);

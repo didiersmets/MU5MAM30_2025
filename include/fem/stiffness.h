@@ -21,7 +21,14 @@
  * Hiden for now.
  *
  */
-void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
-{
-	/* Your implementation goes here */
+
+struct StiffnessCoef {
+	double S00;
+	double S11;
+	double S22;
+	double S01;
+	double S12;
+	double S20;
 }
+
+StiffnessCoef inline stiffness(const Vec3d &AB, const Vec3d &AC);

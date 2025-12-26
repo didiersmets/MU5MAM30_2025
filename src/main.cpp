@@ -5,7 +5,7 @@
 
 int main(){
 	Mesh m;
-	load_sphere(m,1);
+	load_sphere(m,2);
 	CSRPattern p;
 	build_P1_CSRPattern(m,p);
 	CSRMatrix mat(p);

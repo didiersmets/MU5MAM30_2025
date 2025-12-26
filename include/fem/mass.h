@@ -15,7 +15,10 @@
  *
  * Hiden for now.
  */
-void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
-{
-	/* Your implementation goes here ! */
+
+struct MassCoef{
+	double diag;
+	double offdiag;
 }
+
+MassCoef inline mass(const Vec3d &AB, const Vec3d &AC);
