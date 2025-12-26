@@ -1,12 +1,12 @@
-#include "array.h"
+#include "common/array.h"
 
 #define USE_FEM_MATRIX true
 #if USE_FEM_MATRIX
-#include "fem_matrix.h"
+#include "matrix/fem_matrix.h"
 #else
-#include "sparse_matrix.h"
+#include "matrix/sparse_matrix.h"
 #endif
-#include "mesh.h"
+#include "mesh/mesh.h"
 
 struct PoissonSolver {
 	PoissonSolver(const Mesh &m);

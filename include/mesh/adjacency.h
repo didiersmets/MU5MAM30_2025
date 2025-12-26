@@ -1,7 +1,7 @@
 #include <stdint.h>
 
-#include "array.h"
-#include "mesh.h"
+#include "common/array.h"
+#include "mesh/mesh.h"
 
 /*****************************************************************************
  * The mesh structure (mesh.h) that we use does not provide an immediate way 

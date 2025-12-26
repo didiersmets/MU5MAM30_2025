@@ -7,13 +7,13 @@
 #include "fast_obj/fast_obj.h"
 #undef FAST_OBJ_IMPLEMENTATION
 
-#include "array.h"
-#include "hash.h"
-#include "hash_table.h"
-#include "mesh.h"
-#include "mesh_io.h"
-#include "vec2.h"
-#include "vec3.h"
+#include "common/array.h"
+#include "common/hash.h"
+#include "common/hash_table.h"
+#include "mesh/mesh.h"
+#include "mesh/mesh_io.h"
+#include "common/vec2.h"
+#include "common/vec3.h"
 
 struct ObjVertexHasher {
 	bool has_normals;

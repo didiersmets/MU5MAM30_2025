@@ -1,7 +1,7 @@
 #pragma once
 
-#include "camera.h"
-#include "vec3.h"
+#include "viewer/camera.h"
+#include "common/vec3.h"
 
 struct ScreenTrackball {
 	/* Methods */

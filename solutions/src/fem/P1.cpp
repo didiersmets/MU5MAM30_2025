@@ -5,13 +5,13 @@
 #include <omp.h>
 #endif
 
-#include "P1.h"
-#include "adjacency.h"
-#include "fem_matrix.h"
-#include "mass.h"
-#include "mesh.h"
-#include "sparse_matrix.h"
-#include "stiffness.h"
+#include "fem/P1.h"
+#include "mesh/adjacency.h"
+#include "matrix/fem_matrix.h"
+#include "fem/mass.h"
+#include "mesh/mesh.h"
+#include "matrix/sparse_matrix.h"
+#include "fem/stiffness.h"
 
 /* CSRMatrix variants */
 

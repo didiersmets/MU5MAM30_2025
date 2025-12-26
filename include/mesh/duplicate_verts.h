@@ -3,8 +3,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "mesh/mesh.h"
-#include "common/vec3.h"
+#include "mesh.h"
+#include "vec3.h"
 
 /* @param (IN) pos   : pointer to vertices
  * @param (IN) count : number of vertices

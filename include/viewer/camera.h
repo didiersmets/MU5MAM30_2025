@@ -1,11 +1,11 @@
 #pragma once
 
-#include "aabb.h"
-#include "frustum.h"
-#include "geometry.h"
-#include "mat4.h"
-#include "quat.h"
-#include "vec3.h"
+#include "common/aabb.h"
+#include "viewer/frustum.h"
+#include "common/geometry.h"
+#include "common/mat4.h"
+#include "common/quat.h"
+#include "common/vec3.h"
 #include <math.h>
 
 enum Visibility { None = 0, Partial = 1, Full = 2 };

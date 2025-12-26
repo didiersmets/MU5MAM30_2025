@@ -1,15 +1,15 @@
-#include "poisson.h"
+#include "fem/poisson.h"
 
-#include "P1.h"
-#include "array.h"
-#include "conjugate_gradient.h"
+#include "fem/P1.h"
+#include "common/array.h"
+#include "linalg/conjugate_gradient.h"
 #if USE_FEM_MATRIX
-	#include "fem_matrix.h"
+	#include "matrix/fem_matrix.h"
 #else
-	#include "sparse_matrix.h"
+	#include "matrix/sparse_matrix.h"
 #endif
-#include "mesh.h"
-#include "tiny_blas.h"
+#include "mesh/mesh.h"
+#include "linalg/tiny_blas.h"
 
 PoissonSolver::PoissonSolver(const Mesh &m)
     : m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)

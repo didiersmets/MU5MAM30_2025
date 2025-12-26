@@ -27,29 +27,25 @@ add_library(nanofem
 	#        The files mass.h and stiffness.h are specific since they are
 	#        header files, you should complete (or copy them from solutions)
 	#        before building the project.
-	src/fem/P1.cpp
+	solutions/src/fem/P1.cpp
 	src/fem/poisson.cpp
 	#src/fem/navier_stokes.cpp
-	src/linalg/conjugate_gradient.cpp
+	solutions/src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
-	src/matrix/sparse_matrix.cpp
+	solutions/src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
-	src/mesh/adjacency.cpp
+	solutions/src/mesh/adjacency.cpp
 	src/mesh/cube.cpp
 	src/mesh/cube2.cpp
 	src/mesh/sphere.cpp
-	src/mesh/duplicate_verts.cpp
+	#src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
 )
-target_include_directories(nanofem PUBLIC 
-	include/common 
-	include/fem
-	include/linalg
-	include/matrix 
-	include/mesh 
-	extern
+target_include_directories(nanofem PUBLIC
+	${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/extern
 )
 target_compile_options(nanofem PRIVATE 
 	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
@@ -71,11 +67,9 @@ add_library(nanoviewer
 	src/viewer/trackball.cpp
 	src/viewer/shaders.cpp
 )
-target_include_directories(nanoviewer PUBLIC 
-	include/common 
-	include/mesh
-	include/viewer
-	extern
+target_include_directories(nanoviewer PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/extern
 )
 target_compile_options(nanoviewer PRIVATE
 	-std=c++17 -Wall -Wextra
@@ -131,8 +125,10 @@ add_library(imgui_glfw_opengl3
 	extern/imgui/imgui_impl_opengl3.cpp
 )
 target_include_directories(imgui_glfw_opengl3 PUBLIC
-	extern/glfw/include
+    ${PROJECT_SOURCE_DIR}/extern/glfw/include
+    ${PROJECT_SOURCE_DIR}/extern/imgui
 )
+
 ###############################################################################
 
 ###############################################################################
@@ -140,7 +136,7 @@ add_library(tiny_expr
 	extern/tiny_expr/tinyexpr.c
 )
 target_include_directories(tiny_expr PUBLIC
-	extern
+    ${PROJECT_SOURCE_DIR}/extern
 )
 ###############################################################################
 

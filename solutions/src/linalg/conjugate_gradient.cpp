@@ -2,9 +2,9 @@
 #include <math.h>
 #include <stdio.h>
 
-#include "conjugate_gradient.h"
-#include "matrix.h"
-#include "tiny_blas.h"
+#include "linalg/conjugate_gradient.h"
+#include "matrix/matrix.h"
+#include "linalg/tiny_blas.h"
 
 double cg_iterate_once(const Matrix &A, double *__restrict x,
 		       double *__restrict r, double *__restrict p,

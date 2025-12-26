@@ -1,14 +1,14 @@
 #include <assert.h>
 #include <math.h>
 
-#include "aabb.h"
-#include "camera.h"
-#include "geometry.h"
-#include "mat4.h"
-#include "ndc.h"
-#include "quat.h"
-#include "transform.h"
-#include "vec3.h"
+#include "common/aabb.h"
+#include "viewer/camera.h"
+#include "common/geometry.h"
+#include "common/mat4.h"
+#include "viewer/ndc.h"
+#include "common/quat.h"
+#include "common/transform.h"
+#include "common/vec3.h"
 
 Camera::Camera(float aspect_ratio, float fov, Fov axis)
 

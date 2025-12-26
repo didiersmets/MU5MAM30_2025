@@ -3,12 +3,12 @@
 #include <stddef.h>
 #include <stdio.h>
 
-#include "cube.h"
-#include "mesh.h"
-#include "vec3.h"
-#include "vec2.h"
-#include "hash.h"
-#include "hash_table.h"
+#include "mesh/cube.h"
+#include "mesh/mesh.h"
+#include "common/vec3.h"
+#include "common/vec2.h"
+#include "common/hash.h"
+#include "common/hash_table.h"
 
 typedef TVec2<uint32_t> Vec2u;
 #define DISSECT_THRESH 4

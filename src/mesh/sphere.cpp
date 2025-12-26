@@ -1,9 +1,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "cube.h"
-#include "mesh.h"
-#include "vec3.h"
+#include "mesh/cube.h"
+#include "mesh/mesh.h"
+#include "common/vec3.h"
 
 int load_sphere(Mesh &m, size_t subdiv)
 {

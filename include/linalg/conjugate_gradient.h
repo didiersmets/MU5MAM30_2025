@@ -1,4 +1,4 @@
-#include "matrix.h"
+#include "matrix/matrix.h"
 
 /* The conjugate gradient algorithm to solve A * x = b for a SPD square
  * matrix A of size NxN rely on a number of vectors and one matrix 

@@ -5,5 +5,4 @@
 .clangd
 CMakeCache.txt
 CMakeFiles
-CMakeLists.txt
 compile_commands.json
