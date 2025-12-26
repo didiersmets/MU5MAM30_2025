@@ -26,8 +26,8 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 
 	P.symmetric = true;
 	P.rows = P.cols = vtx_count;
-	size_t nnz = 0;
-	/*To complete*/
+	P.row_start.resize(vtx_count+1);
+
 
 }
 
@@ -48,6 +48,25 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 	}
 
 	/* Your implementation goes here */
+	double Mloc[2];
+	const TArray<uint32_t> &idx = m.indices;
+	for (size_t t = 0; t < tri_count; ++t) {
+		uint32_t a = idx[3 * t + 0];
+		uint32_t b = idx[3 * t + 1];
+		uint32_t c = idx[3 * t + 2];
+		Vec3f A = m.positions[a];
+		Vec3f B = m.positions[b];
+		Vec3f C = m.positions[c];
+		Vec3d AB = { (double)B[0] - (double)A[0],(double)B[1] - (double)A[1],(double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0],(double)C[1] - (double)A[1],(double)C[2] - (double)A[2] };
+		mass(AB, AC, Mloc);
+		M(a, a) += Mloc[0];
+		M(b, b) += Mloc[0];
+		M(c, c) += Mloc[0];
+		M(a > b ? a : b, a > b ? b : a) += Mloc[1];
+		M(b > c ? b : c, b > c ? c : b) += Mloc[1];
+		M(c > a ? c : a, c > a ? a : c) += Mloc[1];
+	}
 
 }
 
@@ -68,6 +87,25 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 	}
 
 	/* Your implementation goes here */
+	double Sloc[6];
+	const TArray<uint32_t> &idx = m.indices;
+	for (size_t t = 0; t < tri_count; ++t) {
+		uint32_t a = idx[3 * t + 0];
+		uint32_t b = idx[3 * t + 1];
+		uint32_t c = idx[3 * t + 2];
+		Vec3f A = m.positions[a];
+		Vec3f B = m.positions[b];
+		Vec3f C = m.positions[c];
+		Vec3d AB = { (double)B[0] - (double)A[0],(double)B[1] - (double)A[1],(double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0],(double)C[1] - (double)A[1],(double)C[2] - (double)A[2] };
+		stiffness(AB, AC, Sloc);
+		S(a, a) += Sloc[0];
+		S(b, b) += Sloc[1];
+		S(c, c) += Sloc[2];
+		S(a > b ? a : b, a > b ? b : a) += Sloc[3];
+		S(b > c ? b : c, b > c ? c : b) += Sloc[4];
+		S(c > a ? c : a, c > a ? a : c) += Sloc[5];
+	}
 }
 
 /* FEMatrix variants */
