@@ -3,7 +3,6 @@
 
 VTAdjacency::VTAdjacency(const Mesh &m)
 {
-	/* Your implementation goes here */
 	size_t vtx_count = m.vertex_count();
 	degree.resize(vtx_count);
 	offset.resize(vtx_count);
