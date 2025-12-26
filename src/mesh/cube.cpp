@@ -66,4 +66,20 @@ static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 static void load_cube_indices(uint32_t *idx, size_t subdiv)
 {
 	/* Your implementation goes here */
+	size_t n = subdiv + 1;
+	//Build triangulation indices
+	for(int f = 0; f < 6; ++f){
+		size_t offset = f * POW2(n);
+		for(size_t i = 0; i < subdiv; ++i){
+			for(size_t j = 0; j < subdiv; ++j){
+				uint32_t base = (uint32_t)(offset + i * n + j);
+				*idx++ = base;
+				*idx++ = base + 1;
+				*idx++ = base + n;
+				*idx++ = base + 1;
+				*idx++ = base + 1 + n;
+				*idx++ = base + 1;
+			}
+		}
+	}
 }
