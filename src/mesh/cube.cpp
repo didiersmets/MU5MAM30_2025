@@ -1,36 +1,38 @@
 #include "mesh/mesh.h"
 #include <map>
-  
-struct _face_mesh {
-  TArray<Vec3> positions;
-  TArray<uint32_t> indices;
-  TArray<int> vertices_of_type[3];
-};
+
+namespace {
+  struct face_mesh {
+    TArray<Vec3> positions;
+    TArray<uint32_t> indices;
+    TArray<int> vertices_of_type[3];
+  };
+}
 
 
-static void _load_face_vertices(_face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
+static void load_face_vertices(face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
   m.positions.resize(N*N);
   float step_size = 1.0/(N-1);
-  
-  for(int i=0; i<N; ++i)
-    for(int j=0; j<N; ++j)
+
+  for(size_t i=0; i<N; ++i)
+    for(size_t j=0; j<N; ++j)
       m.positions[i+N*j] = x0 + step_size * (float(i)*nx + float(j)*ny);
 }
 
-static void _load_face_indices(_face_mesh &m, size_t N) {
+static void load_face_indices(face_mesh &m, size_t N) {
   m.indices.resize(3*2*(N-1)*(N-1));
   int try_id = 0;
-  
-  for(int i=0; i<N-1; ++i)
-    for(int j=0; j<N-1; ++j) {
+
+  for(size_t i=0; i<N-1; ++i)
+    for(size_t j=0; j<N-1; ++j) {
       /* Bottom left vertex index */
       int id_v_bl = i+N*j;
-      
+
       m.indices[3*try_id] = id_v_bl;
       m.indices[3*try_id+1] = id_v_bl+1;
       m.indices[3*try_id+2] = id_v_bl+1+N;
       ++try_id;
-      
+
       m.indices[3*try_id] = id_v_bl;
       m.indices[3*try_id+1] = id_v_bl+N;
       m.indices[3*try_id+2] = id_v_bl+N+1;
@@ -38,22 +40,22 @@ static void _load_face_indices(_face_mesh &m, size_t N) {
     }
 }
 
-static void _load_face_vertices_types(_face_mesh &m, size_t N) {
+static void load_face_vertices_types(face_mesh &m, size_t N) {
   /* Type 0 = inside face */
   m.vertices_of_type[0].resize((N-2)*(N-2));
   int id_type_0 = 0;
-  for(int i=1; i<N-1; ++i)
-    for(int j=1; j<N-1; ++j) 
+  for(size_t i=1; i<N-1; ++i)
+    for(size_t j=1; j<N-1; ++j)
       m.vertices_of_type[0][id_type_0++] = i+N*j;
 
   /* Type 1 = on the interior of an outer edge of the face */
   m.vertices_of_type[1].resize(4*(N-2));
   int id_type_1 = 0;
-  for(int i=1; i<N-1; ++i) {
+  for(size_t i=1; i<N-1; ++i) {
     m.vertices_of_type[1][id_type_1++] = i;
     m.vertices_of_type[1][id_type_1++] = i+N*(N-1);
   }
-  for(int j=1; j<N-1; ++j) {
+  for(size_t j=1; j<N-1; ++j) {
     m.vertices_of_type[1][id_type_1++] = N*j;
     m.vertices_of_type[1][id_type_1++] = N-1+N*j;
   }
@@ -66,7 +68,7 @@ static void _load_face_vertices_types(_face_mesh &m, size_t N) {
   m.vertices_of_type[2][3] = (N-1)+N*(N-1);
 }
 
-static void _load_face(_face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
+static void load_face(face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
   /*
     Returns a triangular mesh of a face with N^2 points.
     Each edge of the face has length 1.
@@ -78,18 +80,18 @@ static void _load_face(_face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
   */
 
   /* Build the vertices of the mesh of the face */
-  _load_face_vertices(m, N, nx, ny, x0);
+  load_face_vertices(m, N, nx, ny, x0);
 
   /* Build the triangles of the mesh of the face */
-  _load_face_indices(m, N);
+  load_face_indices(m, N);
 
   /* Assign a type to each vertex */
-  _load_face_vertices_types(m, N);
+  load_face_vertices_types(m, N);
 }
 
-static void _load_cube_vertices(TArray<Vec3> &pos,
+static void load_cube_vertices(TArray<Vec3> &pos,
 				size_t N,
-				_face_mesh faces[6],
+				face_mesh faces[6],
 				std::map<std::pair<int, int>, int> &o2n_vtx)
 {
   size_t tot_nb_int_vtx = 6*(N-2)*(N-2);
@@ -120,18 +122,18 @@ static void _load_cube_vertices(TArray<Vec3> &pos,
   for(int i=0; i<2; ++i) {
     for(int f=0; f<6; ++f) {
       vtx_was_handled[i][f].resize(nb_t_vtx[i]);
-      for(int k=0; k<nb_t_vtx[i]; ++k) {
+      for(size_t k=0; k<nb_t_vtx[i]; ++k) {
 	vtx_was_handled[i][f][k] = false;
       }
     }
   }
-  
+
   for(int type=1; type<3; ++type) {
     /* Number of duplicates for each vertex of current type */
     int nb_eq_vtx = type+1;
-      
+
     for(int f1=0; f1<6; ++f1)
-      for(int t_id_1=0; t_id_1<nb_t_vtx[type-1]; ++t_id_1) {
+      for(size_t t_id_1=0; t_id_1<nb_t_vtx[type-1]; ++t_id_1) {
 	int v1 = faces[f1].vertices_of_type[type][t_id_1];
 
 	/* If v1 not handled, then add its coordinates to the cube mesh */
@@ -141,14 +143,14 @@ static void _load_cube_vertices(TArray<Vec3> &pos,
 	  vtx_was_handled[type-1][f1][t_id_1] = true;
 	  o2n_vtx.insert({{f1, v1}, cube_vtx_id});
 	  ++cube_vtx_id;
-	
+
 	  /* Find the duplicates of v1 and handle them */
 	  int nb_dup_found = 0;
 	  bool all_dup_found = false;
 	  for(int f2=f1+1; f2<6 && !all_dup_found; ++f2)
-	    for(int t_id_2=0; t_id_2<nb_t_vtx[type-1] && !all_dup_found; ++t_id_2) {
+	    for(size_t t_id_2=0; t_id_2<nb_t_vtx[type-1] && !all_dup_found; ++t_id_2) {
 	      int v2 = faces[f2].vertices_of_type[type][t_id_2];
-	  
+
 	      float dist_sq = norm2(faces[f1].positions[v1] - faces[f2].positions[v2]);
 	      if (dist_sq < tol_sq) {
 		vtx_was_handled[type-1][f2][t_id_2] = true;
@@ -162,21 +164,20 @@ static void _load_cube_vertices(TArray<Vec3> &pos,
 	}
       }
   }
-  
-  assert(cube_vtx_id == tot_nb_vtx);
+
+  assert(cube_vtx_id == (int)tot_nb_vtx);
 }
-static void _load_cube_indices(TArray<uint32_t> &idx,
+static void load_cube_indices(TArray<uint32_t> &idx,
 			       size_t N,
-			       _face_mesh faces[6],
+			       face_mesh faces[6],
 			       std::map<std::pair<int, int>, int> &o2n_vtx)
 {
   size_t nb_tri_face = 2*(N-1)*(N-1);
-  size_t tot_nb_tri = 6*2*(N-1)*(N-1);
   idx.resize(3*6*nb_tri_face);
   int cube_indices_id = 0;
-  
+
   for(int f=0; f<6; ++f)
-    for(int loc_tri=0; loc_tri<nb_tri_face; ++loc_tri)
+    for(size_t loc_tri=0; loc_tri<nb_tri_face; ++loc_tri)
       for(int k=0; k<3; ++k) {
 	int loc_v = faces[f].indices[3*loc_tri+k];
 	auto it = o2n_vtx.find({f, loc_v});
@@ -184,6 +185,7 @@ static void _load_cube_indices(TArray<uint32_t> &idx,
 	idx[cube_indices_id++] = it->second;
       }
 }
+
 
 int load_cube(Mesh &m, size_t subdiv) {
   /*
@@ -198,9 +200,9 @@ int load_cube(Mesh &m, size_t subdiv) {
   }
 
   size_t N = subdiv + 1;
-    
+
   /* Construct each face individually */
-  _face_mesh faces[6];
+  face_mesh faces[6];
   Vec3 nx[6] = {
     Vec3::XAxis,
     Vec3::YAxis,
@@ -226,18 +228,18 @@ int load_cube(Mesh &m, size_t subdiv) {
     {1, 1, 1},
   };
   for(int face_id=0; face_id<6; ++face_id)
-    _load_face(faces[face_id], N, nx[face_id], ny[face_id], x0[face_id]);
+    load_face(faces[face_id], N, nx[face_id], ny[face_id], x0[face_id]);
 
-  
+
   /* --- Create the mesh of the cube --- */
   /* (old_face_id, old_local_vtx_id) -> new_cube_vtx_id connectivity */
   std::map<std::pair<int, int>, int> o2n_vtx;
-  
+
   /* Update the vertices */
-  _load_cube_vertices(m.positions, N, faces, o2n_vtx);
+  load_cube_vertices(m.positions, N, faces, o2n_vtx);
 
   /* Update the indices */
-  _load_cube_indices(m.indices, N, faces, o2n_vtx);
+  load_cube_indices(m.indices, N, faces, o2n_vtx);
 
   return (0);
 };
