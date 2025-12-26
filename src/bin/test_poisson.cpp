@@ -2,23 +2,23 @@
 #include <string.h>
 #include <time.h>
 
-#include "common/gl_utils.h"
+#include "gl_utils.h"
 
 #include "imgui/imgui.h"
 
 #include "tiny_expr/tinyexpr.h"
 
-#include "mesh/cube.h"
-#include "common/logging.h"
-#include "mesh/mesh.h"
-#include "mesh/mesh_bounds.h"
-#include "mesh/mesh_gpu.h"
-#include "mesh/mesh_io.h"
-#include "viewer/ndc.h"
-#include "fem/poisson.h"
-#include "viewer/shaders.h"
-#include "mesh/sphere.h"
-#include "viewer/viewer.h"
+#include "cube.h"
+#include "logging.h"
+#include "mesh.h"
+#include "mesh_bounds.h"
+#include "mesh_gpu.h"
+#include "mesh_io.h"
+#include "ndc.h"
+#include "poisson.h"
+#include "shaders.h"
+#include "sphere.h"
+#include "viewer.h"
 
 /* Viewer config */
 float bgcolor[4] = { 0.3, 0.3, 0.3, 1.0 };

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common/geometry.h"
-#include "common/mat4.h"
+#include "geometry.h"
+#include "mat4.h"
 /**
  * General frustum defined by six planes.
  */

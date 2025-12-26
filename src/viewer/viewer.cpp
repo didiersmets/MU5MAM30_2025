@@ -2,18 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/gl_utils.h"
+#include "gl_utils.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_glfw.h"
 #include "imgui/imgui_impl_opengl3.h"
 
-#include "viewer/viewer.h"
+#include "viewer.h"
 
-#include "viewer/camera.h"
-#include "viewer/mouse.h"
-#include "viewer/ndc.h"
-#include "viewer/trackball.h"
+#include "camera.h"
+#include "mouse.h"
+#include "ndc.h"
+#include "trackball.h"
 
 #define ZOOM_SENSITIVITY 0.3f /* for mouse zoom */
 

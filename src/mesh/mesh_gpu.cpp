@@ -1,7 +1,7 @@
-#include "common/gl_utils.h"
+#include "gl_utils.h"
 
-#include "mesh/mesh.h"
-#include "mesh/mesh_gpu.h"
+#include "mesh.h"
+#include "mesh_gpu.h"
 
 void GPUMesh::upload()
 {

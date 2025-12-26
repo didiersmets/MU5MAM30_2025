@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common/gl_utils.h"
+#include "gl_utils.h"
 
-#include "common/vec3.h"
+#include "vec3.h"
 
 #define NDC_REVERSED_Y 0
 #ifndef __APPLE__

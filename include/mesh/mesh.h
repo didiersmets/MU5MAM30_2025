@@ -1,8 +1,8 @@
 #pragma once
 #include <stdint.h>
 
-#include "common/array.h"
-#include "common/vec3.h"
+#include "array.h"
+#include "vec3.h"
 
 struct Mesh {
 	TArray<Vec3> positions;

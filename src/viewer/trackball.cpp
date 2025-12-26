@@ -1,9 +1,9 @@
-#include "viewer/trackball.h"
-#include "viewer/camera.h"
-#include "common/geometry.h"
-#include "common/quat.h"
-#include "common/transform.h"
-#include "common/vec3.h"
+#include "trackball.h"
+#include "camera.h"
+#include "geometry.h"
+#include "quat.h"
+#include "transform.h"
+#include "vec3.h"
 
 void ScreenTrackball::grab(float px, float py, int width, int height)
 {

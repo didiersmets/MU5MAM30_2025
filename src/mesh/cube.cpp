@@ -1,4 +1,4 @@
-#include "mesh/mesh.h"
+#include "mesh.h"
 #include <map>
 
 namespace {
@@ -10,7 +10,12 @@ namespace {
 }
 
 
-static void load_face_vertices(face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
+static void load_face_vertices(face_mesh &m,
+			       size_t N,
+			       const Vec3 &nx,
+			       const Vec3 &ny,
+			       const Vec3 &x0)
+{
   m.positions.resize(N*N);
   float step_size = 1.0/(N-1);
 
@@ -68,7 +73,12 @@ static void load_face_vertices_types(face_mesh &m, size_t N) {
   m.vertices_of_type[2][3] = (N-1)+N*(N-1);
 }
 
-static void load_face(face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
+static void load_face(face_mesh &m,
+		      size_t N,
+		      const Vec3 &nx,
+		      const Vec3 &ny,
+		      const Vec3 &x0)
+{
   /*
     Returns a triangular mesh of a face with N^2 points.
     Each edge of the face has length 1.
@@ -90,9 +100,9 @@ static void load_face(face_mesh &m, size_t N, Vec3 nx, Vec3 ny, Vec3 x0) {
 }
 
 static void load_cube_vertices(TArray<Vec3> &pos,
-				size_t N,
-				face_mesh faces[6],
-				std::map<std::pair<int, int>, int> &o2n_vtx)
+			       size_t N,
+			       const face_mesh faces[6],
+			       std::map<std::pair<int, int>, int> &o2n_vtx)
 {
   size_t tot_nb_int_vtx = 6*(N-2)*(N-2);
   size_t tot_nb_edge_vtx = 12*(N-2);
@@ -115,7 +125,8 @@ static void load_cube_vertices(TArray<Vec3> &pos,
       ++cube_vtx_id;
     }
 
-  /* Update the vertices of type 1 (outer edge interior) and 2 (face extremal vertices) */
+  /* Update the vertices of type 1 (outer edge interior) and 2 (face extremal
+     vertices) */
   /* Number of vertices f type t-1 per face */
   size_t nb_t_vtx[2] = {4*(N-2), 4};
   TArray<bool> vtx_was_handled[2][6];
@@ -148,10 +159,13 @@ static void load_cube_vertices(TArray<Vec3> &pos,
 	  int nb_dup_found = 0;
 	  bool all_dup_found = false;
 	  for(int f2=f1+1; f2<6 && !all_dup_found; ++f2)
-	    for(size_t t_id_2=0; t_id_2<nb_t_vtx[type-1] && !all_dup_found; ++t_id_2) {
+	    for(size_t t_id_2=0;
+		t_id_2<nb_t_vtx[type-1] && !all_dup_found;
+		++t_id_2) {
 	      int v2 = faces[f2].vertices_of_type[type][t_id_2];
 
-	      float dist_sq = norm2(faces[f1].positions[v1] - faces[f2].positions[v2]);
+	      float dist_sq
+		= norm2(faces[f1].positions[v1] - faces[f2].positions[v2]);
 	      if (dist_sq < tol_sq) {
 		vtx_was_handled[type-1][f2][t_id_2] = true;
 		o2n_vtx.insert({{f2, v2}, cube_vtx_id-1});
@@ -168,9 +182,9 @@ static void load_cube_vertices(TArray<Vec3> &pos,
   assert(cube_vtx_id == (int)tot_nb_vtx);
 }
 static void load_cube_indices(TArray<uint32_t> &idx,
-			       size_t N,
-			       face_mesh faces[6],
-			       std::map<std::pair<int, int>, int> &o2n_vtx)
+			      size_t N,
+			      face_mesh faces[6],
+			      std::map<std::pair<int, int>, int> &o2n_vtx)
 {
   size_t nb_tri_face = 2*(N-1)*(N-1);
   idx.resize(3*6*nb_tri_face);

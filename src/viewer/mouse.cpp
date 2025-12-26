@@ -3,7 +3,7 @@
 
 #include <GLFW/glfw3.h>
 
-#include "viewer/mouse.h"
+#include "mouse.h"
 
 void Mouse::record_button(int button, int action, int mods)
 {

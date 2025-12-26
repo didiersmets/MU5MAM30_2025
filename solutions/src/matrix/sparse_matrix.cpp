@@ -1,4 +1,4 @@
-#include "matrix/sparse_matrix.h"
+#include "sparse_matrix.h"
 
 /* CSRMatrix */
 

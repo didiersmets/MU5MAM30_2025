@@ -1,8 +1,8 @@
-#include "mesh/mesh_bounds.h"
+#include "mesh_bounds.h"
 
-#include "common/aabb.h"
-#include "mesh/mesh.h"
-#include "common/vec3.h"
+#include "aabb.h"
+#include "mesh.h"
+#include "vec3.h"
 
 Aabb compute_mesh_bounds(const Mesh &m)
 {

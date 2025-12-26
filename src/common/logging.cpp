@@ -3,8 +3,8 @@
 #include <string.h>
 #include <time.h>
 
-#include "common/logging.h"
-#include "common/sys_utils.h"
+#include "logging.h"
+#include "sys_utils.h"
 
 #define DATE_FMT "%Y-%m-%d %H:%M:%S"
 #define PREFIX_FMT "%s [%s:%d]: ", timedate, filename, line

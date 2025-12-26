@@ -1,5 +1,5 @@
-#include "mesh/mesh.h"
-#include "mesh/adjacency.h"
+#include "mesh.h"
+#include "adjacency.h"
 
 VTAdjacency::VTAdjacency(const Mesh &m)
 {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common/gl_utils.h"
+#include "gl_utils.h"
 
-#include "mesh/mesh.h"
+#include "mesh.h"
 
 struct GPUMesh {
 	const Mesh *m;

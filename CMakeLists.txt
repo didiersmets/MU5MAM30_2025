@@ -43,9 +43,13 @@ add_library(nanofem
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
 )
-target_include_directories(nanofem PUBLIC
-	${PROJECT_SOURCE_DIR}/include
-        ${PROJECT_SOURCE_DIR}/extern
+target_include_directories(nanofem PUBLIC 
+	include/common 
+	include/fem
+	include/linalg
+	include/matrix 
+	include/mesh 
+	extern
 )
 target_compile_options(nanofem PRIVATE 
 	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
@@ -67,9 +71,11 @@ add_library(nanoviewer
 	src/viewer/trackball.cpp
 	src/viewer/shaders.cpp
 )
-target_include_directories(nanoviewer PUBLIC
-    ${PROJECT_SOURCE_DIR}/include
-    ${PROJECT_SOURCE_DIR}/extern
+target_include_directories(nanoviewer PUBLIC 
+	include/common 
+	include/mesh
+	include/viewer
+	extern
 )
 target_compile_options(nanoviewer PRIVATE
 	-std=c++17 -Wall -Wextra
@@ -125,10 +131,8 @@ add_library(imgui_glfw_opengl3
 	extern/imgui/imgui_impl_opengl3.cpp
 )
 target_include_directories(imgui_glfw_opengl3 PUBLIC
-    ${PROJECT_SOURCE_DIR}/extern/glfw/include
-    ${PROJECT_SOURCE_DIR}/extern/imgui
+	extern/glfw/include
 )
-
 ###############################################################################
 
 ###############################################################################
@@ -136,7 +140,7 @@ add_library(tiny_expr
 	extern/tiny_expr/tinyexpr.c
 )
 target_include_directories(tiny_expr PUBLIC
-    ${PROJECT_SOURCE_DIR}/extern
+	extern
 )
 ###############################################################################
 

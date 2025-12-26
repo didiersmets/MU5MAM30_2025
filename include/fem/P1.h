@@ -1,7 +1,7 @@
 #pragma once
 
-#include "matrix/fem_matrix.h"
-#include "matrix/sparse_matrix.h"
+#include "fem_matrix.h"
+#include "sparse_matrix.h"
 
 /* CSR variants */
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P);

@@ -1,8 +1,8 @@
 #pragma once
 #include <stdint.h>
 
-#include "common/array.h"
-#include "matrix/matrix.h"
+#include "array.h"
+#include "matrix.h"
 
 /******************************************************************************
  *
