@@ -39,6 +39,39 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 	}
 
 	/* Your implementation goes here */
+	const auto & indices = m.indices;
+	for (size_t triangle_idx = 0; triangle_idx < tri_count; triangle_idx++) {
+		// get vertex indices
+		uint32_t a_idx = indices[triangle_idx * 3    ];
+		uint32_t b_idx = indices[triangle_idx * 3 + 1];
+		uint32_t c_idx = indices[triangle_idx * 3 + 2];
+
+		// get vertex positions
+		Vec3f A = m.positions[a_idx];
+		Vec3f B = m.positions[b_idx];
+		Vec3f C = m.positions[c_idx];
+
+		// compute edge vectors as required by the mass function
+		Vec3d AB = { (double)B[0] - (double)A[0],
+			     	 (double)B[1] - (double)A[1],
+			     	 (double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0],
+			     	 (double)C[1] - (double)A[1],
+			     	 (double)C[2] - (double)A[2] };
+
+		// allocate array for local mass matrix
+		double Mloc[2];
+		// compute local mass matrix
+		mass(AB, AC, Mloc);
+
+		// distribute local mass matrix contributions to global matrix, only lower triangle part
+		M(a_idx, a_idx) += Mloc[0];
+		M(b_idx, b_idx) += Mloc[0];
+		M(c_idx, c_idx) += Mloc[0];
+		M(a_idx > b_idx ? a_idx : b_idx, a_idx > b_idx ? b_idx : a_idx) += Mloc[1];
+		M(b_idx > c_idx ? b_idx : c_idx, b_idx > c_idx ? c_idx : b_idx) += Mloc[1];
+		M(c_idx > a_idx ? c_idx : a_idx, c_idx > a_idx ? a_idx : c_idx) += Mloc[1];
+	}
 }
 
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
@@ -58,6 +91,38 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 	}
 
 	/* Your implementation goes here */
+	const auto & indices = m.indices;
+	for (size_t triangle_idx = 0; triangle_idx < tri_count; triangle_idx++) {
+		// get vertex indices
+		uint32_t a_idx = indices[triangle_idx * 3    ];
+		uint32_t b_idx = indices[triangle_idx * 3 + 1];
+		uint32_t c_idx = indices[triangle_idx * 3 + 2];
+
+		// get vertex positions
+		Vec3f A = m.positions[a_idx];
+		Vec3f B = m.positions[b_idx];
+		Vec3f C = m.positions[c_idx];
+
+		// compute edge vectors as required by the mass function
+		Vec3d AB = { (double)B[0] - (double)A[0],
+			     	 (double)B[1] - (double)A[1],
+			     	 (double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0],
+			     	 (double)C[1] - (double)A[1],
+			     	 (double)C[2] - (double)A[2] };
+
+		// allocate array for local stiffness matrix
+		double Sloc[6];
+		// compute local stiffness matrix
+		stiffness(AB, AC, Sloc);
+		// distribute local stiffness matrix contributions to global matrix, only lower triangle part
+		S(a_idx, a_idx) += Sloc[0];
+		S(b_idx, b_idx) += Sloc[1];
+		S(c_idx, c_idx) += Sloc[2];
+		S(a_idx > b_idx ? a_idx : b_idx, a_idx > b_idx ? b_idx : a_idx) += Sloc[3];
+		S(b_idx > c_idx ? b_idx : c_idx, b_idx > c_idx ? c_idx : b_idx) += Sloc[4];
+		S(c_idx > a_idx ? c_idx : a_idx, c_idx > a_idx ? a_idx : c_idx) += Sloc[5];
+	}
 }
 
 /* FEMatrix variants */
