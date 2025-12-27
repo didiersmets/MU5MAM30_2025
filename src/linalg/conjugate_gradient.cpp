@@ -18,6 +18,30 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	 * implementations heavilly make use of specific hardware capabilities 
 	 * (instruction sets, parallelism, cache efficiency etc). 
 	 */
+	size_t N = A.rows;
+	assert(A.rows == A.cols);
+
+	// compute A * p
+	A.mvp(p, Ap);
+
+	// compute alpha = r2 / ||p||_A^2
+	double alpha = r2 / blas_dot(p, Ap, N);
+
+	// update x  (x = alpha * p + x)
+	blas_axpy(alpha, p, x, N);
+
+	// update r  (r = r - alpha * Ap)
+	blas_axpy(-alpha, Ap, r, N);
+
+	// compute beta
+	double r2_curr = blas_dot(r, r, N);
+	double beta = r2_curr / r2;
+
+	// update p  (p = r + beta * p)
+	blas_axpby(1, r, beta, p, N);
+
+	// return residual
+	return r2_curr;
 }
 
 size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
