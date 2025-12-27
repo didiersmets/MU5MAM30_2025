@@ -24,4 +24,20 @@
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
 	/* Your implementation goes here */
+	double denom = 2.0f * norm(cross(AB, AC));
+	const Vec3d BC = AC - AB;
+
+	// following the notes, the stiffness matrix coefficients are given by integrals over the triangle
+	// of the gradients of the shape functions. For 1st degree polynomials these are constants.
+	// The computation is the following:
+
+	// diagonal terms
+	S[0] = norm(BC) * norm(BC) / denom;
+	S[1] = norm(AC) * norm(AC) / denom;
+	S[2] = norm(AB) * norm(AB) / denom;
+
+	// off-diagonal terms
+	S[3] = -dot(BC, AC) / denom;
+	S[4] = -dot(AB, AC) / denom;
+	S[5] = dot(BC, AB) / denom;
 }
