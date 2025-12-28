@@ -76,7 +76,7 @@ static void load_cube_indices(uint32_t *idx, size_t subdiv)
 				*idx++ = base + n;
 				*idx++ = base + 1;
 				*idx++ = base + 1 + n;
-				*idx++ = base + 1;
+				*idx++ = base + n;
 			}
 		}
 	}
