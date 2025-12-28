@@ -48,9 +48,7 @@ static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 	for(size_t f = 0; f < 6; ++f){
 		face_offset[f] = f * POW2(n);
 	}
-	Vec3 face_directions[6] = { Vec3::XAxis, -Vec3::XAxis,
-		                        Vec3::YAxis, -Vec3::YAxis,
-								Vec3::ZAxis, -Vec3::ZAxis};
+	
 	for(size_t x = 0; x < n; ++x){
 		for(size_t y = 0; y < n; ++y){
 			pos[face_offset[0]++] = Vec3(1, (float)x / subdiv * 2 - 1, (float)y / subdiv * 2 - 1); //Front face
