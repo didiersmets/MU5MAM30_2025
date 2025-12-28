@@ -2,11 +2,11 @@
 #include "mesh_utils.h"
 
 
-MassCoef inline mass(const Vec3d &AB, const Vec3d &AC);
+MassCoef mass(const Vec3 &AB, const Vec3 &AC)
 {
 	double area = area_triangle(AB,AC);
 	return MassCoef {
-		.diag = area/6;
-		.offdiag = area/12;
+		.diag = area/6,
+		.offdiag = area/12
 	};
 }

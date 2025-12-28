@@ -1,4 +1,6 @@
 #include "P1.h"
+#include "mass.h"
+#include "stiffness.h"
 
 void qsort(TArray<uint32_t> &a, size_t start, size_t end){
 	if (start >= end-1) return;
@@ -73,10 +75,47 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &pattern){
 	pattern.col = std::move(col);
 }
 
-void insert_neighour(TArray<uint32_t>row_start,TArray<uint32_t>col,uint32_t v1, uint32_t v2){
-
+void build_P1_mass_matrix(const Mesh &m, CSRMatrix &M){
+	for (size_t t=0;t<m.index_count();t+=3){
+		uint32_t Ai = m.indices[t];
+		uint32_t Bi = m.indices[t+1];
+		uint32_t Ci = m.indices[t+2];
+		Vec3 A = m.positions[Ai];
+		Vec3 B = m.positions[Bi];
+		Vec3 C = m.positions[Ci];
+		Vec3 AB = B-A;
+		Vec3 AC = C-A;
+		MassCoef coef = mass(AB,AC);
+		M(Ai,Ai)+=coef.diag;
+		M(Bi,Bi)+=coef.diag;
+		M(Ci,Ci)+=coef.diag;
+		M(Ai,Bi)+=coef.offdiag;
+		M(Bi,Ci)+=coef.offdiag;
+		M(Ci,Ai)+=coef.offdiag;
+		M(Bi,Ai)+=coef.offdiag;
+		M(Ci,Bi)+=coef.offdiag;
+		M(Ai,Ci)+=coef.offdiag;
+	}
 }
-
-void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M);
-void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P,
-			       CSRMatrix &S);
+void build_P1_stiffness_matrix(const Mesh &m, CSRMatrix &S){
+	for (size_t t=0;t<m.index_count();t+=3){
+		uint32_t Ai = m.indices[t];
+		uint32_t Bi = m.indices[t+1];
+		uint32_t Ci = m.indices[t+2];
+		Vec3 A = m.positions[Ai];
+		Vec3 B = m.positions[Bi];
+		Vec3 C = m.positions[Ci];
+		Vec3 AB = B-A;
+		Vec3 AC = C-A;
+		StiffnessCoef coef = stiffness(AB,AC);
+		S(Ai,Ai)+=coef.S00;
+		S(Bi,Bi)+=coef.S11;
+		S(Ci,Ci)+=coef.S22;
+		S(Ai,Bi)+=coef.S01;
+		S(Bi,Ci)+=coef.S12;
+		S(Ci,Ai)+=coef.S20;
+		S(Bi,Ai)+=coef.S01;
+		S(Ci,Bi)+=coef.S12;
+		S(Ai,Ci)+=coef.S20;
+	}
+}
