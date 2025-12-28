@@ -58,8 +58,19 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 	PositionHasher hasher{ pos };
 	HashTable<uint32_t, uint32_t, PositionHasher> vtx_remap(count, hasher);
 
-	/* Your implementation goes here */
-
+	
+	size_t new_count=0;
+	for (size_t i=0;i<count;i++){
+		/*i check if pos[i] is already mapped in vtx_map, */
+		if (vtx_remap.get(pos[i])==nullptr){ /*if not present*/
+			vtx_remap.set(i, new_count); /*map pos[i] to new_count*/
+			remap[i]=new_count; /*remap associa al suo i-esimo elemnto il valore che assume nella hash map*/
+			new_count++; /*increment new_count since I have added a new unique vertex*/
+		}
+		else{
+			remap[i]=vtx_remap.get(pos[i]); 	/*remap[i] is the index of the already existing vertex*/
+		}
+	}
 	return new_count;
 }
 
@@ -72,8 +83,19 @@ void remove_duplicate_vertices(Mesh &m)
 	size_t new_count = build_position_remap(pos, vtx_count, remap.data);
 
 	/* Remap vertices */
-	/* Your implementation goes here */
-
+	m.positions.resize(new_count);
+	std::vector<bool> copied(new_count, false);/*I create a vector which tracks which positions have been copied, initialized to false*/
+	/* Copy the unique verticeses*/
+	for (size_t i=0;i<vtx_count;i++){
+		if (!copied[remap[i]]){ /*if the position has not been copied yet*/		
+			m.positions[remap[i]]=pos[i];
+			copied[remap[i]]=true;
+		}
+	}
+	
 	/* Remap indices */
+	for (size_t i = 0; i < m.indices.size(); ++i) {
+        m.indices[i] = remap[m.indices[i]];
+    }
 	/* Your implementation goes here */
 }
