@@ -37,14 +37,21 @@
  *****************************************************************************/
 
 /* Vertex to Triangle adjacency table */
+
+/*For a mesh, it stores:
+Which triangles are incident to each vertex
+In which order those triangles appear around the vertex*/
 struct VTAdjacency {
 	struct VTri {
-		uint32_t next;
-		uint32_t prev;
+		uint32_t next; /*the "next" vertex in the triangle--> uint32: is an unsigned int of 32 bits*/
+		uint32_t prev;/*the "previous" vertex in the triangle*/
 	};
-	TArray<uint32_t> degree;
-	TArray<uint32_t> offset;
-	TArray<VTri> vtri;
+	TArray<uint32_t> degree;/*number of triangles incident to vertex*/ 
+	TArray<uint32_t> offset; /*starting position in vtri for each vertex*/
+	TArray<VTri> vtri; /*tells me how to define a triangle given the indexes*/
+	/*Here:
+	next and prev are indices into vtri
+	They tell you where the next/previous triangle is in memory*/
 	/* The constructor that you need to implement in src/adjacency.cpp */
 	VTAdjacency(const Mesh &m);
 };
