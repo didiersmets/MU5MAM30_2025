@@ -24,19 +24,28 @@
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
 	/* Your implementation goes here */
+
+	/*
+	Stiffness local matrix is defined as:
+	integral over ABC of grad(phi_i) . grad(phi_j) dA
+
+	Since basis functions are linear their gradient will just be a constant vector.
+	As we computed them in the /mass.h file we can compute their gradients as:
+	grad(phi_A) = grad( 1 - x - y ) = [ -1 , -1 ] and so on...
+	We then compute the dot products between these gradients we integrate over the triangle
+	and as before we scale by the area of the triangle divided by the area of the reference triangle (1/2)
+	*/
+
 	/* Computation of ||AB x AC|| */
-	double det = norm(cross(AB, AC));
-	assert(det != 0);
-	/* Computation of the upper coefficients */
-	S[0] = norm2(AC - AB) / (2 * det);
-	S[1] = -dot(AC, AC - AB) / (2 * det);
-	S[2] = dot(AB, AC - AB) / (2 * det);
-	S[4] = norm2(AC) / (2 * det);
-	S[5] = -dot(AB, AC) / (2 * det);
-	S[8] = norm2(AB) / (2 * det);
-	
-	/* Computation of the lower coefficients */
-	for (int j = 0; j < 3; j++)
-	for (int i = j + 1; i < 3; i++)
-		S[3 * i + j] = S[3 * j + i];
+	double det_2 = 2.f * norm(cross(AB, AC));
+	assert(det_2 != 0);
+	// diagonal 
+	S[0] = norm(AC - AB) * norm(AC - AB) / det_2;
+	S[1] = norm(AC) * norm(AC) / det_2;
+	S[2] = norm(AB) * norm(AB) / det_2;
+
+	// off-diagonal  ( symmetric )
+	S[3] = -dot(AC - AB, AC) / det_2;
+	S[4] = -dot(AB, AC) / det_2;
+	S[5] = dot(AC - AB, AB) / det_2;
 }

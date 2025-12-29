@@ -15,7 +15,7 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 	degree.resize(vcount);
 	offset.resize(vcount);
 	vtri.resize(total_vtris);
-	for (size_t i = 0; i < vcount; i++) {
+	for (int i = 0; i < vcount; i++) {
 		degree[i] = 0;
 		offset[i] = 0;
 	}
