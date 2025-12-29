@@ -32,7 +32,8 @@ struct CSRMatrix : public Matrix
   uint32_t*      row_start; /* pointer to the corresponding data in pattern */
   uint32_t*      col;       /* pointer to the corresponding data in pattern */
   TArray<double> data;      /* Size = nnz  */
-  void           mvp(const double* __restrict x, double* __restrict y) const;
+  void           mvp_full(const double* __restrict x, double* __restrict y) const;
+  void           mvp_symmetric(const double* __restrict x, double* __restrict y) const;
   double         sum() const;
   double&        operator()(uint32_t i, uint32_t j);
 };
