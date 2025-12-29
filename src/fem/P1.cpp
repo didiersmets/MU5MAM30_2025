@@ -33,7 +33,7 @@ void build_P1_stiffness_matrix(const Mesh& m, const SKLPattern& P, SKLMatrix& S)
 void build_P1_CSRPattern(const Mesh& m, CSRPattern& P)
 {
   /* Your implementation goes here.
-   * Use a VTAdjacency structure (see include/matrix/adjacency.h)
+   * Use a VTAdjacency structure (see include/mesh/adjacency.h)
    */
 
   // SEE CSR Pattern of a matrix to develop the pattern (cols indices, row offset)
