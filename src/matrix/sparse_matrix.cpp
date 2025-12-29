@@ -20,6 +20,32 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 {
 	/* Your implementation goes here */
+	/* 
+	Performs sparse matrix-vector multiplication (y = A * x) using CSR format. 
+	For each row, it accumulates contributions from non-zero entries: 
+	y[i] += data[k] * x[col[k]]. 
+	If the matrix is symmetric (upper triangular stored), it adds mirrored contributions 
+	for off-diagonal elements: y[col[k]] += data[k] * x[i]. 
+ 	*/
+
+	for( int i = 0; i < rows; i++ ){
+		y[i] = 0.0;
+		size_t start = row_start[i];
+		size_t stop  = row_start[i + 1];
+		for( size_t k = start; k < stop; k++ ){
+			y[i] += data[k] * x[ col[k] ];
+		}
+	}
+	if( symmetric ){
+		//we need to do the equivalent of A^T * x
+		for( int i = 0; i < rows; i++ ){
+			size_t start = row_start[i];
+			size_t stop  = row_start[i + 1];
+			for( size_t k = start; k < stop - 1; k++ ){ //-1 to avoid the diagonal
+				y[ col[k] ] += data[k] * x[i];
+			}
+		}
+	}
 }
 
 double CSRMatrix::sum() const
