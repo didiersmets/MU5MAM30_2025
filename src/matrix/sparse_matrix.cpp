@@ -20,59 +20,25 @@ double& CSRMatrix::operator()(uint32_t i, uint32_t j)
   return dummy;
 }
 
-void CSRMatrix::mvp_full(const double* __restrict x, double* __restrict y) const
+void CSRMatrix::mvp(const double* __restrict x, double* __restrict y) const
 {
-  // Safety check: this method expects a fully stored matrix
-  assert(symmetric == false && "Error: mvp_full called on a symmetric-stored matrix.");
-
-  // Initialize output vector to zero
-  for (int i = 0; i < rows; i++)
-    y[i] = 0.0;
-
-  // Standard Sparse Matrix-Vector Multiplication (y = A * x)
-  for (int i = 0; i < rows; i++)
+  for (size_t i = 0; i < rows; i++)
   {
-    double sum   = 0.0;
-    size_t start = row_start[i];
-    size_t stop  = row_start[i + 1];
-
-    for (size_t k = start; k < stop; k++)
+    y[i] = 0.;
+    for (size_t k = row_start[i]; k < row_start[i + 1]; k++)
     {
-      sum += data[k] * x[col[k]];
+      y[i] += data[k] * x[col[k]];
     }
-    y[i] = sum;
   }
-}
-
-void CSRMatrix::mvp_symmetric(const double* __restrict x, double* __restrict y) const
-{
-  // Safety check: this method expects only the upper/lower triangular part
-  assert(symmetric == true && "Error: mvp_symmetric called on a fully stored matrix.");
-
-  // Initialize output vector to zero
-  for (int i = 0; i < rows; i++)
-    y[i] = 0.0;
-
-  // Compute both A_upper and A_lower contributions in one pass , using y = A_upper * x and
-  // y=A_upper^T * x
-  for (int i = 0; i < rows; i++)
+  // when computing y = A*x and A is symmetric we can save calculate the contribution of the lower
+  // part as y = A.T * x
+  if (symmetric)
   {
-    size_t start = row_start[i];
-    size_t stop  = row_start[i + 1];
-
-    for (size_t k = start; k < stop; k++)
+    for (size_t i = 0; i < rows; ++i)
     {
-      uint32_t j     = col[k];
-      double   value = data[k];
-
-      // Standard contribution: y[i] += A[i][j] * x[j]
-      y[i] += value * x[j];
-
-      // Symmetric contribution: y[j] += A[j][i] * x[i]
-      // We skip the diagonal (i == j) to avoid doubling the result
-      if (i != j)
+      for (size_t k = row_start[i]; k < row_start[i + 1] - 1; k++)
       {
-        y[j] += value * x[i];
+        y[col[k]] += data[k] * x[i];
       }
     }
   }
