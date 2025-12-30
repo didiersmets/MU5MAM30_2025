@@ -31,7 +31,7 @@ void inline stiffness(const Vec3& AB, const Vec3& AC, double* __restrict S)
   S[1] = norm2(AC) / (2 * det);  // B <-> B
   S[2] = norm2(AB) / (2 * det);  // C <-> C
 
-  // the matrix is symm
+  // the off-diagonal part
   S[3] = -dot(AC, BC) / (2 * det);  // A <-> B
   S[4] = -dot(AB, AC) / (2 * det);  // B <-> C
   S[5] = dot(AB, BC) / (2 * det);   // C <-> A
