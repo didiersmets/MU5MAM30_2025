@@ -67,7 +67,7 @@ VTAdjacency::VTAdjacency(const Mesh& m)
    * vertex. For any vertex 'i' (where i ranges from 0 to m.vertex_count() - 1), all its adjacent
    * vertices are stored in a specific "block" within vtri:
    * - For vertex 'i', we access its neighbors in vtri from position:
-   * offset[i] to (offset[i] + degree[i] - 1).
+   *    offset[i] to (offset[i] + degree[i] - 1).
    * - This block contains 'degree[i]' entries, representing the number of triangles that contain
    * vertex 'i'. This structure allows O(1) random access to the adjacency information of any
    * vertex.

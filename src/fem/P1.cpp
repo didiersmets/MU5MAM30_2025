@@ -2,6 +2,9 @@
 
 #include "fem/P1.h"
 
+#include "mesh/adjacency.h"
+#include "mesh/mesh.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -22,22 +25,128 @@ void build_P1_CSRPattern(const Mesh& m, CSRPattern& P);
 void build_P1_mass_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& M);
 void build_P1_stiffness_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& S);
 
-/*
-void build_P1_SKLPattern(const Mesh& m, SKLPattern& P);
-void build_P1_mass_matrix(const Mesh& m, const SKLPattern& P, SKLMatrix& M);
-void build_P1_stiffness_matrix(const Mesh& m, const SKLPattern& P, SKLMatrix& S);
-*/
+/**
+ * Helper function: linear search to avoid duplicate column indices in the same row.
+ * Returns true if the index 'x' is already present in the current row segment.
+ */
+static bool find(uint32_t x, uint32_t* start, size_t count)
+{
+  for (size_t i = 0; i < count; ++i)
+  {
+    if (start[i] == x)
+      return true;
+  }
+  return false;
+}
 
-// global Mass and Stiffness matrix builders using CSR patterns
-
+/**
+ * Constructs the Compressed Sparse Row (CSR) pattern for P1 finite elements.
+ * Each row 'a' represents vertex 'a' and its connections to other vertices.
+ */
 void build_P1_CSRPattern(const Mesh& m, CSRPattern& P)
 {
-  /* Your implementation goes here.
-   * Use a VTAdjacency structure (see src/mesh/adjacency.cpp) to help build the pattern.
-   */
+  size_t vtx_count = m.vertex_count();
+  size_t tri_count = m.triangle_count();
 
-  // CSR Pattern of a matrix to develop the pattern (cols indices, row offset)
+  // The matrix represents interactions between mesh vertices (V x V).
+  // We store only the lower triangle (including diagonal) to save memory.
+  P.symmetric = true;
+  P.rows = P.cols = vtx_count;
+  P.row_start.resize(vtx_count + 1);
+
+  // Get vertex-to-triangle adjacency data (provides triangles sharing each vertex)
+  VTAdjacency adj(m);
+
+  /* Initial memory allocation estimate:
+   * Each triangle (tri_count) has 3 edges, plus the diagonal for each vertex.
+   */
+  size_t max_nnz = 3 * tri_count + vtx_count;
+  P.col.resize(max_nnz);
+
+  /* PHASE 1: FILL THE PATTERN (UNORDERED) */
+  size_t nnz = 0;
+  for (size_t a = 0; a < vtx_count; ++a)
+  {
+    // P.row_start[a] stores the offset (starting position) of row 'a' in the flat P.col array.
+    P.row_start[a] = nnz;
+
+    // Pointer to the beginning of row 'a' in P.col for quick searching
+    uint32_t* start   = &P.col[nnz];
+    size_t    nnz_loc = 0;  // Local counter for elements added to this specific row
+
+    // Access the block of triangles associated with vertex 'a' from VTAdjacency
+    uint32_t kstart = adj.offset[a];
+    uint32_t kstop  = kstart + adj.degree[a];
+
+    for (size_t k = kstart; k < kstop; ++k)
+    {
+      // b and c are the neighbors of 'a' in the current triangle k.
+      uint32_t b = adj.vtri[k].next;
+      uint32_t c = adj.vtri[k].prev;
+
+      /* * Check neighbor 'b':
+       * 1. 'b < a' ensures we only store the lower triangular part of the matrix.
+       * 2. '!find' ensures we don't add the same neighbor twice (shared edges).
+       */
+      if (b < a && !find(b, start, nnz_loc))
+      {
+        P.col[nnz++] = b;
+        nnz_loc++;
+      }
+      /* Check neighbor 'c' with the same logic */
+      if (c < a && !find(c, start, nnz_loc))
+      {
+        P.col[nnz++] = c;
+        nnz_loc++;
+      }
+    }
+    // Add vertex 'a' itself (diagonal element).
+    P.col[nnz++] = a;
+  }
+
+  // Finalize row_start with the total number of non-zero elements
+  P.row_start[vtx_count] = nnz;
+  P.col.resize(nnz);
+  P.col.shrink_to_fit();
+
+  /* PHASE 2: SORT COLUMN INDICES */
+  /* Standard CSR format requires column indices to be sorted for each row. */
+  for (size_t a = 0; a < vtx_count; ++a)
+  {
+    uint32_t* __restrict to_sort = &P.col[P.row_start[a]];
+    size_t count                 = P.row_start[a + 1] - P.row_start[a];
+
+    /* Insertion sort: very efficient for small arrays (vertex degrees are usually low) */
+    for (size_t k = 1; k < count; ++k)
+    {
+      size_t j = k;
+      while (j && (to_sort[j - 1] > to_sort[j]))
+      {
+        uint32_t tmp   = to_sort[j - 1];
+        to_sort[j - 1] = to_sort[j];
+        to_sort[j]     = tmp;
+        j--;
+      }
+    }
+  }
 }
+
+/*
+struct CSRPattern
+{
+  bool   symmetric;
+  size_t rows;
+  size_t cols;
+  size_t nnz;
+  /* Non zero entries on line i (0 <= i < rows)
+   * are stored at indices row_start(i) <= k < row_start(i + 1).
+   * Corresponding column indices are read into col(k).
+  // offset for every row: row_start[i+1] - row_start[i] = number of non zero entries in row i
+  TArray<uint32_t> row_start;    Size = nrows + 1
+  // indices of columns for every non zero entry
+  TArray<uint32_t> col;       Size = nnz
+  }
+  */
 
 void build_P1_mass_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& M)
 {
@@ -45,7 +154,7 @@ void build_P1_mass_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& M)
   size_t tri_count = m.triangle_count();
   assert(P.row_start.size == vtx_count + 1);
 
-  M.symmetric = true;
+  M.symmetric = true;  // saving only the lower triangular part
   M.rows = M.cols = vtx_count;
   M.nnz           = P.col.size;
   M.row_start     = P.row_start.data;
@@ -66,7 +175,7 @@ void build_P1_stiffness_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& S)
   size_t tri_count = m.triangle_count();
   assert(P.row_start.size == vtx_count + 1);
 
-  S.symmetric = true;
+  S.symmetric = true;  // saving only the lower triangular part
   S.rows = S.cols = vtx_count;
   S.nnz           = P.col.size;
   S.row_start     = P.row_start.data;
