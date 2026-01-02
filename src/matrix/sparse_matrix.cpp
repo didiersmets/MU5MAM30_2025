@@ -1,4 +1,4 @@
-#include "sparse_matrix.h"
+#include "matrix/sparse_matrix.h"
 
 #include <cassert>
 

@@ -19,9 +19,6 @@
 #include "stiffness.h"
 */
 
-void build_P1_mass_matrix(const Mesh& m, FEMatrix& M);
-void build_P1_stiffness_matrix(const Mesh& m, FEMatrix& S);
-
 void build_P1_CSRPattern(const Mesh& m, CSRPattern& P);
 void build_P1_mass_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& M);
 void build_P1_stiffness_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& S);
@@ -198,6 +195,8 @@ void build_P1_mass_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& M)
     {
       for (int j = 0; j < 3; ++j)
       {
+        // contribution to global matrix M at position (r, c)
+
         uint32_t r = v[i];  // Global row index
         uint32_t c = v[j];  // Global column index
 

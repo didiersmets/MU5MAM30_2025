@@ -1,3 +1,4 @@
+#include "include/fem/P1.h"
 #include "include/mesh/cube.h"
 #include "include/mesh/mesh.h"
 #include "include/mesh/sphere.h"
@@ -7,7 +8,8 @@
 
 /*
 to run the main:
-g++ -std=c++17 main.cpp src/mesh/cube.cpp src/mesh/duplicate_verts.cpp -I include -o main
+g++ -std=c++17 main.cpp src/matrix/sparse_matrix.cpp src/mesh/adjacency.cpp src/fem/P1.cpp
+src/mesh/sphere.cpp src/mesh/duplicate_verts.cpp -I include -o main
 */
 
 int main()
@@ -44,7 +46,7 @@ int main()
   size_t total_vtris = myMesh.triangle_count() * 3;  // number of vertex-triangle connections
   std::cout << "Total connections:     " << total_vtris << std::endl;
 
-  // 4. Validate results
+  // Validate results
   if (myMesh.triangle_count() == expected_triangles)
   {
     std::cout << "SUCCESS: Triangle count matches expected value (" << expected_triangles << ")."
@@ -54,6 +56,17 @@ int main()
   {
     std::cout << "WARNING: Triangle count mismatch!" << std::endl;
   }
+
+  CSRPattern pattern;
+  build_P1_CSRPattern(myMesh, pattern);
+  std::cout << "CSR Pattern built with " << pattern.cols << " non-zero entries (lower triangle)."
+            << std::endl;
+  std::cout << "[Step 2] Assembling Mass Matrix..." << std::endl;
+  CSRMatrix massMatrix;
+  build_P1_mass_matrix(myMesh, pattern, massMatrix);
+  std::cout << "Mass Matrix assembled successfully." << std::endl;
+  std::cout << "Matrix Rows:     " << massMatrix.rows << std::endl;
+  std::cout << "Matrix NNZ:      " << massMatrix.nnz << std::endl;
 
   return 0;
 }

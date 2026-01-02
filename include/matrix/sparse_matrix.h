@@ -1,5 +1,6 @@
 #pragma once
-#include "array.h"
+
+#include "common/array.h"
 #include "matrix.h"
 
 #include <stdint.h>

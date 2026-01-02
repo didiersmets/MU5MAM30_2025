@@ -1,5 +1,5 @@
-#include "array.h"
-#include "mesh.h"
+#include "common/array.h"
+#include "mesh/mesh.h"
 
 #include <stdint.h>
 
