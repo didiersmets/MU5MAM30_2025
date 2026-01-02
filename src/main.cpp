@@ -11,13 +11,14 @@ int main(){
 	build_P1_CSRPattern(m,pattern);
 	size_t n = pattern.rows; // square matrix
 	spy(pattern,pattern.rows,"CSRPattern.png");
-	CSRMatrix A(pattern,0.0);
+	CSRMatrix A(pattern,0);
 
 	// we want to solve Mx = b
-	dump(A,"matrix1.txt");
+	dump(A,"matrix0.txt");
 	build_P1_mass_matrix(m,A);
+	dump(A,"matrix1.txt");
 	build_P1_stiffness_matrix(m,A);
-	dump(A,"matrix.txt");
+	dump(A,"matrix2.txt");
 
 
 

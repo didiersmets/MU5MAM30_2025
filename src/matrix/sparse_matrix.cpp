@@ -69,8 +69,9 @@ uint32_t find_dichotomic(uint32_t val,const uint32_t *buf,uint32_t start,uint32_
 double &CSRMatrix::operator()(uint32_t i, uint32_t j){
 	static double zero = 0.0;
 	bool found = false;
-	uint32_t k = find_dichotomic(j,col,row_start[i],row_start[j],found);
-	return found ? data[k] : zero;
+	uint32_t k = find_dichotomic(j,col,row_start[i],row_start[i+1],found);
+	assert(found); // tried to access 0 element in sparse matrix
+	return data[k];
 }
 
 /* Visualisation of non zeros */
@@ -89,9 +90,15 @@ void spy(const CSRPattern &P, uint32_t width, const char *fname){
 
 void dump(CSRMatrix &M, const char *fname){
 	FILE *f = fopen(fname,"w");
-	for (uint32_t x=0;x<M.rows;x++){
+	for (uint32_t r=0;r<M.rows;r++){
+		uint32_t non_zero_col = M.row_start[r];
 		for (uint32_t y=0; y<M.cols; y++){
-			fprintf(f,"%lf ",M(x,y));
+			if (y==M.col[non_zero_col]){
+				fprintf(f,"%lf ",M.data[non_zero_col]);
+				non_zero_col++;
+			} else {
+				fprintf(f,"%lf ",0.0);
+			}
 		}
 		fprintf(f,"\n");
 	}
