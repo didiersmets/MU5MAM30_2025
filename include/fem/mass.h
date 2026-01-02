@@ -35,11 +35,6 @@ void inline mass(const Vec3d& AB, const Vec3d& AC, double* __restrict M)
   // Mij = Area / 12.
   double off_diagonal_term = area / 12.0;
 
-  /*
-   * Construct the mass matrix M in row-major order:
-      Recall that the mass matrix is symmetric, so M[i][j] = M[j][i]
-  */
-
   // Diagonal Term
   M[0] = diagonal_term;
 

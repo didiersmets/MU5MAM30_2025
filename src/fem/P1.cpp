@@ -2,6 +2,7 @@
 
 #include "fem/P1.h"
 
+#include "fem/mass.h"
 #include "mesh/adjacency.h"
 #include "mesh/mesh.h"
 
@@ -154,7 +155,7 @@ void build_P1_mass_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& M)
   size_t tri_count = m.triangle_count();
   assert(P.row_start.size == vtx_count + 1);
 
-  M.symmetric = true;  // saving only the lower triangular part
+  M.symmetric = true;
   M.rows = M.cols = vtx_count;
   M.nnz           = P.col.size;
   M.row_start     = P.row_start.data;
@@ -165,8 +166,68 @@ void build_P1_mass_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& M)
     M.data[i] = 0.0;
   }
 
-  /* Your implementation goes here */
-  // assemble local matrix M_loc and then add in the global matrix M
+  // global indices of the mesh triangles
+  const TArray<uint32_t>& idx = m.indices;
+
+  // Main assembly loop: iterate over each triangle (element) in the mesh
+  for (size_t t = 0; t < tri_count; ++t)
+  {
+    // Retrieve global indices for the three vertices of triangle 't'
+    uint32_t v[3] = {idx[3 * t + 0], idx[3 * t + 1], idx[3 * t + 2]};
+
+    // Retrieve the 3D positions of the triangle's vertices
+    Vec3f A_pos = m.positions[v[0]];
+    Vec3f B_pos = m.positions[v[1]];
+    Vec3f C_pos = m.positions[v[2]];
+
+    // Edge vectors
+    Vec3d AB = {(double) B_pos[0] - A_pos[0],
+                (double) B_pos[1] - A_pos[1],
+                (double) B_pos[2] - A_pos[2]};
+    Vec3d AC = {(double) C_pos[0] - A_pos[0],
+                (double) C_pos[1] - A_pos[1],
+                (double) C_pos[2] - A_pos[2]};
+
+    // compute the local mass matrix for the triangle ABC
+    double Mloc[2];
+    mass(AB, AC, Mloc);
+
+    // GLOBAL ASSEMBLY : add the local mass matrix Mloc into the global matrix M
+    // Iterate over all pairs (i, j) of the 3x3 local element matrix
+    for (int i = 0; i < 3; ++i)
+    {
+      for (int j = 0; j < 3; ++j)
+      {
+        uint32_t r = v[i];  // Global row index
+        uint32_t c = v[j];  // Global column index
+
+        /* * Since the matrix is symmetric and we use Lower Triangular storage,
+         * we only process entries where row index 'r' >= column index 'c'.
+         * Entries where r < c belong to the upper triangle and are omitted.
+         */
+        if (r >= c)
+        {
+          // Determine value: use diagonal term if r==c, else use off-diagonal term
+          double val_to_add = (r == c) ? Mloc[0] : Mloc[1];
+
+          // Find the position 'k' in the M.data array corresponding to column 'c'
+          // We only search within the range defined for row 'r'
+          uint32_t start = M.row_start[r];
+          uint32_t end   = M.row_start[r + 1];
+
+          for (uint32_t k = start; k < end; ++k)
+          {
+            if (M.col[k] == c)
+            {
+              // accumulate the local contribution
+              M.data[k] += val_to_add;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 void build_P1_stiffness_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& S)
