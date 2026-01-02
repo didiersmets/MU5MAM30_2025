@@ -1,6 +1,7 @@
 #include <utility>
-#include "sparse_matrix.h"
+#include <stdio.h>
 
+#include "sparse_matrix.h"
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
@@ -84,5 +85,16 @@ void spy(const CSRPattern &P, uint32_t width, const char *fname){
 		}
 	}
 	stbi_write_png(fname, width, width, 1, (void *)img.data, width);
+}
+
+void dump(CSRMatrix &M, const char *fname){
+	FILE *f = fopen(fname,"w");
+	for (uint32_t x=0;x<M.rows;x++){
+		for (uint32_t y=0; y<M.cols; y++){
+			fprintf(f,"%lf ",M(x,y));
+		}
+		fprintf(f,"\n");
+	}
+	fclose(f);
 }
 

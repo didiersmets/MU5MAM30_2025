@@ -29,13 +29,13 @@ size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
 		// r0 = b - Ax0
 		A.mvp(x,r);
 		blas_axpby(1,b,-1,r,N);
-		blas_copy(r,p);
+		blas_copy(r,p,N);
 	}
 	double b2 = blas_dot(b,b,N);
 	double r2 = blas_dot(r,r,N);
 	*rel_error = r2/b2;
 	size_t iter = 0;
-	while(iter<max_iter && rel_error>tol){
+	while(iter<max_iter && *rel_error>tol){
 		r2 = cg_iterate_once(A,x,r,p,Ap,r2);
 		*rel_error = r2/b2;
 		iter++;

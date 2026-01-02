@@ -3,8 +3,8 @@
 #include "stiffness.h"
 
 void qsort(TArray<uint32_t> &a, size_t start, size_t end){
-	if (start >= end-1) return;
-	// todo implement quicksort
+	if (start+1 >= end) return;
+
 	uint32_t pivot = a[start];
 	size_t mid = start+1;
 	for (size_t i=start+1;i<end;i++){
@@ -12,10 +12,13 @@ void qsort(TArray<uint32_t> &a, size_t start, size_t end){
 			uint32_t temp = a[i];
 			a[i] = a[mid];
 			a[mid] = temp;
-			temp++;
+			mid++;
 		}
 	}
-	qsort(a,start,mid);
+	a[start] = a[mid-1];
+	a[mid-1] = pivot;
+
+	qsort(a,start,mid-1);
 	qsort(a,mid,end);
 }
 
@@ -24,6 +27,7 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &pattern){
 	pattern.rows = m.vertex_count();
 	pattern.cols = pattern.rows;
 	TArray<uint32_t> row_start (pattern.rows+1,1);
+	row_start[0] = 0;
 	for(size_t t=0;t<m.index_count();t+=3){
 		for (int e=0;e<3;e++){
 			uint32_t v = m.indices[t+e];

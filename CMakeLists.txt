@@ -14,6 +14,7 @@ target_link_libraries(main
 	array
 	P1
 	sparse_matrix
+	conjugate_gradient
 )
 
 add_library(mesh)
@@ -112,6 +113,26 @@ target_sources(mesh_utils
         )
 target_link_libraries(mesh_utils
 	PRIVATE vec3 )
+add_library(conjugate_gradient)
+target_sources(conjugate_gradient
+        PRIVATE
+        src/linalg/conjugate_gradient.cpp
+
+        PUBLIC
+        FILE_SET HEADERS
+	BASE_DIRS include/linalg/
+	FILES include/linalg/conjugate_gradient.h
+        )
+target_link_libraries(conjugate_gradient
+	PRIVATE matrix tiny_blas )
+add_library(tiny_blas INTERFACE)
+target_include_directories(tiny_blas INTERFACE include/linalg)
+target_sources(tiny_blas
+	INTERFACE
+        FILE_SET HEADERS
+	BASE_DIRS include/linalg
+	FILES include/linalg/tiny_blas.h
+        )
 add_library(array INTERFACE)
 target_include_directories(array INTERFACE include/common)
 target_sources(array

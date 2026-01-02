@@ -39,6 +39,7 @@ struct CSRMatrix : public Matrix {
 
 /* Visualisation of non zeros */
 void spy(const CSRPattern &P, uint32_t width, const char *fname);
+void dump(CSRMatrix &M, const char *fname);
 
 /******************************************************************************
  *
