@@ -66,12 +66,17 @@ int main()
   CSRMatrix stiffMatrix;
   build_P1_mass_matrix(myMesh, pattern, massMatrix);
   build_P1_stiffness_matrix(myMesh, pattern, stiffMatrix);
-  std::cout << "Mass Matrix assembled successfully." << std::endl;
+  std::cout << "Mass Matrix (sym) assembled successfully." << std::endl;
   std::cout << "Matrix Rows:     " << massMatrix.rows << std::endl;
   std::cout << "Matrix NNZ:      " << massMatrix.nnz << std::endl;
-  std::cout << "Stiffness Matrix assembled successfully." << std::endl;
+  std::cout << "Stiffness Matrix (sym) assembled successfully." << std::endl;
   std::cout << "Matrix Rows:     " << stiffMatrix.rows << std::endl;
   std::cout << "Matrix NNZ:      " << stiffMatrix.nnz << std::endl;
+
+  // Now massMatrix and stiffMatrix can be used for further FEM computations
+  // A = M + S (SPD matrix)
+  // b = M*f
+  // solve A*x = b using conjugate gradient solver where x is the unknown DOFs
 
   return 0;
 }
