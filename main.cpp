@@ -63,10 +63,15 @@ int main()
             << std::endl;
   std::cout << "[Step 2] Assembling Mass Matrix..." << std::endl;
   CSRMatrix massMatrix;
+  CSRMatrix stiffMatrix;
   build_P1_mass_matrix(myMesh, pattern, massMatrix);
+  build_P1_stiffness_matrix(myMesh, pattern, stiffMatrix);
   std::cout << "Mass Matrix assembled successfully." << std::endl;
   std::cout << "Matrix Rows:     " << massMatrix.rows << std::endl;
   std::cout << "Matrix NNZ:      " << massMatrix.nnz << std::endl;
+  std::cout << "Stiffness Matrix assembled successfully." << std::endl;
+  std::cout << "Matrix Rows:     " << stiffMatrix.rows << std::endl;
+  std::cout << "Matrix NNZ:      " << stiffMatrix.nnz << std::endl;
 
   return 0;
 }

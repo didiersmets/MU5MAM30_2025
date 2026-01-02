@@ -3,9 +3,12 @@
 #include "fem/P1.h"
 
 #include "fem/mass.h"
+#include "fem/stiffness.h"
+#include "math.h"
 #include "mesh/adjacency.h"
 #include "mesh/mesh.h"
 
+#include <algorithm>
 #include <stdio.h>
 #include <string.h>
 
@@ -233,19 +236,92 @@ void build_P1_stiffness_matrix(const Mesh& m, const CSRPattern& P, CSRMatrix& S)
 {
   size_t vtx_count = m.vertex_count();
   size_t tri_count = m.triangle_count();
+
+  // Ensure the pattern matches the mesh size
   assert(P.row_start.size == vtx_count + 1);
 
-  S.symmetric = true;  // saving only the lower triangular part
-  S.rows = S.cols = vtx_count;
-  S.nnz           = P.col.size;
-  S.row_start     = P.row_start.data;
-  S.col           = P.col.data;
+  // 1. Initialize CSR Matrix properties
+  // We only store the lower triangular part (symmetric = true)
+  S.symmetric = true;
+  S.rows      = vtx_count;
+  S.cols      = vtx_count;
+  S.nnz       = P.col.size;
+
+  // 2. Bind the matrix to the topology provided by the CSRPattern
+  S.row_start = P.row_start.data;
+  S.col       = P.col.data;
+
+  // 3. Allocate and zero-initialize the numerical data array
   S.data.resize(S.nnz);
   for (size_t i = 0; i < S.nnz; ++i)
   {
     S.data[i] = 0.0;
   }
 
-  /* Your implementation goes here */
-  // assemble local matrix S_loc and then add in the global matrix S
+  /* ASSEMBLY PHASE */
+  double Sloc[6];  // Local stiffness matrix components: [Saa, Sbb, Scc, Sab, Sbc, Sca]
+  const TArray<uint32_t>& idx = m.indices;
+
+  for (size_t t = 0; t < tri_count; ++t)
+  {
+    // Retrieve global indices for the three vertices of triangle 't'
+    uint32_t v[3] = {idx[3 * t + 0], idx[3 * t + 1], idx[3 * t + 2]};
+
+    // Retrieve the 3D positions of the triangle's vertices
+    Vec3f A_pos = m.positions[v[0]];
+    Vec3f B_pos = m.positions[v[1]];
+    Vec3f C_pos = m.positions[v[2]];
+
+    // Edge vectors
+    Vec3d AB = {(double) B_pos[0] - A_pos[0],
+                (double) B_pos[1] - A_pos[1],
+                (double) B_pos[2] - A_pos[2]};
+    Vec3d AC = {(double) C_pos[0] - A_pos[0],
+                (double) C_pos[1] - A_pos[1],
+                (double) C_pos[2] - A_pos[2]};
+
+    // Calculate local stiffness contributions for triangle ABC
+    stiffness(AB, AC, Sloc);
+
+    /* * MAPPING TO LOWER TRIANGULAR STORAGE:
+     * To respect the 'S.symmetric = true' constraint, we must ensure the row index (r)
+     * is always >= the column index (c). We achieve this by taking the max and min
+     * of each global vertex pair.
+     */
+    struct Interaction
+    {
+      uint32_t row, col;
+      double   value;
+    };
+    Interaction pairs[6] = {
+      {v[0], v[0], Sloc[0]},                                  // Saa (Diagonal)
+      {v[1], v[1], Sloc[1]},                                  // Sbb (Diagonal)
+      {v[2], v[2], Sloc[2]},                                  // Scc (Diagonal)
+      {std::max(v[0], v[1]), std::min(v[0], v[1]), Sloc[3]},  // Interaction A-B
+      {std::max(v[1], v[2]), std::min(v[1], v[2]), Sloc[4]},  // Interaction B-C
+      {std::max(v[2], v[0]), std::min(v[2], v[0]), Sloc[5]}   // Interaction C-A
+    };
+
+    // Scatter each of the 6 local interactions into the global CSR data array
+    for (int k_loc = 0; k_loc < 6; ++k_loc)
+    {
+      uint32_t r   = pairs[k_loc].row;
+      uint32_t c   = pairs[k_loc].col;
+      double   val = pairs[k_loc].value;
+
+      // Locate the entry for column 'c' within the compressed row 'r'
+      uint32_t row_begin = S.row_start[r];
+      uint32_t row_end   = S.row_start[r + 1];
+
+      for (uint32_t k = row_begin; k < row_end; ++k)
+      {
+        if (S.col[k] == c)
+        {
+          // Atomically add the local triangle contribution to the global matrix entry
+          S.data[k] += val;
+          break;  // Found the column, move to the next interaction
+        }
+      }
+    }
+  }
 }

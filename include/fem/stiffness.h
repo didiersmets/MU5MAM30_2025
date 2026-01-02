@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "vec3.h"
+#include "common/vec3.h"
 
 /* Given a triangle ABC, computes the (symmetric) 3x3 stiffness matrix S s.t.
  *
@@ -19,12 +19,12 @@
  * Idea behind computation : see class notes
  *
  */
-void inline stiffness(const Vec3& AB, const Vec3& AC, double* __restrict S)
+void inline stiffness(const Vec3d& AB, const Vec3d& AC, double* __restrict S)
 {
   /* Computation of ||AB x AC|| */
   double det = norm(cross(AB, AC));
 
-  Vec3 BC = AC - AB;
+  Vec3d BC = AC - AB;
 
   // the diagonal part
   S[0] = norm2(BC) / (2 * det);  // A <-> A
