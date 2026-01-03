@@ -3,25 +3,18 @@
 #include "P1.h"
 #include "array.h"
 #include "conjugate_gradient.h"
-#if USE_FEM_MATRIX
-	#include "fem_matrix.h"
-#else
-	#include "sparse_matrix.h"
-#endif
+#include "sparse_matrix.h"
 #include "mesh.h"
 #include "tiny_blas.h"
 
 PoissonSolver::PoissonSolver(const Mesh &m)
     : m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
 {
-#if USE_FEM_MATRIX
+	build_P1_CSRPattern(m, P);
+	M = std::move(CSRMatrix(P,0));
+	A = std::move(CSRMatrix(P,0));
 	build_P1_mass_matrix(m, M);
 	build_P1_stiffness_matrix(m, A);
-#else
-	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, A);
-#endif
 	vol = M.sum();
 	inited = false;
 	iterate = 0;

@@ -7,6 +7,16 @@
 #include "stb_image_write.h"
 
 
+CSRMatrix::CSRMatrix(){
+	rows = 0;
+	cols = 0;
+	symmetric = false;
+	nnz = 0;
+	row_start = nullptr;
+	col = nullptr;
+	data = TArray<double>();
+}
+
 CSRMatrix::CSRMatrix(CSRPattern &pattern){
 	rows = pattern.rows;
 	cols = pattern.cols;
@@ -67,7 +77,6 @@ uint32_t find_dichotomic(uint32_t val,const uint32_t *buf,uint32_t start,uint32_
 }
 
 double &CSRMatrix::operator()(uint32_t i, uint32_t j){
-	static double zero = 0.0;
 	bool found = false;
 	uint32_t k = find_dichotomic(j,col,row_start[i],row_start[i+1],found);
 	assert(found); // tried to access 0 element in sparse matrix

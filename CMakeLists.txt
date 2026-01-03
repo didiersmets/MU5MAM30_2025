@@ -42,6 +42,9 @@ add_library(nanofem
 	src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
+	src/fem/mass.cpp
+	src/fem/stiffness.cpp
+	src/mesh/mesh_utils.cpp
 )
 target_include_directories(nanofem PUBLIC 
 	include/common 

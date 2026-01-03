@@ -30,6 +30,7 @@ struct CSRMatrix : public Matrix {
 	uint32_t *col; /* pointer to the corresponding data in pattern */
 	TArray<double> data; /* Size = nnz  */
 	// constructors
+	CSRMatrix();
 	CSRMatrix(CSRPattern &pattern);
 	CSRMatrix(CSRPattern &pattern,double default_val);
 	void mvp(const double *__restrict x, double *__restrict y) const;

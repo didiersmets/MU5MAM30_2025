@@ -1,11 +1,6 @@
 #include "array.h"
 
-#define USE_FEM_MATRIX true
-#if USE_FEM_MATRIX
-#include "fem_matrix.h"
-#else
 #include "sparse_matrix.h"
-#endif
 #include "mesh.h"
 
 struct PoissonSolver {
@@ -15,14 +10,9 @@ struct PoissonSolver {
 	double vol; // Surface(m), used for insuring zero mean to f and u
 	TArray<double> f;
 	TArray<double> u;
-#if USE_FEM_MATRIX
-	FEMatrix A; // Stiffness matrix
-	FEMatrix M; // Mass matrix
-#else
 	CSRPattern P; // Pattern arrays
 	CSRMatrix A; // Stiffness matrix
 	CSRMatrix M; // Mass matrix
-#endif
 	TArray<double> r; // current residue r = Mf - Su
 	TArray<double> p; // internal for cg
 	TArray<double> Ap; // internal for cg
