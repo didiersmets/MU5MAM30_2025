@@ -1,4 +1,5 @@
 #include "duplicate_verts.h"
+#include <cstdlib> 
 
 size_t build_position_remap(const Vec3 *pos, size_t count, uint32_t *remap)
 {
@@ -32,36 +33,6 @@ size_t build_position_remap(const Vec3 *pos, size_t count, uint32_t *remap)
       
 }
 
-#include "duplicate_verts.h"
-#include <cstdlib>
-
-size_t build_position_remap(const Vec3* pos, size_t count, uint32_t* remap)
-{
-    if (count == 0) return 0;
-    
-    size_t unique_count = 0;
-    
-    for (size_t i = 0; i < count; i++) {
-        remap[i] = (uint32_t)i;
-        
-        // Check for duplicates in previous vertices
-        for (size_t j = 0; j < i; j++) {
-            if (pos[i].x == pos[j].x && 
-                pos[i].y == pos[j].y && 
-                pos[i].z == pos[j].z) {
-                remap[i] = remap[j];
-                break;
-            }
-        }
-        
-        // Count unique vertices
-        if (remap[i] == i) {
-            unique_count++;
-        }
-    }
-    
-    return unique_count;
-}
 
 void remove_duplicate_vertices(Mesh& m)
 {
