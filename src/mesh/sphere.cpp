@@ -1,6 +1,11 @@
+#include <stdint.h>
+#include <stdio.h>
 #include <cmath>
 #include <utility>
-#include <stdio.h>
+
+#include "cube.h"
+#include "mesh.h"
+#include "vec3.h"
 
 #include "sphere.h"
 
@@ -108,4 +113,18 @@ int load_icosahedron(Mesh &m){
 		m.positions[i] = normalized(m.positions[i]);
 	}
 	return 0;
+}
+
+int load_spherical_cube(Mesh &m, size_t subdiv)
+{
+	if (int res = load_cube(m, subdiv))
+		return (res);
+
+	Vec3 *pos = m.positions.data;
+	size_t vtx_count = m.positions.size;
+	for (size_t i = 0; i < vtx_count; ++i) {
+		pos[i] = normalized(pos[i]);
+	}
+
+	return (0);
 }

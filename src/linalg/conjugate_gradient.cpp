@@ -1,5 +1,9 @@
 #include <assert.h>
+#include <math.h>
+#include <stdio.h>
+
 #include "conjugate_gradient.h"
+#include "matrix.h"
 #include "tiny_blas.h"
 
 double cg_iterate_once(const Matrix &A, double *__restrict x,

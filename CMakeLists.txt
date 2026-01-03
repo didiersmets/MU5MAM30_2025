@@ -1,167 +1,147 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.14)
 
-project(MU5MAM30 CXX)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_VERBOSE_MAKEFILE OFF)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 
+project(MU5MAM30 LANGUAGES CXX C)
 
-add_executable(main)
-target_sources(main
-	PRIVATE src/main.cpp)
-target_link_libraries(main
-	PRIVATE
-	mesh
-	sphere
-	array
-	P1
-	sparse_matrix
-	conjugate_gradient
+find_package(OpenGL REQUIRED)
+
+###############################################################################
+set(USE_OPENMP FALSE)
+if (USE_OPENMP)
+	find_package(OpenMP)
+endif()
+add_library(nanofem
+	# NOTE : If you want to test your code step by step, before completion
+	#        of all the files with "holes" (i.e. sections labeled 
+	#        /* Your implementation goes here */ ), you can simply prefix
+	#        the corresponding unfinished source files below with the
+	#        solutions directory. 
+	#        If P1.cpp has not been completed yet e.g., you simply replace :
+	#	    src/fem/P1.cpp
+	#        by
+	#           solutions/src/fem/P1.cpp
+	#        The files mass.h and stiffness.h are specific since they are
+	#        header files, you should complete (or copy them from solutions)
+	#        before building the project.
+	src/fem/P1.cpp
+	src/fem/poisson.cpp
+	#src/fem/navier_stokes.cpp
+	src/linalg/conjugate_gradient.cpp
+	#src/linalg/cholesky.cpp
+	src/matrix/fem_matrix.cpp
+	src/matrix/sparse_matrix.cpp
+	#src/matrix/spy.cpp
+	src/mesh/adjacency.cpp
+	src/mesh/cube.cpp
+	src/mesh/cube2.cpp
+	src/mesh/sphere.cpp
+	src/mesh/duplicate_verts.cpp
+	src/mesh/mesh_io.cpp
+	src/mesh/mesh_bounds.cpp
 )
+target_include_directories(nanofem PUBLIC 
+	include/common 
+	include/fem
+	include/linalg
+	include/matrix 
+	include/mesh 
+	extern
+)
+target_compile_options(nanofem PRIVATE 
+	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
+	-Wno-missing-field-initializers
+)
+if (USE_OPENMP AND OpenMP_CXX_FOUND)
+	target_compile_options(nanofem PRIVATE -DUSE_OPENMP)
+	target_link_libraries(nanofem PUBLIC OpenMP::OpenMP_CXX)
+endif()
+###############################################################################
 
-add_library(mesh)
-target_sources(mesh
-        PRIVATE
-        src/mesh/mesh.cpp
+###############################################################################
+add_library(nanoviewer
+	src/mesh/mesh_gpu.cpp
+	src/viewer/viewer.cpp
+	src/viewer/camera.cpp
+	src/viewer/frustum.cpp
+	src/viewer/mouse.cpp
+	src/viewer/trackball.cpp
+	src/viewer/shaders.cpp
+)
+target_include_directories(nanoviewer PUBLIC 
+	include/common 
+	include/mesh
+	include/viewer
+	extern
+)
+target_compile_options(nanoviewer PRIVATE
+	-std=c++17 -Wall -Wextra
+)
+target_link_libraries(nanoviewer PUBLIC
+	glfw
+	imgui_glfw_opengl3
+	OpenGL::GL
+)
+###############################################################################
 
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/mesh
-	FILES include/mesh/mesh.h
-        )
-target_link_libraries(mesh
-	PRIVATE array)
-add_library(sphere)
-target_sources(sphere
-        PRIVATE
-        src/mesh/sphere.cpp
+###############################################################################
+add_executable(test_poisson
+	src/common/logging.cpp
+	src/bin/test_poisson.cpp
+)
+target_compile_options(test_poisson PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr) 
+###############################################################################
 
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/mesh
-	FILES include/mesh/sphere.h
-        )
-target_link_libraries(sphere
-	PRIVATE mesh array)
-add_library(P1)
-target_sources(P1
-        PRIVATE
-        src/fem/P1.cpp
+###############################################################################
+#add_executable(test_NS
+#	src/common/logging.cpp
+#	src/bin/test_navier_stokes.cpp
+#)
+#target_compile_options(test_NS PRIVATE 
+#	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+#)
+#target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+###############################################################################
 
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/fem
-	FILES include/fem/P1.h
-        )
-target_link_libraries(P1
-	PRIVATE fem_matrix sparse_matrix matrix array mesh mass stiffness)
-add_library(fem_matrix)
-target_sources(fem_matrix
-        PRIVATE
-        src/matrix/fem_matrix.cpp
+###############################################################################
+#add_executable(test_ordering
+#	src/common/logging.cpp
+#	src/common/chrono.cpp
+#	src/bin/test_ordering.cpp
+#)
+#target_compile_options(test_ordering PRIVATE 
+#	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+#)
+#target_link_libraries(test_ordering PRIVATE nanofem)
+###############################################################################
 
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/matrix
-	FILES include/matrix/fem_matrix.h
-        )
-target_link_libraries(fem_matrix
-	PRIVATE array matrix mesh)
-add_library(sparse_matrix)
-target_sources(sparse_matrix
-        PRIVATE
-        src/matrix/sparse_matrix.cpp
+###############################################################################
+add_library(imgui_glfw_opengl3
+	extern/imgui/imgui.cpp
+	extern/imgui/imgui_draw.cpp
+	extern/imgui/imgui_tables.cpp
+	extern/imgui/imgui_widgets.cpp
+	extern/imgui/imgui_impl_glfw.cpp
+	extern/imgui/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui_glfw_opengl3 PUBLIC
+	extern/glfw/include
+)
+###############################################################################
 
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/matrix/
-	FILES include/matrix/sparse_matrix.h
-        )
-target_link_libraries(sparse_matrix
-	PRIVATE array stb_image_write)
-add_library(mass)
-target_sources(mass
-        PRIVATE
-        src/fem/mass.cpp
+###############################################################################
+add_library(tiny_expr
+	extern/tiny_expr/tinyexpr.c
+)
+target_include_directories(tiny_expr PUBLIC
+	extern
+)
+###############################################################################
 
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/fem
-	FILES include/fem/mass.h
-        )
-target_link_libraries(mass
-	PRIVATE vec3 mesh_utils)
-add_library(stiffness)
-target_sources(stiffness
-        PRIVATE
-        src/fem/stiffness.cpp
-
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/fem
-	FILES include/fem/stiffness.h
-        )
-target_link_libraries(stiffness
-	PRIVATE vec3 mesh_utils)
-add_library(mesh_utils)
-target_sources(mesh_utils
-        PRIVATE
-        src/mesh/mesh_utils.cpp
-
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/mesh
-	FILES include/mesh/mesh_utils.h
-        )
-target_link_libraries(mesh_utils
-	PRIVATE vec3 )
-add_library(conjugate_gradient)
-target_sources(conjugate_gradient
-        PRIVATE
-        src/linalg/conjugate_gradient.cpp
-
-        PUBLIC
-        FILE_SET HEADERS
-	BASE_DIRS include/linalg/
-	FILES include/linalg/conjugate_gradient.h
-        )
-target_link_libraries(conjugate_gradient
-	PRIVATE matrix tiny_blas )
-add_library(tiny_blas INTERFACE)
-target_include_directories(tiny_blas INTERFACE include/linalg)
-target_sources(tiny_blas
-	INTERFACE
-        FILE_SET HEADERS
-	BASE_DIRS include/linalg
-	FILES include/linalg/tiny_blas.h
-        )
-add_library(array INTERFACE)
-target_include_directories(array INTERFACE include/common)
-target_sources(array
-	INTERFACE
-        FILE_SET HEADERS
-	BASE_DIRS include/common
-	FILES include/common/array.h
-        )
-add_library(matrix INTERFACE)
-target_include_directories(matrix INTERFACE include/matrix)
-target_sources(matrix
-	INTERFACE
-        FILE_SET HEADERS
-	BASE_DIRS include/matrix
-	FILES include/matrix/matrix.h
-        )
-add_library(vec3 INTERFACE)
-target_include_directories(vec3 INTERFACE include/common)
-target_sources(vec3
-	INTERFACE
-        FILE_SET HEADERS
-	BASE_DIRS include/common
-	FILES include/common/vec3.h
-        )
-add_library(stb_image_write INTERFACE)
-target_include_directories(stb_image_write INTERFACE extern)
-target_sources(stb_image_write
-	INTERFACE
-        FILE_SET HEADERS
-	BASE_DIRS extern
-	FILES extern/stb_image_write.h
-        )
+add_subdirectory(extern/glfw)

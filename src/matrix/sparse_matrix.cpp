@@ -104,4 +104,3 @@ void dump(CSRMatrix &M, const char *fname){
 	}
 	fclose(f);
 }
-

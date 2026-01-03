@@ -121,5 +121,3 @@ void build_P1_stiffness_matrix(const Mesh &m, CSRMatrix &S){
 		S(Bi,Ai)+=coef.S01;
 		S(Ci,Bi)+=coef.S12;
 		S(Ai,Ci)+=coef.S20;
-	}
-}
