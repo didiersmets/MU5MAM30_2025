@@ -60,6 +60,24 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 
 	/* Your implementation goes here */
 
+	/*
+	what we want to do is for each vertex to check if the same vertex is already
+	in the hash table:
+	if it is we set remap[i] to the index of the already existing vertex
+	if it is not we add it to the hash table and set remap[i] to the current new index
+	and we increment the new vertex count to keep track of the number of unique vertices 
+	that have been added so far
+	*/
+
+	size_t new_count = 0;
+
+	for( int i = 0; i < count; i++){
+		//find if the vertex is already in the hash table
+		uint32_t *vtx = vtx_remap.get_or_set(i, new_count);
+		//if it is not in the hash table, we add it and set remap[i] to new_count
+		remap[i] = (vtx) ? *vtx : new_count++;
+	}
+
 	return new_count;
 }
 
@@ -74,6 +92,39 @@ void remove_duplicate_vertices(Mesh &m)
 	/* Remap vertices */
 	/* Your implementation goes here */
 
+	/*
+	now that we know the number of added vertices and the new remap
+	we can actually remove the duplicate vertices by overwriting the
+	positions array with the unique vertices only
+	the main idea is that:
+
+	remap[i] tells us the new index for vertex i
+
+	If vertex i is the first occurrence of its position --> remap[i] == i
+	for unique vertices we writes to the same place 
+
+	If vertex i is a duplicate --> remap[i] < i, pointing to the index of the first occurrence
+	for duplicates we overwrite the first occurrence with the same value 
+
+	*/
+
+	for( int i = 0; i < vtx_count; i++)
+	 	pos[remap[i]] = pos[i];
+	m.positions.resize(new_count);
+
 	/* Remap indices */
 	/* Your implementation goes here */
+
+	/*
+	we successfully removed the duplicate vertices but the triangles still reference
+	the old vertex indices, so we need to remap them using the remap array
+	the idea is to map each triangle index as its remap value in its own position
+
+	triangle_index[i] = remap[triangle_index[i]]
+
+	*/
+
+	for (int i = 0; i < m.index_count(); i++)
+    	m.indices[i] = remap[m.indices[i]];
+
 }
