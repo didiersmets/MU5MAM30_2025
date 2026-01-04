@@ -18,6 +18,15 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	 * implementations heavilly make use of specific hardware capabilities 
 	 * (instruction sets, parallelism, cache efficiency etc). 
 	 */
+	 /*look at CG5 from notes*/
+
+	alpha=r2/blas_dot(p, Ap, A.rows); /*A.rows = N */
+	x=x + alpha*p; /*update x*/
+	r=r - alpha*Ap; /*update r*/
+	double new_r2=blas_dot(r,r,A.rows);
+	beta=new_r2/r2; /*compute new r2*/
+	p=r + beta*p; /*update p*/
+	return new_r2;	
 }
 
 size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
@@ -29,7 +38,7 @@ size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
 	size_t N = A.rows;
 	assert(A.rows == A.cols);
 
-	double b2 = blas_dot(b, b, N);
+	double b2 = blas_dot(b, b, N);/*b norm using parallel code, N tells me how many processors do I want to use */
 
 	if (!inited) {
 		/* r_0 = b - Ax_0 */
