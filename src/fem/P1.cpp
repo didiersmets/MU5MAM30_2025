@@ -1,5 +1,3 @@
-#pragma once
-
 #include "fem/P1.h"
 
 #include "fem/mass.h"
@@ -139,7 +137,7 @@ struct CSRPattern
   size_t rows;
   size_t cols;
   size_t nnz;
-  /* Non zero entries on line i (0 <= i < rows)
+   Non zero entries on line i (0 <= i < rows)
    * are stored at indices row_start(i) <= k < row_start(i + 1).
    * Corresponding column indices are read into col(k).
   // offset for every row: row_start[i+1] - row_start[i] = number of non zero entries in row i

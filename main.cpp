@@ -7,9 +7,18 @@
 #include <vector>
 
 /*
-to run the main:
-g++ -std=c++17 main.cpp src/matrix/sparse_matrix.cpp src/mesh/adjacency.cpp src/fem/P1.cpp
-src/mesh/sphere.cpp src/mesh/duplicate_verts.cpp -I include -o main
+TO RUN THE MAIN
+g++ -std=c++17 main.cpp \
+    src/matrix/sparse_matrix.cpp \
+    src/mesh/adjacency.cpp \
+    src/fem/P1.cpp \
+    src/mesh/sphere.cpp \
+    src/mesh/duplicate_verts.cpp \
+    -I include \
+    -I include/common \
+    -I include/matrix \
+    -I include/fem \
+    -o main
 */
 
 int main()
