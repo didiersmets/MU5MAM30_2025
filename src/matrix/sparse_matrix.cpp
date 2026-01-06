@@ -19,7 +19,29 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 {
-	/* Your implementation goes here */
+	// Step 1: Compute y = Ax for stored entries (upper triangle + diagonal for symmetric)
+	for (size_t i = 0; i < rows; ++i) {
+		y[i] = 0;
+		size_t start = row_start[i];
+		size_t stop = row_start[i + 1];
+		for (size_t k = start; k < stop; ++k) {
+			assert(k < nnz);
+			assert(col[k] < cols);
+			y[i] += data[k] * x[col[k]];
+		}
+	}
+	
+	// Step 2: If matrix is symmetric, add contribution from lower triangle
+	if (symmetric) {
+		for (size_t i = 0; i < rows; ++i) {
+			size_t start = row_start[i];
+			// Stop before the diagonal (last entry in each row)
+			size_t stop = row_start[i + 1] - 1;
+			for (size_t k = start; k < stop; ++k) {
+				y[col[k]] += data[k] * x[i];
+			}
+		}
+	}
 }
 
 double CSRMatrix::sum() const
