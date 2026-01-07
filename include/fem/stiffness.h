@@ -23,27 +23,5 @@
  */
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-	// attention, on appelle une matrice S qui est une FEMatrix et qui est de type P1_sym
-	// pourquoi : on a que la matrice stiffness est une matrice symétrique car $int \nabla \phi_A \phi_B = int \nmbla \phiB \phi_A$
-	//
-	//   A	B	C
-	//A		0	1
-	//B  O		2
-	//C	 1  2
-
-	// Vecteur BC
-	Vec3d BC = AC - AB;
-
-	// Aire du triangle
-	double area2 = 0.5 * norm(cross(AB, AC)); // = 2 * Area
-	assert(area2 > 0.0 && "Triangle degeneré");
-
-	// Facteur commun : 1 / (4 * Area)
-	double coef = 1.0 / (4.0 * area2);
-
-// Attention au signe !!! il y a un moins car dans toutes nos formules du cours on a par exemples (A-C).(B-A) qui correspondent à vect CA cross vect AB donc - vect AC cross vect AB
-	S[0] = - dot(AC, BC) * coef; // AB
-	S[1] = - dot(AB, BC) * coef; // AC
-	S[2] = - dot(AB, AC) * coef; // BC
-
+	/* Your implementation goes here */
 }
