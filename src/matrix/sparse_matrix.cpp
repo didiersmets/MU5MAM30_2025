@@ -19,7 +19,16 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 {
-	/* Your implementation goes here */
+	/* da rivedere assolutamente, la strada penso sia giusta, guardare ipad con esempio*/
+    for(size_t i=0; i<rows; ++i){
+        double sum=0.0; 
+        size_t current_row=row_start[i]; 
+	for (size_t j=row_start[i]; j<row_start[i+1];j++){
+            sum=sum+x[col[j]]*data[j];
+        }
+        y[i]=sum;
+    }
+
 }
 
 double CSRMatrix::sum() const
