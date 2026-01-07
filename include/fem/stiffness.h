@@ -3,7 +3,9 @@
 #include "../common/vec3.h"
 
 #include <iostream>
-#include "mass.h"      
+#include "mass.h" 
+#pragma once
+#include <cmath>     
 
 /* Given a triangle ABC, computes the (symmetric) 3x3 stiffness matrix S s.t.
  *
@@ -26,56 +28,88 @@
  */
 
 
+
+// Utilidades básicas
+static inline Vec3d cross(const Vec3d& a, const Vec3d& b) {
+    return Vec3d{
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    };
+}
+
+static inline double norm(const Vec3d& v) {
+    return std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
+static inline Vec3d normalize(const Vec3d& v) {
+    double n = norm(v);
+    return (n > 0.0) ? Vec3d{v.x/n, v.y/n, v.z/n} : Vec3d{0.0,0.0,0.0};
+}
+
+/*
+ * Given triangle ABC via AB=B-A and AC=C-A,
+ * compute stiffness entries:
+ *   S00 S11 S22 S01 S12 S20  (row-major pairs AA, BB, CC, AB, BC, CA)
+ */
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-    // 1) Área del triángulo
-    const double area = 0.5 * norm(cross(AB, AC));
-
-    // 2) Construir Jacobiano J = [AB AC]
-    // En 2D: J = |AB_x AC_x|
-    //           |AB_y AC_y|
-    double J[2][2] = {
-        {AB[0], AC[0]},
-        {AB[1], AC[1]}
-    };
-
-    // 3) Calcular inversa transpuesta de J (J^-T)
-    const double detJ = J[0][0]*J[1][1] - J[0][1]*J[1][0];
-    double JTinv[2][2] = {
-        {  J[1][1]/detJ, -J[1][0]/detJ},
-        {-J[0][1]/detJ,  J[0][0]/detJ}
-    };
-
-    // 4) Gradientes en coordenadas baricéntricas
-    double gradAlphaBeta[3][2] = {
-        { 1.0,  0.0},  // grad φ_A
-        { 0.0,  1.0},  // grad φ_B
-        {-1.0, -1.0}   // grad φ_C
-    };
-
-    // 5) Transformar a gradientes en coordenadas físicas
-    Vec3d grad[3]; // guardamos como 3D pero solo x,y se usan
-    for(int i=0; i<3; ++i)
-    {
-        grad[i][0] = JTinv[0][0]*gradAlphaBeta[i][0] + JTinv[0][1]*gradAlphaBeta[i][1]; // x
-        grad[i][1] = JTinv[1][0]*gradAlphaBeta[i][0] + JTinv[1][1]*gradAlphaBeta[i][1]; // y
-        grad[i][2] = 0.0; // z = 0
+    // Área 3D
+    const Vec3d n = cross(AB, AC);
+    const double area = 0.5 * norm(n);
+    if (area <= 0.0) {
+        for (int k = 0; k < 6; ++k) S[k] = 0.0;
+        return;
     }
 
-    // 6) Calcular los productos punto y multiplicar por el área
-    const double S_AA = (grad[0][0]*grad[0][0] + grad[0][1]*grad[0][1]) * area;
-    const double S_BB = (grad[1][0]*grad[1][0] + grad[1][1]*grad[1][1]) * area;
-    const double S_CC = (grad[2][0]*grad[2][0] + grad[2][1]*grad[2][1]) * area;
+    // Base ortonormal del plano: t1, t2
+    // t1 paralelo a AB, t2 en el plano, ortogonal a t1
+    Vec3d t1 = normalize(AB);
+    Vec3d t2 = cross(normalize(n), t1); // = (n̂ × t1), está en el plano y ortogonal a t1
+    // Proyecciones 2D de AB y AC en esta base
+    const double ABx = AB.x * t1.x + AB.y * t1.y + AB.z * t1.z;           // ~ ||AB||
+    const double ABy = AB.x * t2.x + AB.y * t2.y + AB.z * t2.z;           // ~ 0
+    const double ACx = AC.x * t1.x + AC.y * t1.y + AC.z * t1.z;
+    const double ACy = AC.x * t2.x + AC.y * t2.y + AC.z * t2.z;
 
-    const double S_AB = (grad[0][0]*grad[1][0] + grad[0][1]*grad[1][1]) * area;
-    const double S_BC = (grad[1][0]*grad[2][0] + grad[1][1]*grad[2][1]) * area;
-    const double S_CA = (grad[2][0]*grad[0][0] + grad[2][1]*grad[0][1]) * area;
+    // Jacobiano 2D y su determinante (equivale al doble del área firmado en la base local)
+    const double detJ = ABx * ACy - ACx * ABy;
+    if (std::abs(detJ) <= 0.0) { // degenerado en la base local
+        for (int k = 0; k < 6; ++k) S[k] = 0.0;
+        return;
+    }
 
-    // 7) Guardar en arreglo según convención
-    S[0] = S_AA;
-    S[1] = S_BB;
-    S[2] = S_CC;
-    S[3] = S_AB;
-    S[4] = S_BC;
-    S[5] = S_CA;
+    // Gradientes en 2D (gA, gB, gC)
+    const double invDet = 1.0 / detJ;
+
+    // gA = J^{-T} * (-1,-1)
+    const double gAx = ( -ACy + ABy ) * invDet;
+    const double gAy = (  ACx - ABx ) * invDet;
+
+    // gB = J^{-T} * (1,0)
+    const double gBx = (  ACy ) * invDet;
+    const double gBy = ( -ACx ) * invDet;
+
+    // gC = J^{-T} * (0,1)
+    const double gCx = ( -ABy ) * invDet;
+    const double gCy = (  ABx ) * invDet;
+
+    // Productos punto de gradientes
+    const double gA_gA = gAx*gAx + gAy*gAy;
+    const double gB_gB = gBx*gBx + gBy*gBy;
+    const double gC_gC = gCx*gCx + gCy*gCy;
+
+    const double gA_gB = gAx*gBx + gAy*gBy;
+    const double gB_gC = gBx*gCx + gBy*gCy;
+    const double gC_gA = gCx*gAx + gCy*gAy;
+
+    // Entradas S_ij = (∇φi · ∇φj) * area
+    S[0] = gA_gA * area; // S00 (A,A)
+    S[1] = gB_gB * area; // S11 (B,B)
+    S[2] = gC_gC * area; // S22 (C,C)
+
+    S[3] = gA_gB * area; // S01 (A,B)
+    S[4] = gB_gC * area; // S12 (B,C)
+    S[5] = gC_gA * area; // S20 (C,A)
 }
+
