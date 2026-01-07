@@ -1,16 +1,17 @@
 #include "array.h"
 #define USE_FEM_MATRIX false
 #if USE_FEM_MATRIX
-	#include "fem_matrix.h"
+#include "fem_matrix.h"
 #else
-	#include "sparse_matrix.h"
+#include "sparse_matrix.h"
 #endif
 #include "mesh.h"
 
-struct NavierStokesSolver {
+struct NavierStokesSolver
+{
 	NavierStokesSolver(const Mesh &m);
 	const Mesh &m;
-	size_t N;   // DoF
+	size_t N;	// DoF
 	double vol; // Surface(m), used for insuring zero mean to omega and psi
 
 	TArray<double> omega;
