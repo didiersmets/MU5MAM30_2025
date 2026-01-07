@@ -67,7 +67,7 @@ static void load_cube_indices(uint32_t *idx, size_t subdiv)
 	size_t n = subdiv + 1;
 	//Build triangulation indices
 	for(int f = 0; f < 6; ++f){
-		size_t offset = f * POW2(n);
+		size_t offset = f * n * n;
 		for(size_t i = 0; i < subdiv; ++i){
 			for(size_t j = 0; j < subdiv; ++j){
 				uint32_t base = (uint32_t)(offset + i * n + j);
