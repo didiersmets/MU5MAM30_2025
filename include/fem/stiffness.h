@@ -21,6 +21,7 @@
  * Hiden for now.
  *
  */
+template <typename T>
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
     // 1. Passing from triangle in 3D to triangle in 2D
@@ -28,7 +29,7 @@ void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 	T x_b = norm(AB);               // B = (||AB||, 0)
     T x_c = dot(AC, AB) / x_b;      // C = (AC . AB / ||AB||, 
     //                                      ||AC - (AC . AB / ||AB||^2) * AB ||)
-    T x_y = norm(AC - (x_c / norm(AB)) * AB);
+    T y_c = norm(AC - (x_c / norm(AB)) * AB);
 
     // 2. Passing from any-shape triangle in 2D to "canonic" 2D triangle:
     /*  C = (0, 1)

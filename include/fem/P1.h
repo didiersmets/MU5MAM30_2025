@@ -21,13 +21,13 @@ template <typename T>
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P,
 			       CSRMatrix &S);
 
-template <typename T>
-void build_P1_SKLPattern(const Mesh &m, SKLPattern &P);
-template <typename T>
-void build_P1_mass_matrix(const Mesh &m, const SKLPattern &P, SKLMatrix &M);
-template <typename T>
-void build_P1_stiffness_matrix(const Mesh &m, const SKLPattern &P,
-			       SKLMatrix &S);
+// template <typename T>
+// void build_P1_SKLPattern(const Mesh &m, SKLPattern &P);
+// template <typename T>
+// void build_P1_mass_matrix(const Mesh &m, const SKLPattern &P, SKLMatrix &M);
+// template <typename T>
+// void build_P1_stiffness_matrix(const Mesh &m, const SKLPattern &P,
+// 			       SKLMatrix &S);
 
 
 template <typename T>
@@ -40,7 +40,7 @@ void build_P1_mass_matrix(const Mesh &m, FEMatrix &M) {
 
 	M_loc = (double *) std::malloc(9 * sizeof(double));
 
-	for ( int tria_index = 0; tria_index < m.index_count; tria_index += 3 ) {
+	for ( int tria_index = 0; tria_index < m.index_count(); tria_index += 3 ) {
 		tria_indices[0] = m.indices[tria_index];    // A_index
 		tria_indices[1] = m.indices[tria_index+1];  // B_index
 		tria_indices[2] = m.indices[tria_index+2];  // C_index
@@ -53,7 +53,7 @@ void build_P1_mass_matrix(const Mesh &m, FEMatrix &M) {
 		// M[i_glob][j_glob] += M_loc[i_loc][j_loc]
 		for ( int i_loc = 0; i_loc < 3; i_loc++ ) {
 			for ( int j_loc = 0; j_loc < 3; j_loc++ ) {
-				M[tria_indices[i_loc]][tria_indices[j_loc]] = M_loc[i_loc][j_loc];
+				M[tria_indices[i_loc]][tria_indices[j_loc]] = M_loc[i_loc*3+j_loc];
 			}
 		}
 	}
@@ -82,7 +82,7 @@ void build_P1_stiffness_matrix(const Mesh &m, FEMatrix &S) {
 		// M[i_glob][j_glob] += M_loc[i_loc][j_loc]
 		for ( int i_loc = 0; i_loc < 3; i_loc++ ) {
 			for ( int j_loc = 0; j_loc < 3; j_loc++ ) {
-				S[tria_indices[i_loc]][tria_indices[j_loc]] = S_loc[i_loc][j_loc];
+				S[tria_indices[i_loc]][tria_indices[j_loc]] = S_loc[i_loc*3 + j_loc];
 			}
 		}
 	}

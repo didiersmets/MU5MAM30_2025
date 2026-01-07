@@ -23,7 +23,7 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 	T x_b = norm(AB);               // B = (||AB||, 0)
     T x_c = dot(AC, AB) / x_b;      // C = (AC . AB / ||AB||, 
     //                                      ||AC - (AC . AB / ||AB||^2) * AB ||)
-    T x_y = norm(AC - (x_c / norm(AB)) * AB);
+    T y_c = norm(AC - (x_c / norm(AB)) * AB);
 
     // 2. Passing from any-shape triangle in 2D to "canonic" 2D triangle:
     /*  C = (0, 1)
