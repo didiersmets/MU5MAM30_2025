@@ -12,6 +12,7 @@
 #include "mesh.h"
 #include "sparse_matrix.h"
 #include "stiffness.h"
+#include "algorithm"
 
 /* CSRMatrix variants */
 
@@ -21,17 +22,87 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 	 * Use a VTAdjacency structure (see include/matrix/adjacency.h)
 	 */
 
-	 P.symmetric = true;
-	 P.rows = m.vertex_count();
-	 P.cols = m.vertex_count();
-	 VTAdjacency adj(m);
-
-	 P.row_start.resize(P.rows + 1);
-
-	 for( size_t i = 0; i < P.rows; i++ )
-	 {
+	 /*
+		build the sparse matrix pattern to store information on how 
+		all the vertixes are connected.
+		The main idea is to use the Adjency pattern built before:
 		
-	 }
+		for the row array we can just use the offset array we computed
+		in the constructor of Adjency since it already tells us on 
+		each row how many entries we have, since in each row we will have
+		as many entries as the degree of that specific vtx.
+
+		for the column array we instead need to loop over the vtri array
+		in this array we will have informations on which are the vtxs to which
+		our vtx is connected to, for each vtx we need to loop from
+		vtri[ offset[vtx] ] to vtri[ offset[vtx] + degree ]
+
+	 */
+	P.symmetric = true;
+	P.rows = m.vertex_count();
+	P.cols = m.vertex_count();
+	VTAdjacency adj(m);
+
+	P.row_start.resize( P.rows + 1 );
+	P.col.resize( P.cols + 3 * m.triangle_count() ); 
+	
+	int nnz = 0;
+	for( int a = 0; a < P.rows; a++)
+	{
+		//also try with offset array in adjacency
+		// P.row_start[a] = adj.offset[a]
+		P.row_start[a] = nnz;
+
+		int init_nnz = nnz;
+
+		int start = adj.offset[a];
+		int stop = start + adj.degree[a];
+
+		for( int i = start; i < stop; i++ )
+		{
+			//retrieve the entries from the vtri
+			int b = adj.vtri[i].next;
+			int c = adj.vtri[i].prev;
+			
+			/*
+			since we are iterating for the number of a connected to vtx
+			and not on the triangles that vtx is part of we will end up with 
+			redundant entries in the column array, to avoid that we need to see
+			if the entries are already present 
+			*/ 
+			bool b_present = false;
+			bool c_present = false;
+			int tmp_add_elem = nnz - init_nnz;
+			
+			for( int j = 0; j < tmp_add_elem; j++ )
+			{
+				if( P.col[init_nnz + j] == b )
+					b_present = true;
+				if( P.col[init_nnz + j] == c )
+					c_present = true;
+			}
+			// since the mtx is symmetric we only add the lower diagonal elements
+			// so we check b < a and c < a
+			if( b < a && !b_present )
+				P.col[nnz++] = b;
+			if( c < a && !c_present )
+				P.col[nnz++] = c;
+			
+		}
+		P.col[nnz++] = a; // add the diagonal entry
+	}
+
+	P.col.resize(nnz);
+	P.col.shrink_to_fit();
+
+	// reorder the column indices in each row in increasing order
+	for (size_t a = 0; a < P.rows; ++a) {
+		uint32_t *start = &P.col[P.row_start[a]];
+		uint32_t *end = &P.col[P.row_start[a + 1]];
+		std::sort(start, end);
+	}
+
+	 
 }
 
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
@@ -51,6 +122,45 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 	}
 
 	/* Your implementation goes here */
+
+	/*
+	each row and col if the matrix represent a specific basis function
+	we need to loop over all the triangles and compute the local mass matrix
+	for each triangle we then need to add the contributions to the global mass matrix
+	*/
+	const TArray<uint32_t> &idx = m.indices;
+	for (size_t t = 0; t < tri_count; ++t) {
+		uint32_t a = idx[3 * t + 0];
+		uint32_t b = idx[3 * t + 1];
+		uint32_t c = idx[3 * t + 2];
+		Vec3f A = m.positions[a];
+		Vec3f B = m.positions[b];
+		Vec3f C = m.positions[c];
+		Vec3d AB = { (double)B[0] - (double)A[0], (double)B[1] - (double)A[1], (double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0], (double)C[1] - (double)A[1], (double)C[2] - (double)A[2] };
+		// as discussed in mass.h we only need to store 2 values for the local mass matrix
+		double Mloc[2]; 
+		//create the local mass matrix
+		mass(AB, AC, Mloc);
+		double diagonal_term = Mloc[0];
+		double off_diagonal_term = Mloc[1];
+		// add contributions to global mass matrix
+		M(a, a) += diagonal_term;
+		M(b, b) += diagonal_term;
+		M(c, c) += diagonal_term;
+		// off diagonal terms
+		const unsigned int ab_max = std::max(a, b);
+		const unsigned int ab_min = std::min(a, b);
+		M(ab_max, ab_min) += off_diagonal_term;
+
+		const unsigned int bc_max = std::max(b, c);
+		const unsigned int bc_min = std::min(b, c);
+		M(bc_max, bc_min) += off_diagonal_term;
+
+		const unsigned int ca_max = std::max(c, a);
+		const unsigned int ca_min = std::min(c, a);
+		M(ca_max, ca_min) += off_diagonal_term;
+	}
 }
 
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
@@ -70,6 +180,40 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 	}
 
 	/* Your implementation goes here */
+	/*
+	same logic as per the stiffness matrix but now we compute the stiffness matrix
+	*/
+	const TArray<uint32_t> &idx = m.indices;
+	for (size_t t = 0; t < tri_count; ++t) {
+		uint32_t a = idx[3 * t + 0];
+		uint32_t b = idx[3 * t + 1];
+		uint32_t c = idx[3 * t + 2];
+		Vec3f A = m.positions[a];
+		Vec3f B = m.positions[b];
+		Vec3f C = m.positions[c];
+		Vec3d AB = { (double)B[0] - (double)A[0], (double)B[1] - (double)A[1], (double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0], (double)C[1] - (double)A[1], (double)C[2] - (double)A[2] };
+		// as discussed in stiffness.h we only need to store 2 values for the local stiffness matrix
+		double Sloc[6]; 
+		//create the local stiffness matrix
+		stiffness(AB, AC, Sloc);
+		// add contributions to global stiffness matrix
+		S(a, a) += Sloc[0];
+		S(b, b) += Sloc[1];
+		S(c, c) += Sloc[2];
+		// off diagonal terms
+		const unsigned int ab_max = std::max(a, b);
+		const unsigned int ab_min = std::min(a, b);
+		S(ab_max, ab_min) += Sloc[3];
+
+		const unsigned int bc_max = std::max(b, c);
+		const unsigned int bc_min = std::min(b, c);
+		S(bc_max, bc_min) += Sloc[4];
+
+		const unsigned int ca_max = std::max(c, a);
+		const unsigned int ca_min = std::min(c, a);
+		S(ca_max, ca_min) += Sloc[5];
+	}
 }
 
 /* FEMatrix variants */

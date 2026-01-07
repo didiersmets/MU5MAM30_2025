@@ -42,6 +42,9 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 	we first copy offsets in a tmp array to avoid overwriting them
 	the reason is that we need to increment the positions as we add entries
 	to the vtri array
+	the reason why we do vtri[ offset[vtx] ] is because in a vtri we save just 2 vtx
+	relative to one triangle but we need to iterate through all triangles that vtx is 
+	part of
 	*/
 	TArray<uint32_t> tmp_offset;
 	tmp_offset.resize(vcount);
