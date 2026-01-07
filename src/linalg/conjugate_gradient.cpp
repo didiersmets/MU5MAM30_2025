@@ -9,7 +9,15 @@
 double cg_iterate_once(const Matrix &A, double *__restrict x,
 		       double *__restrict r, double *__restrict p,
 		       double *__restrict Ap, double r2)
-{
+{	
+	size_t N = A.rows;
+	double a = r2/blas_dot(p,Ap,N);
+	blas_axpy(a,p,x,N);
+	blas_axpy(-a,Ap,r,N);
+	double rn2 = blas_dot(r,r,N);
+	double b = rn2/r2;
+	blas_axpby(1,r,b,p,N);
+	return rn2;
 	/* Your implementation goes here
 	 * Check usage of tiny_blas (BLAS = Basic Linear Algebra Subroutines) 
 	 * in include/linalg/tiny_blas.h
