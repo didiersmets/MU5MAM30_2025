@@ -59,8 +59,6 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 	HashTable<uint32_t, uint32_t, PositionHasher> vtx_remap(count, hasher);
 
 	/* Your implementation goes here */
-	PositionHasher hasher{pos};
-	HashTable<uint32_t, uint32_t, PositionHasher> vtx_remap(count, hasher);
 
 	size_t new_count = 0;
 	for (size_t i = 0; i < count; ++i) {
