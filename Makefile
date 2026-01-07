@@ -3,7 +3,7 @@
 
 cm:
 	rm -r build
-	cmake -B build
+	cmake -B build -DCMAKE_BUILD_TYPE=Debug
 
 b :
-	cmake --build build
+	cmake --build build 

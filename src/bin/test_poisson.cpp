@@ -166,7 +166,7 @@ static int load_mesh(Mesh &mesh, int argc, char **argv)
 		res = load_cube(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "sphere", 6) == 0) {
 		res = load_sphere(mesh, atoi(argv[2]));
-	} else if (argc > 2 && strncmp(argv[1], "spherical_cube", 14) == 0) {
+	} else if (argc > 2 && strncmp(argv[1], "sphube", 6) == 0) {
 		res = load_spherical_cube(mesh, atoi(argv[2]));
 	} else if (argc > 1) {
 		res = load_obj(argv[1], mesh);

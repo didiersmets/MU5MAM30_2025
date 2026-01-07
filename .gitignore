@@ -1,3 +1,8 @@
 *.swp
 **/build/
 **/.cache/
+*.obj
+*.mtl
+*.png
+*.ini
+*.txt

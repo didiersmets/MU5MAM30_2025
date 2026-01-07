@@ -12,7 +12,7 @@
  * be initialized on the fly from a given existing mesh, and which encodes that
  * information.
  *
- * The incident triangles to vertex number "a" are not encoded by their 
+ * The incident triangles to vertex number "a" are not encoded by their index
  * in the triangles array, but instead by listing the indices of the two
  * remaining vertices, in order : more precisely, if one such triangle is
  * "abc" then the VTri struct below will record the pair (b,c), because "a"
