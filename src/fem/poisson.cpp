@@ -11,6 +11,7 @@
 #include "mesh.h"
 #include "tiny_blas.h"
 
+
 PoissonSolver::PoissonSolver(const Mesh &m)
     : m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
 {
@@ -93,3 +94,4 @@ void PoissonSolver::do_iterate(size_t max_iter, double tol)
 	if (rel_error <= tol)
 		converged = true;
 }
+

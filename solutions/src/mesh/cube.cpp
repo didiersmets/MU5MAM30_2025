@@ -82,6 +82,7 @@ int load_cube(Mesh &m, size_t subdiv)
 
 	/* Finally attach faces between themselves */
 	remove_duplicate_vertices(m);
+	
 
 	return (0);
 }

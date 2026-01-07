@@ -29,8 +29,6 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 
     double m_diag = area / 6.0;   // int phi_i^2
     double m_off  = area / 12.0;  // int phi_i phi_j  (i != j)
-    M[0] = m_diag; M[1] = m_off;  M[2] = m_off;
-    M[3] = m_off;  M[4] = m_diag; M[5] = m_off;
-    M[6] = m_off;  M[7] = m_off;  M[8] = m_diag;
+    M[0] = m_diag; M[1] = m_off; 
 }
 
