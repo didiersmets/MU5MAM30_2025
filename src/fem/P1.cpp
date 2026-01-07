@@ -44,66 +44,80 @@ static bool find(uint32_t x, uint32_t* start, size_t count)
  */
 void build_P1_CSRPattern(const Mesh& m, CSRPattern& P)
 {
+  /*
+    build the sparse matrix pattern to store information on how
+    all the vertixes are connected.
+    The main idea is to use the Adjency pattern built before:
+
+    for the row array we can just use the offset array we computed
+    in the constructor of Adjency since it already tells us on
+    each row how many entries we have, since in each row we will have
+    as many entries as the degree of that specific vtx.
+
+    for the column array we instead need to loop over the vtri array
+    in this array we will have informations on which are the vtxs to which
+    our vtx is connected to, for each vtx we need to loop from
+    vtri[ offset[vtx] ] to vtri[ offset[vtx] + degree ]
+
+   */
+  P.symmetric      = true;
+  P.rows           = m.vertex_count();
   size_t vtx_count = m.vertex_count();
-  size_t tri_count = m.triangle_count();
-
-  // The matrix represents interactions between mesh vertices (V x V).
-  // We store only the lower triangle (including diagonal) to save memory.
-  P.symmetric = true;
-  P.rows = P.cols = vtx_count;
-  P.row_start.resize(vtx_count + 1);
-
-  // Get vertex-to-triangle adjacency data (provides triangles sharing each vertex)
+  P.cols           = m.vertex_count();
   VTAdjacency adj(m);
 
-  /* Initial memory allocation estimate:
-   * Each triangle (tri_count) has 3 edges, plus the diagonal for each vertex.
-   */
-  size_t max_nnz = 3 * tri_count + vtx_count;
-  P.col.resize(max_nnz);
+  P.row_start.resize(P.rows + 1);
+  // we start with the worst case scenario where we fill everything
+  P.col.resize(P.cols + 3 * m.triangle_count());
 
-  /* PHASE 1: FILL THE PATTERN (UNORDERED) */
-  size_t nnz = 0;
-  for (size_t a = 0; a < vtx_count; ++a)
+  int nnz = 0;
+  for (int a = 0; a < P.rows; a++)
   {
-    // P.row_start[a] stores the offset (starting position) of row 'a' in the flat P.col array.
+    // also try with offset array in adjacency
+    //  P.row_start[a] = adj.offset[a]
     P.row_start[a] = nnz;
 
-    // Pointer to the beginning of row 'a' in P.col for quick searching
-    uint32_t* start   = &P.col[nnz];
-    size_t    nnz_loc = 0;  // Local counter for elements added to this specific row
+    int init_nnz = nnz;
 
-    // Access the block of triangles associated with vertex 'a' from VTAdjacency
-    uint32_t kstart = adj.offset[a];
-    uint32_t kstop  = kstart + adj.degree[a];
+    int start = adj.offset[a];
+    int stop  = start + adj.degree[a];
 
-    for (size_t k = kstart; k < kstop; ++k)
+    for (int i = start; i < stop; i++)
     {
-      // b and c are the neighbors of 'a' in the current triangle k.
-      uint32_t b = adj.vtri[k].next;
-      uint32_t c = adj.vtri[k].prev;
+      // retrieve the entries from the vtri
+      int b = adj.vtri[i].next;
+      int c = adj.vtri[i].prev;
 
-      /* * Check neighbor 'b':
-       * 1. 'b < a' ensures we only store the lower triangular part of the matrix.
-       * 2. '!find' ensures we don't add the same neighbor twice (shared edges).
-       */
-      if (b < a && !find(b, start, nnz_loc))
+      /*
+      since we are iterating for the number of a connected to vtx
+      and not on the triangles that vtx is part of we will end up with
+      redundant entries in the column array, to avoid that we need to see
+      if the entries are already present
+      */
+      bool b_present    = false;
+      bool c_present    = false;
+      int  tmp_add_elem = nnz - init_nnz;
+
+      for (int j = 0; j < tmp_add_elem; j++)
       {
+        if (P.col[init_nnz + j] == b)
+          b_present = true;
+        if (P.col[init_nnz + j] == c)
+          c_present = true;
+      }
+      // since the mtx is symmetric we only add the lower diagonal elements
+      // so we check b < a and c < a
+      if (b < a && !b_present)
         P.col[nnz++] = b;
-        nnz_loc++;
-      }
-      /* Check neighbor 'c' with the same logic */
-      if (c < a && !find(c, start, nnz_loc))
-      {
+      if (c < a && !c_present)
         P.col[nnz++] = c;
-        nnz_loc++;
-      }
     }
-    // Add vertex 'a' itself (diagonal element).
-    P.col[nnz++] = a;
+    P.col[nnz++] = a;  // add the diagonal entry
   }
 
-  // Finalize row_start with the total number of non-zero elements
+  P.col.resize(nnz);
+
+  // Finalize row_start with the actual total number of non-zero elements
   P.row_start[vtx_count] = nnz;
   P.col.resize(nnz);
   P.col.shrink_to_fit();

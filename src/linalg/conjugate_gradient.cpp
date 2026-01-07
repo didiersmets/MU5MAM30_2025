@@ -1,8 +1,8 @@
-#include "conjugate_gradient.h"
+#include "linalg/conjugate_gradient.h"
 
-#include "matrix.h"
-#include "sparse_matrix.h"
-#include "tiny_blas.h"
+#include "linalg/tiny_blas.h"
+#include "matrix/matrix.h"
+#include "matrix/sparse_matrix.h"
 
 #include <assert.h>
 #include <math.h>

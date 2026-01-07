@@ -1,4 +1,5 @@
 #include "include/fem/P1.h"
+#include "include/linalg/conjugate_gradient.h"
 #include "include/mesh/cube.h"
 #include "include/mesh/mesh.h"
 #include "include/mesh/sphere.h"
@@ -11,6 +12,7 @@ TO RUN THE MAIN
 g++ -std=c++17 main.cpp \
     src/matrix/sparse_matrix.cpp \
     src/mesh/adjacency.cpp \
+    src/linalg/conjugate_gradient.cpp \
     src/fem/P1.cpp \
     src/mesh/sphere.cpp \
     src/mesh/duplicate_verts.cpp \
@@ -86,6 +88,57 @@ int main()
   // A = M + S (SPD matrix)
   // b = M*f
   // solve A*x = b using conjugate gradient solver where x is the unknown DOFs
+
+  CSRMatrix A;
+  A.rows      = massMatrix.rows;
+  A.cols      = massMatrix.cols;
+  A.nnz       = massMatrix.nnz;
+  A.symmetric = massMatrix.symmetric;
+  A.row_start = massMatrix.row_start;
+  A.col       = massMatrix.col;
+  A.data.resize(A.nnz);
+
+  // compute A = M + S
+  for (size_t k = 0; k < A.nnz; k++)
+  {
+    A.data[k] = massMatrix.data[k] + stiffMatrix.data[k];
+  }
+
+  // compute b = MF
+  // assume F = Ones
+
+  size_t n = A.cols;
+
+  // Allocate initial solution x0
+  std::vector<double> x(n, 0.0);
+
+  // assemble RHS
+  std::vector<double> f(n, 1.0);
+  std::vector<double> b(n, 0.0);
+  // Calcolo b = M * f
+  massMatrix.mvp(f.data(), b.data());
+
+  std::vector<double> r(n);
+  std::vector<double> p(n);
+  std::vector<double> Ap(n);
+
+  double rel_error      = 0.0;
+  double tolerance      = 1e-6;
+  int    max_iterations = 1000;
+
+  size_t iterations = conjugate_gradient_solve(A,
+                                               b.data(),
+                                               x.data(),
+                                               r.data(),
+                                               p.data(),
+                                               Ap.data(),
+                                               &rel_error,
+                                               tolerance,
+                                               max_iterations,
+                                               false);
+
+  std::cout << "CG converged" << iterations << "# iterations." << std::endl;
+  std::cout << "relative error: " << rel_error << std::endl;
 
   return 0;
 }
