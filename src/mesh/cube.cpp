@@ -9,43 +9,102 @@
 #include "sys_utils.h"
 #include "vec3.h"
 
-static void load_cube_vertices(Vec3 *pos, size_t subdiv);
-static void load_cube_indices(uint32_t *idx, size_t subdiv);
-
 int load_cube(Mesh &m, size_t subdiv)
 {
-	/* Check subdiv is reasonable and return error if not */
-	if (subdiv <= 0 || subdiv > (1 << 14) /* 16K */) {
-		return (-1);
-	}
+    /* Check subdiv is reasonable */
+    if (subdiv == 0 || subdiv > (1 << 14)) {
+        return -1;
+    }
 
-	size_t n = subdiv + 1;
+    const size_t n = subdiv + 1;
+    const float step = 2.0f / subdiv;
 
-	/* Reserve memory for vertices and indices */
-	m.positions.resize(6 * POW2(n));
-	m.indices.resize(36 * POW2(subdiv));
+    /* Reserve memory */
+    m.positions.resize(6 * n * n);
+    m.indices.resize(6 * subdiv * subdiv * 6);
 
-	/* First build vertices as six unattached faces of n^2 vertices each */
-	/* See below for implementation */
-	load_cube_vertices(m.positions.data, subdiv);
+    size_t vbase = 0;  /* base vertex index for each face */
+    size_t ibase = 0;  /* base index offset */
 
-	/* Build corresponding triangulation indices */
-	/* See below for implementation */
-	load_cube_indices(m.indices.data, subdiv);
+    auto emit_face = [&](Vec3 origin, Vec3 du, Vec3 dv)
+    {
+        /* Generate vertices */
+        for (size_t j = 0; j < n; ++j) {
+            for (size_t i = 0; i < n; ++i) {
+                m.positions[vbase + j * n + i] =
+                    origin
+                    + du * (float(i) * step)
+                    + dv * (float(j) * step);
+            }
+        }
 
-	/* Finally attach faces between themselves */
-	/* Implementation in src/duplicate_verts.cpp */
-	remove_duplicate_vertices(m);
+        /* Generate indices */
+        for (size_t j = 0; j < subdiv; ++j) {
+            for (size_t i = 0; i < subdiv; ++i) {
+                uint32_t v0 = uint32_t(vbase + j * n + i);
+                uint32_t v1 = uint32_t(vbase + j * n + i + 1);
+                uint32_t v2 = uint32_t(vbase + (j + 1) * n + i);
+                uint32_t v3 = uint32_t(vbase + (j + 1) * n + i + 1);
 
-	return (0);
-}
+                /* Triangle 1 */
+                m.indices[ibase++] = v0;
+                m.indices[ibase++] = v1;
+                m.indices[ibase++] = v2;
 
-static void load_cube_vertices(Vec3 *pos, size_t subdiv)
-{
-	/* Your implementation goes here */
-}
+                /* Triangle 2 */
+                m.indices[ibase++] = v1;
+                m.indices[ibase++] = v3;
+                m.indices[ibase++] = v2;
+            }
+        }
 
-static void load_cube_indices(uint32_t *idx, size_t subdiv)
-{
-	/* Your implementation goes here */
+        vbase += n * n;
+    };
+
+    /* +X face */
+    emit_face(
+        Vec3{ 1, -1, -1 },
+        Vec3{ 0,  0,  1 },
+        Vec3{ 0,  1,  0 }
+    );
+
+    /* -X face */
+    emit_face(
+        Vec3{ -1, -1,  1 },
+        Vec3{ 0,  0, -1 },
+        Vec3{ 0,  1,  0 }
+    );
+
+    /* +Y face */
+    emit_face(
+        Vec3{ -1, 1, -1 },
+        Vec3{ 1,  0,  0 },
+        Vec3{ 0,  0,  1 }
+    );
+
+    /* -Y face */
+    emit_face(
+        Vec3{ -1, -1,  1 },
+        Vec3{ 1,  0,  0 },
+        Vec3{ 0,  0, -1 }
+    );
+
+    /* +Z face */
+    emit_face(
+        Vec3{ -1, -1, 1 },
+        Vec3{ 1,  0, 0 },
+        Vec3{ 0,  1, 0 }
+    );
+
+    /* -Z face */
+    emit_face(
+        Vec3{ 1, -1, -1 },
+        Vec3{ -1, 0,  0 },
+        Vec3{ 0,  1,  0 }
+    );
+
+    /* Merge coincident vertices */
+    remove_duplicate_vertices(m);
+
+    return 0;
 }
