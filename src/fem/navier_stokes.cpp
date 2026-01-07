@@ -32,7 +32,12 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 
 void NavierStokesSolver::set_zero_mean(double *V)
 {
-	/* Your implementation goes here */
+	/* Your implementation goes here*/
+	M.mvp(V, Ap.data);
+	double s = blas_sum_in_place(Ap.data, N);
+	for(size_t i = 0; i < N; ++i){
+		V[i] -= s / vol;
+	}	
 }
 
 void NavierStokesSolver::compute_transport(double *T)
