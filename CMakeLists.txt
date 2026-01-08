@@ -68,12 +68,12 @@ add_library(nanoviewer
 	src/viewer/trackball.cpp
 	src/viewer/shaders.cpp
 )
+
 target_include_directories(nanoviewer PUBLIC 
-	include/common 
-	include/mesh
-	include/viewer
-	extern
+    include
+    extern
 )
+
 target_compile_options(nanoviewer PRIVATE
 	-std=c++17 -Wall -Wextra
 )

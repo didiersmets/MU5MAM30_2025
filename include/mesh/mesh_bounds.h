@@ -1,6 +1,6 @@
 #pragma once
 
-#include "aabb.h"
-#include "mesh.h"
+#include "common/aabb.h"
+#include "mesh/mesh.h"
 
-Aabb compute_mesh_bounds(const Mesh &m);
+Aabb compute_mesh_bounds(const Mesh& m);
