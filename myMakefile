@@ -1,0 +1,53 @@
+# --- CONFIGURAZIONE ---
+CXX      := g++
+CXXFLAGS := -std=c++17 -Wall -Wextra -O3
+TARGET   := main
+BUILD_DIR := build/debug
+
+# --- DIRECTORY INCLUSIONE ---
+# Aggiunte anche le cartelle in extern se dovessi iniziare a usarle
+INCLUDES := -I include \
+            -I include/common \
+            -I include/matrix \
+            -I include/fem \
+            -I include/mesh \
+            -I include/linalg \
+            -I extern/glfw/include \
+            -I extern/imgui
+
+# --- FILE SORGENTE ---
+# Elenchiamo i file come nel tuo comando originale
+SRCS := main.cpp \
+        src/matrix/sparse_matrix.cpp \
+        src/mesh/adjacency.cpp \
+        src/linalg/conjugate_gradient.cpp \
+        src/fem/P1.cpp \
+        src/mesh/sphere.cpp \
+        src/mesh/duplicate_verts.cpp \
+        src/mesh/cube.cpp
+
+# --- LOGICA DI COMPILAZIONE ---
+# Trasforma la lista dei .cpp in una lista di .o dentro build/debug
+OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.o)
+
+# Regola di default
+all: $(TARGET)
+
+# Link finale dell'eseguibile
+$(TARGET): $(OBJS)
+	@echo "--- LINKING $(TARGET) ---"
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET)
+	@echo "Finito! Puoi eseguire con ./$(TARGET)"
+
+# Compilazione dei singoli file oggetto
+$(BUILD_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	@echo "Compiling $<..."
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+# Pulizia dei file compilati
+clean:
+	@echo "Pulizia in corso..."
+	rm -rf $(BUILD_DIR) $(TARGET)
+
+.PHONY: all clean

@@ -8,19 +8,7 @@
 #include <vector>
 
 /*
-TO RUN THE MAIN
-g++ -std=c++17 main.cpp \
-    src/matrix/sparse_matrix.cpp \
-    src/mesh/adjacency.cpp \
-    src/linalg/conjugate_gradient.cpp \
-    src/fem/P1.cpp \
-    src/mesh/sphere.cpp \
-    src/mesh/duplicate_verts.cpp \
-    -I include \
-    -I include/common \
-    -I include/matrix \
-    -I include/fem \
-    -o main
+TO RUN THE MAIN use myMakefile
 */
 
 int main()
@@ -70,9 +58,8 @@ int main()
 
   CSRPattern pattern;
   build_P1_CSRPattern(myMesh, pattern);
-  std::cout << "CSR Pattern built with " << pattern.cols << " non-zero entries (lower triangle)."
-            << std::endl;
-  std::cout << "[Step 2] Assembling Mass Matrix..." << std::endl;
+  std::cout << "CSR Pattern built with " << std::endl;
+
   CSRMatrix massMatrix;
   CSRMatrix stiffMatrix;
   build_P1_mass_matrix(myMesh, pattern, massMatrix);
@@ -104,20 +91,34 @@ int main()
     A.data[k] = massMatrix.data[k] + stiffMatrix.data[k];
   }
 
-  // compute b = MF
-  // assume F = Ones
+  // --- SET UP TEST CASE
+  // We choose u_exact = x^2 - z^2.
+  // Since this is a spherical harmonic of degree k=2,
+  // the source term f is given by: f = -Δ_beltrami(u) = k(k+1)u = 6(x^2 - z^2).
 
-  size_t n = A.cols;
+  size_t              n = A.cols;
+  std::vector<double> f(n, 0.0);
+  std::vector<double> u_exact(n, 0.0);
 
-  // Allocate initial solution x0
-  std::vector<double> x(n, 0.0);
+  for (size_t i = 0; i < n; ++i)
+  {
+    // Access vertex coordinates (adjust according to your Mesh class)
+    double vx = myMesh.positions[i].x;
+    // not used in this set up
+    // double vy = myMesh.positions[i].y;
+    double vz = myMesh.positions[i].z;
 
-  // assemble RHS
-  std::vector<double> f(n, 1.0);
+    // Define the exact solution and the source term
+    u_exact[i] = vx * vx - vz * vz;
+    f[i]       = 6.0 * (vx * vx - vz * vz);
+  }
+
+  // --- ASSEMBLE RIGHT-HAND SIDE (b = M * f) ---
   std::vector<double> b(n, 0.0);
-  // Calcolo b = M * f
   massMatrix.mvp(f.data(), b.data());
 
+  // --- SOLVE THE SYSTEM ---
+  std::vector<double> x(n, 0.0);  // Initial solution x0
   std::vector<double> r(n);
   std::vector<double> p(n);
   std::vector<double> Ap(n);
@@ -137,8 +138,7 @@ int main()
                                                max_iterations,
                                                false);
 
-  std::cout << "CG converged" << iterations << "# iterations." << std::endl;
-  std::cout << "relative error: " << rel_error << std::endl;
-
+  std::cout << "CG converged in " << iterations << " iterations."
+            << "the relative error is: " << rel_error << std::endl;
   return 0;
 }
