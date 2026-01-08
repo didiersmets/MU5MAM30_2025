@@ -17,7 +17,9 @@ int main()
 
   // Define subdivision level
   // subdiv = 4 means each face will be a 4x4 grid of quads
-  size_t subdivisions = 4;
+  // size_t subdivisions = 4;
+
+  size_t subdivisions = 10;
 
   std::cout << "--- Starting Mesh Generation Test ---" << std::endl;
 
@@ -94,7 +96,7 @@ int main()
   // --- SET UP TEST CASE
   // We choose u_exact = x^2 - z^2.
   // Since this is a spherical harmonic of degree k=2,
-  // the source term f is given by: f = -Δ_beltrami(u) = k(k+1)u = 6(x^2 - z^2).
+  // the source term f is given by: f = (-Delta + 1)u = 6u + u = 7u = 7(x^2 - z^2).
 
   size_t              n = A.cols;
   std::vector<double> f(n, 0.0);
@@ -110,7 +112,7 @@ int main()
 
     // Define the exact solution and the source term
     u_exact[i] = vx * vx - vz * vz;
-    f[i]       = 6.0 * (vx * vx - vz * vz);
+    f[i]       = 7.0 * (vx * vx - vz * vz);
   }
 
   // --- ASSEMBLE RIGHT-HAND SIDE (b = M * f) ---
