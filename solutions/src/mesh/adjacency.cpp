@@ -25,7 +25,7 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 
 	for (size_t t = 0; t < tri_count; ++t) {
 		uint32_t a = m.indices[3 * t + 0];
-		uint32_t b = m.indices[3 * t + 1];
+		uint32_t b = m.indices[3 * t + 1];ok
 		uint32_t c = m.indices[3 * t + 2];
 		vtri[offset[a]++] = { b, c };
 		vtri[offset[b]++] = { c, a };
