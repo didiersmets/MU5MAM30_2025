@@ -32,24 +32,21 @@ add_library(nanofem
 	#src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
-	src/matrix/fem_matrix.cpp
+	#src/matrix/fem_matrix.cpp
 	src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
 	src/mesh/adjacency.cpp
 	src/mesh/cube.cpp
-	src/mesh/cube2.cpp
+	#src/mesh/cube2.cpp
 	src/mesh/sphere.cpp
 	src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
 )
+
 target_include_directories(nanofem PUBLIC 
-	include/common 
-	include/fem
-	include/linalg
-	include/matrix 
-	include/mesh 
-	extern
+    include        # <--- Questa riga risolve il problema "fem/P1.h"
+    extern
 )
 target_compile_options(nanofem PRIVATE 
 	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
