@@ -6,7 +6,6 @@
 
 #include "P1.h"
 #include "tiny_blas.h"
-#include "conjugate_gradient.h"
 
 NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	: m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
@@ -26,7 +25,7 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 
 void NavierStokesSolver::set_zero_mean(double *V)
 {
-	/* We use the formula : \bar v = (\sum_{i, j} V_i * M_{ij})  / vol 
+	/* We use the formula : \bar v = (\sum_{i, j} V_i * M_{ij})  / vol
 	Then we set V <- V - \bar v */
 	double *TEMP = nullptr;
 	M.mvp(V, TEMP);
@@ -37,9 +36,35 @@ void NavierStokesSolver::set_zero_mean(double *V)
 
 void NavierStokesSolver::compute_transport(double *T)
 {
+	/* We use the formula :
+	\forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k . \nabla \phi_j) */
 	memset(T, 0, N * sizeof(double));
 
-	/* Your implementation goes here */
+	double *OMEGA = omega.data;
+	double *PSI = psi.data;
+
+	size_t nt = m.triangle_count();
+	for (size_t tri = 0; tri < nt; tri++)
+	{
+		uint32_t a = m.indices[3 * tri];
+		uint32_t b = m.indices[3 * tri + 1];
+		uint32_t c = m.indices[3 * tri + 2];
+
+		/* Compute T[a] contribution */
+		T[a] += (OMEGA[a] * (PSI[c] - PSI[b])) / 6;
+		T[a] += (OMEGA[b] * (PSI[c] - PSI[b])) / 6;
+		T[a] += (OMEGA[c] * (PSI[c] - PSI[b])) / 6;
+
+		/* Compute T[b] contribution */
+		T[b] += (OMEGA[a] * (PSI[a] - PSI[c])) / 6;
+		T[b] += (OMEGA[b] * (PSI[a] - PSI[c])) / 6;
+		T[b] += (OMEGA[c] * (PSI[a] - PSI[c])) / 6;
+
+		/* Compute T[c] contribution */
+		T[c] += (OMEGA[a] * (PSI[b] - PSI[a])) / 6;
+		T[c] += (OMEGA[b] * (PSI[b] - PSI[a])) / 6;
+		T[c] += (OMEGA[c] * (PSI[b] - PSI[a])) / 6;
+	}
 }
 
 size_t NavierStokesSolver::compute_stream_function()
@@ -58,7 +83,9 @@ size_t NavierStokesSolver::compute_stream_function()
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
+	double *T;
 	compute_stream_function();
+	compute_transport(T);
 
 	/**********************************************************************
 	 * Solve the system :
