@@ -19,13 +19,13 @@
  *
  * NOTE : Feel free to rely on different implementations like the more
  *        standard std::unordered_map (or even std::map) from the standard
- *        C++ library. 
+ *        C++ library.
  */
 
 /* A vaudou recipe to turn a (x,y,z) Vec3 into an integer, i.e. a hash map
  * for Vec3. "Good" hash maps should "shuffle" as much as possible the input
  * data to spread it in the table and avoid too many collisions, which recipe
- * is most appropriate is matter of empirism and belief, "murmur_32" is a 
+ * is most appropriate is matter of empirism and belief, "murmur_32" is a
  * popular class to hash 4bytes at a time, without any knowledge of what type of
  * data is in these 4 bytes.
  */
@@ -58,7 +58,7 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 	PositionHasher hasher{ pos };
 	HashTable<uint32_t, uint32_t, PositionHasher> vtx_remap(count, hasher);
 
-	/* Your implementation goes here */
+	/* (not needed) Your implementation goes here */
 
 	return new_count;
 }
@@ -72,8 +72,8 @@ void remove_duplicate_vertices(Mesh &m)
 	size_t new_count = build_position_remap(pos, vtx_count, remap.data);
 
 	/* Remap vertices */
-	/* Your implementation goes here */
+	/* (not needed) Your implementation goes here */
 
 	/* Remap indices */
-	/* Your implementation goes here */
+	/* (not needed) Your implementation goes here */
 }

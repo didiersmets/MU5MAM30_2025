@@ -19,7 +19,20 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 {
-	/* Your implementation goes here */
+  /* (done) Your implementation goes here */
+
+  for (uint32_t i=0; i<rows; ++i)
+    y[i]=0;
+
+  for (uint32_t i=0; i<rows; ++i)
+    for (uint32_t k=row_start[i]; k<row_start[i+1]; ++k) {
+      uint32_t j = col[k];
+      uint32_t a = data[k];
+
+      y[i] += a * x[j];
+      if (symmetric && j != i)
+	y[j] += a * x[i];
+    }
 }
 
 double CSRMatrix::sum() const

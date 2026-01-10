@@ -104,6 +104,8 @@ static void load_cube_vertices(TArray<Vec3> &pos,
 			       const face_mesh faces[6],
 			       std::map<std::pair<int, int>, int> &o2n_vtx)
 {
+  /* (done) Your implementation goes here */
+
   size_t tot_nb_int_vtx = 6*(N-2)*(N-2);
   size_t tot_nb_edge_vtx = 12*(N-2);
   size_t tot_nb_extr_vtx = 8;
@@ -186,6 +188,8 @@ static void load_cube_indices(TArray<uint32_t> &idx,
 			      face_mesh faces[6],
 			      std::map<std::pair<int, int>, int> &o2n_vtx)
 {
+  /* (done) Your implementation goes here */
+
   size_t nb_tri_face = 2*(N-1)*(N-1);
   idx.resize(3*6*nb_tri_face);
   int cube_indices_id = 0;
