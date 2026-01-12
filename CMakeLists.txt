@@ -33,7 +33,7 @@ add_library(nanofem
 	solutions/src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
-	solutions/src/matrix/sparse_matrix.cpp
+	src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
 	solutions/src/mesh/adjacency.cpp
 	solutions/src/mesh/cube.cpp
