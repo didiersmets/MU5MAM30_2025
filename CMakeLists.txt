@@ -30,7 +30,7 @@ add_library(nanofem
 	solutions/src/fem/P1.cpp
 	src/fem/poisson.cpp
 	#src/fem/navier_stokes.cpp
-	solutions/src/linalg/conjugate_gradient.cpp
+	src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
 	src/matrix/sparse_matrix.cpp
