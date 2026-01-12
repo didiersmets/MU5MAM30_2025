@@ -18,7 +18,7 @@
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 {
 	/* Your implementation goes here.
-	 * Use a VTAdjacency structure (see include/matrix/adjacency.h)
+	 * Use a VTAdjacency structure (see include/mesh/adjacency.h)
 	 */
 }
 
