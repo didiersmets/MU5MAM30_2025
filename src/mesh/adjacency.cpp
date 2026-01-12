@@ -12,6 +12,10 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 	offset.resize(vtx_count);
 	vtri.resize(3*tri_count);
 
+	for (size_t i=0; i<vtx_count; i++) { /* Initialisation is needed, we don't know what is inside degree and offset */
+		degree[i] = 0;
+		offset[i] = 0;
+	}
 	/* We compute degree[] by going through every indices and 
 	adding one to degree[a] each time a is found in the indices*/
 
