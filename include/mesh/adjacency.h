@@ -12,8 +12,8 @@
  * be initialized on the fly from a given existing mesh, and which encodes that
  * information.
  *
- * The incident triangles to vertex number "a" are not encoded by their 
- * in the triangles array, but instead by listing the indices of the two
+ * The incident triangles to vertex number "a" are not encoded by their incident 
+ * indices in the triangles array, but instead by listing the indices of the two
  * remaining vertices, in order : more precisely, if one such triangle is
  * "abc" then the VTri struct below will record the pair (b,c), because "a"
  * is known (no need to record it again), "b" is the "next" vertex and "c" is
@@ -32,7 +32,7 @@
  *            lists 3 vertices so the total sum of the degrees is 3 times as
  *            much as the number of vertices]. The VTri structs (as explained 
  *            above) related to vertex k are found in the vtri array at
- *            positions j such that offset[k] <= j < offser[k] + degree[k].
+ *            positions j such that offset[k] <= j < offset[k] + degree[k].
  *
  *****************************************************************************/
 

@@ -35,7 +35,7 @@ add_library(nanofem
 	src/matrix/fem_matrix.cpp
 	src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
-	solutions/src/mesh/adjacency.cpp
+	src/mesh/adjacency.cpp
 	src/mesh/cube.cpp
 	src/mesh/cube2.cpp
 	src/mesh/sphere.cpp
