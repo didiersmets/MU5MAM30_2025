@@ -59,6 +59,18 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 	HashTable<uint32_t, uint32_t, PositionHasher> vtx_remap(count, hasher);
 
 	/* Your implementation goes here */
+	uint32_t *value_in_hashtable;
+	for (size_t vtx_index = 0; vtx_index < count; vtx_index++) {
+		value_in_hashtable = vtx_remap.get_or_set(vtx_index, vtx_index);
+		if (value_in_hashtable == nullptr) {
+			remap[vtx_index] = vtx_index;
+		}
+		else {
+			remap[vtx_index] = *value_in_hashtable;
+		}
+	}
+
+	size_t new_count = vtx_remap.size();
 
 	return new_count;
 }
@@ -73,7 +85,23 @@ void remove_duplicate_vertices(Mesh &m)
 
 	/* Remap vertices */
 	/* Your implementation goes here */
+	TArray<uint32_t> compact_indices(vtx_count);
+	size_t next_free_index = 0;
+
+	for (size_t vtx_index=0; vtx_index < vtx_count; vtx_index++) {
+		if (remap[vtx_index] == vtx_index) { /* First time we see this vertex */
+			pos[next_free_index] = pos[vtx_index];
+			compact_indices[vtx_index] = next_free_index;
+			next_free_index++; 
+		}
+
+	}
 
 	/* Remap indices */
 	/* Your implementation goes here */
+	for (size_t index=0; index < m.indices.size; index++) {
+		size_t old_index = m.indices[index];
+		m.indices[index] = compact_indices[remap[old_index]];
+	}
+	m.positions.resize(new_count);
 }
