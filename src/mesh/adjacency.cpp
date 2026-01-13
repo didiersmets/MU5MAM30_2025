@@ -30,8 +30,8 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 
   for (size_t tri=0; tri<n_tri; ++tri) {
     for (uint32_t a=0; a<3; ++a) {
-      uint32_t b = ((a+1 < 3) ? a+1 : 0);
-      uint32_t c = ((a-1 >= 0) ? a-1 : 2);
+      uint32_t b = ((a < 2) ? a+1 : 0);
+      uint32_t c = ((a >= 1) ? a-1 : 2);
 
       uint32_t va = m.indices[3*tri+a];
       uint32_t vb = m.indices[3*tri+b];
