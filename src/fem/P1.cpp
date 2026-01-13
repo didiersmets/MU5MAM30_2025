@@ -81,7 +81,7 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 		size_t line_start = P.row_start[i];
 		size_t line_end = P.row_start[i+1];
 
-		std::sort(&P.col[line_start], &P.col[line_end]);
+		std::sort(&P.col[line_start], &P.col[line_end]); // use a O(N*log(N)) sorting algorithm
 	}
 }
 
@@ -115,9 +115,9 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 		Vec3 B = m.positions[j];
 		Vec3 C = m.positions[k];
 
-		/* We must convert float to double as mass() expect Vec3d*/
+		/* We must convert float to double as mass() expect Vec3d */
 		Vec3d AB = {(double)B[0] - (double)A[0], (double)B[1] - (double)A[1], (double)B[2] - (double)A[2]};
-		Vec3d AC = {(double)B[0] - (double)C[0], (double)B[1] - (double)C[1], (double)B[2] - (double)C[2]};
+		Vec3d AC = {(double)C[0] - (double)A[0], (double)C[1] - (double)A[1], (double)C[2] - (double)A[2]};
 
 		double tri_contribution[2];
 		mass(AB, AC, tri_contribution);
