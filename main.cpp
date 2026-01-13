@@ -60,7 +60,7 @@ int main()
 
   CSRPattern pattern;
   build_P1_CSRPattern(myMesh, pattern);
-  std::cout << "CSR Pattern built with " << std::endl;
+  std::cout << "CSR Pattern built" << std::endl;
 
   CSRMatrix massMatrix;
   CSRMatrix stiffMatrix;
@@ -96,6 +96,8 @@ int main()
   // --- SET UP TEST CASE
   // We choose u_exact = x^2 - z^2.
   // Since this is a spherical harmonic of degree k=2,
+  // The original pb is -Delta u + u = f
+  // when considering u_exact
   // the source term f is given by: f = (-Delta + 1)u = 6u + u = 7u = 7(x^2 - z^2).
 
   size_t              n = A.cols;

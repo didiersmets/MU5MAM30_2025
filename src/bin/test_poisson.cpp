@@ -33,7 +33,13 @@ bool reset          = false;
 int  iter_per_frame = 1;
 
 /* RHS expression of the PDE */
-char        rhs_expression[128] = "cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
+// char        rhs_expression[128] = "cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
+// We choose u_exact = x^2 - z^2.
+// Since this is a spherical harmonic of degree k=2,
+// The original pb is -Delta u = f
+// when considering u_exact
+// the source term f is given by: f = -(Delta)u = 6u =6(x^2 - z^2).
+char        rhs_expression[128] = "6*(x^2 - z^2)";
 bool        rhs_show_error      = false;
 double      rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x},
@@ -125,8 +131,11 @@ int main(int argc, char** argv)
   LOG_MSG("Viewer initialized.");
 
   /* Prepare GPU data */
-  const char* vert_shader = "./shaders/fem.vert";
-  const char* frag_shader = "./shaders/fem.frag";
+  // const char* vert_shader = "./shaders/fem.vert";
+  // const char* frag_shader = "./shaders/fem.frag";
+
+  const char* vert_shader = "shaders/fem.vert";
+  const char* frag_shader = "shaders/fem.frag";
   int         shader      = create_shader(vert_shader, frag_shader);
   if (!shader)
   {
