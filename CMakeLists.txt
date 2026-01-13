@@ -27,7 +27,7 @@ add_library(nanofem
 	#        The files mass.h and stiffness.h are specific since they are
 	#        header files, you should complete (or copy them from solutions)
 	#        before building the project.
-	solutions/src/fem/P1.cpp
+	src/fem/P1.cpp
 	src/fem/poisson.cpp
 	#src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
