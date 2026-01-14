@@ -2,6 +2,7 @@
 #include "duplicate_verts.h"
 #include "mesh.h"
 
+<<<<<<< HEAD
 /*
 This structure stores only the "skin" of the object.
  * There are no internal vertices (volume is empty).
@@ -129,3 +130,7 @@ int load_overlapping_cube(Mesh& m, size_t subdiv)
 
   return (int) m.vertex_count();
 }
+=======
+int load_cube(Mesh &m, size_t subdiv);
+int load_cube_nested_dissect(Mesh &m, size_t subdiv);
+>>>>>>> d257ab564368a1440fe0800a0313b5240b131b0e

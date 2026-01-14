@@ -53,8 +53,9 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 		// P.row_start[a] = adj.offset[a]
 		P.row_start[a] = nnz;
 
+		//we will need this later to check for redundant entries
 		int init_nnz = nnz;
-
+		
 		int start = adj.offset[a];
 		int stop = start + adj.degree[a];
 

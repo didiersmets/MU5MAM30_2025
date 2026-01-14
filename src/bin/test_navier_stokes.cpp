@@ -14,14 +14,14 @@
 #include "mesh_bounds.h"
 #include "mesh_gpu.h"
 #include "mesh_io.h"
+#include "navier_stokes.h"
 #include "ndc.h"
-#include "poisson.h"
 #include "shaders.h"
 #include "sphere.h"
 #include "viewer.h"
 
 /* Viewer config */
-float bgcolor[4] = { 0.3, 0.3, 0.3, 1.0 };
+float bgcolor[4] = {0.3, 0.3, 0.3, 1.0};
 bool draw_surface = true;
 bool draw_edges = false;
 float scale_min;
@@ -33,40 +33,35 @@ bool autoscale = true;
 bool started = false;
 bool one_step = false;
 bool reset = false;
-int iter_per_frame = 1;
+
+/* Parameters */
+float lognu = -4;
+float dt = 0.005;
+double tol = 1e-6;
 
 /* RHS expression of the PDE */
 char rhs_expression[128] =
-	"cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
+    "100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
-te_variable rhs_vars[] = { { "x", &rhs_x },	{ "y", &rhs_y },
-			   { "z", &rhs_z },	{ "phi", &rhs_p },
-			   { "theta", &rhs_t }, { "rand", &rhs_r } };
+te_variable rhs_vars[] = {{"x", &rhs_x},   {"y", &rhs_y},     {"z", &rhs_z},
+			  {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}};
 te_expr *te_rhs = NULL;
 
 static void syntax(char *prg_name);
 static int load_mesh(Mesh &mesh, int argc, char **argv);
 static void rescale_and_recenter_mesh(Mesh &mesh);
 static void init_camera_for_mesh(const Mesh &mesh, Camera &camera);
-static void update_all(PoissonSolver &solver, Mesh &mesh, GPUMesh &mesh_gpu);
+static void update_all(NavierStokesSolver &solver, Mesh &mesh,
+		       GPUMesh &mesh_gpu);
 static void draw_scene(const Viewer &viewer, int shader,
 		       const GPUMesh &gpu_mesh);
-static void draw_gui(PoissonSolver &solver);
+static void draw_gui(NavierStokesSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
-bool new_rhs(PoissonSolver &solver)
+void reset_solver(NavierStokesSolver &solver)
 {
-	srand((int)time(NULL));
-	te_expr *test = te_compile(rhs_expression, rhs_vars,
-				   sizeof(rhs_vars) / sizeof(rhs_vars[0]),
-				   NULL);
-	if (!test)
-		return false;
-
-	te_free(te_rhs);
-	te_rhs = test;
 	for (size_t i = 0; i < solver.N; ++i) {
 		rhs_x = solver.m.positions[i].x;
 		rhs_y = solver.m.positions[i].y;
@@ -74,11 +69,27 @@ bool new_rhs(PoissonSolver &solver)
 		rhs_p = atan2(rhs_y, rhs_x);
 		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
 		rhs_r = (double)rand() / RAND_MAX;
-		solver.f[i] = te_eval(te_rhs);
+		solver.omega[i] = te_eval(te_rhs);
 	}
 
-	solver.init_cg();
-	solver.iterate = 0;
+	solver.set_zero_mean(solver.omega.data);
+	memset(solver.psi.data, 0, solver.N * sizeof(double));
+	solver.t = 0;
+}
+
+bool new_rhs(NavierStokesSolver &solver)
+{
+	srand((int)time(NULL));
+	te_expr *test =
+	    te_compile(rhs_expression, rhs_vars,
+		       sizeof(rhs_vars) / sizeof(rhs_vars[0]), NULL);
+	if (!test)
+		return false;
+
+	te_free(te_rhs);
+	te_rhs = test;
+
+	reset_solver(solver);
 
 	return true;
 }
@@ -106,20 +117,21 @@ int main(int argc, char **argv)
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	PoissonSolver solver(mesh);
+	NavierStokesSolver solver(mesh);
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
 	}
-	transfer_to_mesh(solver.f, mesh);
+	transfer_to_mesh(solver.omega, mesh);
 	get_attr_bounds(mesh, &scale_min, &scale_max);
 	LOG_MSG("Prepared FEM data.");
 
 	/* Get an OpenGL context through a viewer app. */
 	Viewer viewer;
 	init_camera_for_mesh(mesh, viewer.camera);
-	viewer.init("Poisson solver");
-	viewer.register_key_callback({ key_cb, NULL });
+	viewer.init("Navier Stokes 2D solver (vorticity formulation)");
+	viewer.register_key_callback({key_cb, NULL});
+	viewer.mouse.set_double_click_time(-1);
 	LOG_MSG("Viewer initialized.");
 
 	/* Prepare GPU data */
@@ -220,21 +232,22 @@ static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max)
 	*attr_max = max;
 }
 
-static void update_all(PoissonSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh)
+static void update_all(NavierStokesSolver &solver, Mesh &mesh,
+		       GPUMesh &gpu_mesh)
 {
 	bool needs_upload = true;
 	if (started || one_step) {
-		solver.do_iterate(iter_per_frame, 1e-6);
+		solver.time_step(dt, pow(10, lognu));
 		if (one_step) {
 			one_step = false;
 		}
-		transfer_to_mesh(solver.u, mesh);
+		transfer_to_mesh(solver.omega, mesh);
 		if (autoscale) {
 			get_attr_bounds(mesh, &scale_min, &scale_max);
 		}
 	} else if (reset) {
-		solver.clear_solution();
-		transfer_to_mesh(solver.f, mesh);
+		reset_solver(solver);
+		transfer_to_mesh(solver.omega, mesh);
 		get_attr_bounds(mesh, &scale_min, &scale_max);
 		reset = false;
 	} else {
@@ -242,9 +255,6 @@ static void update_all(PoissonSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh)
 	}
 	if (needs_upload) {
 		gpu_mesh.update_attr();
-	}
-	if (solver.converged) {
-		started = false;
 	}
 }
 
@@ -264,10 +274,8 @@ static void draw_scene(const Viewer &viewer, int shader,
 	Mat4 vm = camera.world_to_view();
 	Vec3 camera_pos = camera.get_position();
 	glUniformMatrix4fv(glGetUniformLocation(shader, "vm"), 1, 0, &vm(0, 0));
-	glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, 0,
-			   &proj(0, 0));
-	glUniform3fv(glGetUniformLocation(shader, "camera_pos"), 1,
-		     &camera_pos[0]);
+	glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, 0, &proj(0, 0));
+	glUniform3fv(glGetUniformLocation(shader, "camera_pos"), 1, &camera_pos[0]);
 	glUniform1f(glGetUniformLocation(shader, "scale_min"), scale_min);
 	glUniform1f(glGetUniformLocation(shader, "scale_max"), scale_max);
 	glUniform1f(glGetUniformLocation(shader, "deform"), mesh_deform);
@@ -289,14 +297,15 @@ static void draw_scene(const Viewer &viewer, int shader,
 	}
 }
 
-static void draw_gui(PoissonSolver &solver)
+static void draw_gui(NavierStokesSolver &solver)
 {
 	ImGui::Begin("Controls");
-	ImGui::Text("Solves -\\Delta u = f");
+	ImGui::Text("Navier Stokes solver");
 	ImGui::Text("--------------------");
 
-	ImGui::Text("Enter math expression for f below:");
-	ImGui::Text("(available variables : x, y, z, theta, phi, rand)");
+	ImGui::Text("Enter math expression for initial vorticity below:");
+	ImGui::Text("(available variables : x, y, z, phi, theta, rand)");
+	ImGui::Text("(zero mean automatically achieved by adding constant)");
 	ImGui::InputText("", rhs_expression, IM_ARRAYSIZE(rhs_expression));
 	if (ImGui::Button("Apply")) {
 		if (!new_rhs(solver)) {
@@ -317,7 +326,6 @@ static void draw_gui(PoissonSolver &solver)
 	ImGui::Text(" ");
 	ImGui::Text("Solution value is represented by color :");
 	ImGui::Text("Red = low value, Green = mid, Blue = high.");
-	ImGui::Text("Shows f at iter 0, then successive u_n iterates of cg.");
 
 	ImGui::Text(" ");
 
@@ -338,22 +346,22 @@ static void draw_gui(PoissonSolver &solver)
 	if (ImGui::Button("Reset")) {
 		reset = true;
 	}
-
-	ImGui::Text(" ");
-	ImGui::Text("Iterate : %zu", solver.iterate);
-	ImGui::Text("Relative error : %g", solver.rel_error);
+	ImGui::Text("Time : %f", solver.t);
 	ImGui::Text("Scale min %.2f Scale max %.2f  (Span : %g)", scale_min,
 		    scale_max, scale_max - scale_min);
 
 	ImGui::Text(" ");
-	ImGui::Text("Controls :");
-	ImGui::Checkbox("Autoscale", &autoscale);
-	ImGui::Checkbox("Show edges", &draw_edges);
-	ImGui::Text("Iterations per frame :");
-	ImGui::DragInt(" ", &iter_per_frame, 1, 1, 20);
-	ImGui::Text("Artificially deform mesh according to u :");
-	ImGui::Text("(may help visualize oscillations of u)");
-	ImGui::DragFloat("  ", &mesh_deform, 0.01f, 0.f, 1.f);
+	ImGui::Text("Controls");
+	ImGui::Text("--------");
+	ImGui::Text("Viscosity (negative power of 10):");
+	ImGui::SliderFloat("nu", &lognu, -8, 0, "10^(%.1f)");
+	ImGui::Text("Time step :");
+	ImGui::SliderFloat("dt", &dt, 0.f, 0.01f, "%.4f");
+	ImGui::Checkbox("Autoscale colors to bounds", &autoscale);
+	ImGui::Checkbox("Show mesh edges", &draw_edges);
+	ImGui::Text("Artificially deform mesh according to omega :");
+	ImGui::Text("(may help visualize oscillations)");
+	ImGui::SliderFloat("  ", &mesh_deform, 0.f, 1.f);
 
 	ImGui::Text(" ");
 	ImGui::Text("Number of DOF : %zu", solver.N);
