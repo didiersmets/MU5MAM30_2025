@@ -41,6 +41,10 @@ void NavierStokesSolver::compute_transport(double* T)
   det(J) = 2* Area(T_ABC)
   */
 
+  /* We use the formula :
+   \forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k .
+   \nabla \phi_j) */
+
   for (size_t tri = 0; tri < nt; tri++)
   {
     uint32_t a = m.indices[3 * tri];
