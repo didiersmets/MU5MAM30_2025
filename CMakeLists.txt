@@ -15,6 +15,18 @@ if (USE_OPENMP)
 	find_package(OpenMP)
 endif()
 add_library(nanofem
+	# NOTE : If you want to test your code step by step, before completion
+	#        of all the files with "holes" (i.e. sections labeled 
+	#        /* Your implementation goes here */ ), you can simply prefix
+	#        the corresponding unfinished source files below with the
+	#        solutions directory. 
+	#        If P1.cpp has not been completed yet e.g., you simply replace :
+	#	    src/fem/P1.cpp
+	#        by
+	#           solutions/src/fem/P1.cpp
+	#        The files mass.h and stiffness.h are specific since they are
+	#        header files, you should complete (or copy them from solutions)
+	#        before building the project.
 	src/fem/P1.cpp
 	src/fem/poisson.cpp
 	#src/fem/navier_stokes.cpp
@@ -25,7 +37,7 @@ add_library(nanofem
 	#src/matrix/spy.cpp
 	src/mesh/adjacency.cpp
 	src/mesh/cube.cpp
-	#src/mesh/cube2.cpp
+	src/mesh/cube2.cpp
 	src/mesh/sphere.cpp
 	src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
