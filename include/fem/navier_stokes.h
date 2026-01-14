@@ -12,14 +12,11 @@ struct NavierStokesSolver
   TArray<double> omega;
   TArray<double> Momega;
   TArray<double> psi;
-#if USE_FEM_MATRIX
-  FEMatrix S;  // Stiffness matrix
-  FEMatrix M;  // Mass matrix
-#else
+
   CSRPattern P;  // Pattern arrays
   CSRMatrix  S;  // Stiffness matrix
   CSRMatrix  M;  // Mass matrix
-#endif
+
   TArray<double> r;   // current residue r = Mf - Su
   TArray<double> p;   // internal for cg
   TArray<double> Ap;  // internal for cg
