@@ -23,5 +23,16 @@
  */
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-	/* Your implementation goes here */
+	Vec3d BC = AB - AC;
+	double area = norm(cross(AB, AC))/2;
+
+	//First store diagonal coefficients
+	S[0] = dot(BC, BC)/(4*area);
+	S[1] = dot(AC, AC)/(4*area);
+	S[2] = dot(AB, AB)/(4*area);
+	
+	// Then store other coefficients in order AB, AC, BC
+	S[3] = dot(-AC, AC - AB )/(4*area);
+	S[4] = dot(AB, BC)/ (4*area);
+	S[5] = dot(-AC, AB)/ (4*area);
 }

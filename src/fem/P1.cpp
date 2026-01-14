@@ -86,10 +86,34 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 	}
 }
 
+void add_to_mass_matrix(uint32_t start, uint32_t stop, uint32_t ind1, uint32_t ind2, uint32_t ind3, 
+					uint32_t *col, TArray<double>& data, double* M ){
+
+// funcion to add att the right place in the mass matrix
+
+	if(ind2 < ind1){
+		for(uint32_t j = start; j < stop; j ++){
+			if(col[j] == ind2){
+				data[j] += M[1];
+			}
+		}
+		}
+	if(ind3 < ind1){
+		for(uint32_t j = start; j < stop; j ++){
+			if(col[j] == ind3){
+				data[j] += M[1];
+			}
+		}
+		}
+		data[stop-1] += M[0];	
+}
+
+
+
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 {
 	size_t vtx_count = m.vertex_count();
-	size_t tri_count = m.triangle_count();
+	//size_t tri_count = m.triangle_count();
 	assert(P.row_start.size == vtx_count + 1);
 
 	M.symmetric = true;
@@ -101,38 +125,73 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 	for (size_t i = 0; i < M.nnz; ++i) {
 		M.data[i] = 0.0;
 	}
+	
 
 
-	for(size_t i = 0; i < M.index_count(); i+=3){
+	for(size_t i = 0; i < m.index_count(); i+=3){
 		//indicies of current triangle
-		uint32_t ind1, ind2, ind3 = M.indices[i], M.indices[i+1], M.indices[i+2];
-		Vec3 v1, v2, v3 = M.poistions[ind2], M.poistions[ind2], M.poistions[ind3];
+		uint32_t ind1 = m.indices[i];
+		uint32_t ind2 = m.indices[i+1];
+		uint32_t ind3 = m.indices[i+2];
+		//position of current vectors
+		Vec3 v1 = m.positions[ind1];
+		Vec3 v2 = m.positions[ind2];
+		Vec3 v3 = m.positions[ind3];
 		
 		//Compute local mass matrix
-		mass(v2 - v1, v3 - v1, mass_mat);
+		double mass_mat[2];
+		Vec3d AB = {v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2] };
+		Vec3d AC = {v1[0] - v3[0], v1[1] - v3[1], v1[2] - v3[2]};
+		mass(AB, AC, mass_mat);
+		uint32_t start, stop;
 
 		//start of the row v1
-		uint32_t start = P.row_start[ind1];
-		uint32_t stop = P.row_start[ind1 +1];
+		 start = P.row_start[ind1];
+		 stop = P.row_start[ind1 +1];
 
-		if(ind2 < ind1){
+		add_to_mass_matrix( start,  stop,  ind1,  ind2,  ind3, M.col, M.data, mass_mat );
+
+		//start of the row v1
+		 start = P.row_start[ind2];
+		 stop = P.row_start[ind2 +1];
+
+		add_to_mass_matrix( start,  stop,  ind2,  ind1,  ind3, M.col, M.data, mass_mat );
+		
+		//start of the row v1
+		start = P.row_start[ind3];
+		stop = P.row_start[ind3 +1];
+
+		add_to_mass_matrix( start,  stop,  ind3,  ind2,  ind1, M.col, M.data, mass_mat );
+	
+	}
+}
+
+void add_to_stiffness_matrix(uint32_t start, uint32_t stop, uint32_t ind1, uint32_t ind2, uint32_t ind3, 
+					uint32_t *col, TArray<double>& data, double first_off_diag, double second_off_diag, double diag ){
+
+// funcion to add att the right place in the stifness matrix
+
+	if(ind2 < ind1){
 		for(uint32_t j = start; j < stop; j ++){
-			if(P.col[j] == ind2){
-				M.data[j] += M[1];
+			if(col[j] == ind2){
+				data[j] += first_off_diag;
 			}
 		}
 		}
-
-		
-		
-	}
-	
+	if(ind3 < ind1){
+		for(uint32_t j = start; j < stop; j ++){
+			if(col[j] == ind3){
+				data[j] += second_off_diag;
+			}
+		}
+		}
+		data[stop-1] += diag;	
 }
 
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 {
 	size_t vtx_count = m.vertex_count();
-	size_t tri_count = m.triangle_count();
+	//size_t tri_count = m.triangle_count();
 	assert(P.row_start.size == vtx_count + 1);
 
 	S.symmetric = true;
@@ -145,7 +204,44 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 		S.data[i] = 0.0;
 	}
 
-	/* Your implementation goes here */
+		for(size_t i = 0; i < m.index_count(); i+=3){
+		//indicies of current triangle
+		uint32_t ind1 = m.indices[i];
+		uint32_t ind2 = m.indices[i+1];
+		uint32_t ind3 = m.indices[i+2];
+		//position of current vectors
+		Vec3 v1 = m.positions[ind1];
+		Vec3 v2 = m.positions[ind2];
+		Vec3 v3 = m.positions[ind3];
+		
+		//Compute local stiffness matrix
+		double stiff_mat[6];
+		Vec3d AB = {v1[0] - v2[0], v1[1] - v2[1], v1[2] - v2[2] };
+		Vec3d AC = {v1[0] - v3[0], v1[1] - v3[1], v1[2] - v3[2]};
+		stiffness(AB, AC, stiff_mat);
+		uint32_t start, stop;
+
+		//start of the row v1
+		 start = P.row_start[ind1];
+		 stop = P.row_start[ind1 +1];
+
+		add_to_stiffness_matrix( start,  stop,  ind1,  ind2,  ind3, S.col, S.data,
+			 stiff_mat[3], stiff_mat[4], stiff_mat[0] );
+
+		//start of the row v2
+		 start = P.row_start[ind2];
+		 stop = P.row_start[ind2 +1];
+
+		add_to_stiffness_matrix( start,  stop,  ind2,  ind1,  ind3, S.col, S.data,
+			 stiff_mat[3], stiff_mat[5], stiff_mat[1] );
+		
+			 //start of the row v3
+		start = P.row_start[ind3];
+		stop = P.row_start[ind3 +1];
+
+		add_to_stiffness_matrix( start,  stop,  ind3,  ind1,  ind2, S.col, S.data,
+			 stiff_mat[4], stiff_mat[5], stiff_mat[2] );	
+	}
 }
 
 /* FEMatrix variants */

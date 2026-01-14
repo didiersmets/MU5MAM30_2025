@@ -51,10 +51,19 @@ target_include_directories(nanofem PUBLIC
 	include/mesh 
 	extern
 )
-target_compile_options(nanofem PRIVATE 
-	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
-	-Wno-missing-field-initializers
+target_compile_options(nanofem PRIVATE
+    -std=c++17
+    -Wall
+    -Wextra
+    -ffast-math
+    -Wno-unknown-pragmas
+    -Wno-missing-field-initializers
 )
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(nanofem PRIVATE -march=native)
+endif()
+
 if (USE_OPENMP AND OpenMP_CXX_FOUND)
 	target_compile_options(nanofem PRIVATE -DUSE_OPENMP)
 	target_link_libraries(nanofem PUBLIC OpenMP::OpenMP_CXX)

@@ -30,6 +30,7 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	double beta = r2_new / r2;
 	blas_axpby(1, r, beta, p, N);
 
+
 	return (r2_new);
 }
 
