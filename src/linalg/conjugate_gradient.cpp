@@ -18,6 +18,19 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	 * implementations heavilly make use of specific hardware capabilities 
 	 * (instruction sets, parallelism, cache efficiency etc). 
 	 */
+
+	 size_t N = A.rows;
+	 
+	 A.mvp(p, Ap); // update Ap
+	 float alpha = r2 / blas_dot(p, Ap, N); //Compute alpha
+	 blas_axpy(alpha, p, x, N); //Compute new x
+	 blas_axpy(-alpha, Ap, r, N); // Compute new r
+	 double r2_new = blas_dot(r, r, N);
+	
+	 double beta = r2_new/ r2;
+	 blas_axpby(1, p, beta , r, N); //compute new p
+
+	 return r2_new;
 }
 
 size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,

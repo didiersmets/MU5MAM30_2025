@@ -43,9 +43,60 @@ int load_cube(Mesh &m, size_t subdiv)
 static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 {
 	/* Your implementation goes here */
+	
+	uint32_t n = subdiv + 1;
+
+	TArray<float> coord_pos(n);
+
+	for(int i = 0; i < n; i ++){
+		coord_pos[i] = -1.0f + 2.0f * i / subdiv;
+	}
+
+	
+	for(int i = 0; i < n; i ++){
+		for(int j = 0; j < n; j ++){
+
+		pos[n*i + j ] = {1.0, coord_pos[i], coord_pos[j] };
+		pos[POW2(n) + n*i + j ] ={-1.0, coord_pos[subdiv - i], coord_pos[j] };
+
+		pos[2*POW2(n) + n*i + j ] = {coord_pos[subdiv - i], 1.0, coord_pos[j] };
+		pos[3*POW2(n) + n*i + j ] = {coord_pos[i], -1.0, coord_pos[j]};
+
+		pos[4*POW2(n) +n*i + j ] = {coord_pos[i], coord_pos[j], 1.0 };
+		pos[5*POW2(n) +n*i + j ] = {coord_pos[subdiv-i], coord_pos[j], -1.0 };
+		}
+	}
 }
 
 static void load_cube_indices(uint32_t *idx, size_t subdiv)
 {
-	/* Your implementation goes here */
+	
+	uint32_t n = subdiv;
+
+	uint32_t idx_counter = 0; // count how many triangles we have assigned
+	
+	for(int f = 0; f < 6; f ++) { //face we are currently looking at
+		for(int i = 0; i < subdiv; i ++){ // 'cloumn' on face
+			for(int j = 0; j < n; j ++){ // 'row' on face 
+
+			uint32_t v0, v1, v2, v3;
+			v0 = f*POW2(n) + i + n*j;
+			v1 = f*POW2(n) + i +1 +n*j;
+			v2 = f*POW2(n) + i + n*(j +1);
+			v3 = f*POW2(n) + i + n*(j +1);
+
+			idx[idx_counter] = v0;
+			idx[idx_counter+1] = v1;
+			idx[idx_counter+2] = v2;
+			idx_counter += 3;
+
+			idx[idx_counter] = v0;
+			idx[idx_counter + 1] = v2;
+			idx[idx_counter +2] = v3;
+
+			idx_counter += 3;
+
+			}
+		}
+	}
 }
