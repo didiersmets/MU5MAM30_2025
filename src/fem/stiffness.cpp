@@ -4,7 +4,6 @@
 StiffnessCoef stiffness(const Vec3 &AB, const Vec3 &AC)
 {
 	double area = area_triangle(AB,AC);
-	/* Your implementation goes here */
 	double AB2 = norm2(AB);
 	double AC2 = norm2(AC);
 	double BC2 = norm2(AC-AB);
