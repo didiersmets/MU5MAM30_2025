@@ -30,5 +30,5 @@ int main(){
 	TArray<double> Ap (n);
 	double rel_error = 0;
 	size_t iter = conjugate_gradient_solve(A,b.data,x.data,r.data,p.data,Ap.data,&rel_error,1e-6,n,true);
-	printf("Solved in %d iteration (relative error %lf)\n",iter,rel_error);
+	printf("Solved in %ld iteration (relative error %lf)\n",iter,rel_error);
 }

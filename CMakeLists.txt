@@ -99,6 +99,14 @@ target_compile_options(test_poisson PRIVATE
 	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 )
 target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr) 
+##############################################################################
+add_executable(main
+	src/bin/main.cpp
+)
+target_compile_options(main PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(main PRIVATE nanofem ) 
 ###############################################################################
 
 ###############################################################################
