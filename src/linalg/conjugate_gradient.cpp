@@ -10,14 +10,24 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 		       double *__restrict r, double *__restrict p,
 		       double *__restrict Ap, double r2)
 {
-	/* Your implementation goes here
-	 * Check usage of tiny_blas (BLAS = Basic Linear Algebra Subroutines) 
-	 * in include/linalg/tiny_blas.h
-	 * BLAS routines are key in efficient linear algebra computations;
-	 * we do not really care about best performance here, top notch 
-	 * implementations heavilly make use of specific hardware capabilities 
-	 * (instruction sets, parallelism, cache efficiency etc). 
-	 */
+	size_t N = A.rows;
+	assert(A.rows == A.cols);
+
+	A.mvp(p, Ap);
+	double alpha = r2 / blas_dot(p, Ap, N);
+
+	// x = x + alpha * p
+	blas_axpy(alpha, p, x, N);
+	// r = r - alpha * Ap
+	blas_axpy(-alpha, Ap, r, N);
+
+	double r2_new = blas_dot(r, r, N);
+	double beta = r2_new / r2;
+
+	// p = r + beta * p
+	blas_axpby(1, r, beta, p, N);
+
+	return (r2_new);
 }
 
 size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
