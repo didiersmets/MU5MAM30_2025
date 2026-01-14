@@ -16,10 +16,10 @@ if (USE_OPENMP)
 endif()
 add_library(nanofem
 	# NOTE : If you want to test your code step by step, before completion
-	#        of all the files with "holes" (i.e. sections labeled 
+	#        of all the files with "holes" (i.e. sections labeled
 	#        /* Your implementation goes here */ ), you can simply prefix
 	#        the corresponding unfinished source files below with the
-	#        solutions directory. 
+	#        solutions directory.
 	#        If P1.cpp has not been completed yet e.g., you simply replace :
 	#	    src/fem/P1.cpp
 	#        by
@@ -30,28 +30,28 @@ add_library(nanofem
 	solutions/src/fem/P1.cpp
 	src/fem/poisson.cpp
 	#src/fem/navier_stokes.cpp
-	solutions/src/linalg/conjugate_gradient.cpp
+	src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
-	solutions/src/matrix/sparse_matrix.cpp
+	src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
-	solutions/src/mesh/adjacency.cpp
+	src/mesh/adjacency.cpp
 	src/mesh/cube.cpp
 	src/mesh/cube2.cpp
 	src/mesh/sphere.cpp
-	#src/mesh/duplicate_verts.cpp
+	#solutions/src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
 )
-target_include_directories(nanofem PUBLIC 
-	include/common 
+target_include_directories(nanofem PUBLIC
+	include/common
 	include/fem
 	include/linalg
-	include/matrix 
-	include/mesh 
+	include/matrix
+	include/mesh
 	extern
 )
-target_compile_options(nanofem PRIVATE 
+target_compile_options(nanofem PRIVATE
 	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
 	-Wno-missing-field-initializers
 )
@@ -71,8 +71,8 @@ add_library(nanoviewer
 	src/viewer/trackball.cpp
 	src/viewer/shaders.cpp
 )
-target_include_directories(nanoviewer PUBLIC 
-	include/common 
+target_include_directories(nanoviewer PUBLIC
+	include/common
 	include/mesh
 	include/viewer
 	extern
@@ -92,10 +92,10 @@ add_executable(test_poisson
 	src/common/logging.cpp
 	src/bin/test_poisson.cpp
 )
-target_compile_options(test_poisson PRIVATE 
+target_compile_options(test_poisson PRIVATE
 	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 )
-target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr) 
+target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr)
 ###############################################################################
 
 ###############################################################################
@@ -103,7 +103,7 @@ target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr)
 #	src/common/logging.cpp
 #	src/bin/test_navier_stokes.cpp
 #)
-#target_compile_options(test_NS PRIVATE 
+#target_compile_options(test_NS PRIVATE
 #	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 #)
 #target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
@@ -115,7 +115,7 @@ target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr)
 #	src/common/chrono.cpp
 #	src/bin/test_ordering.cpp
 #)
-#target_compile_options(test_ordering PRIVATE 
+#target_compile_options(test_ordering PRIVATE
 #	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 #)
 #target_link_libraries(test_ordering PRIVATE nanofem)
@@ -145,4 +145,3 @@ target_include_directories(tiny_expr PUBLIC
 ###############################################################################
 
 add_subdirectory(extern/glfw)
-

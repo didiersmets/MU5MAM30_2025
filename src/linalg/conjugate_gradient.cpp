@@ -22,13 +22,14 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
   A.mvp(p, Ap);
 
   double alpha = r2 / blas_dot(p, Ap, N);
-  blas_axpby(1, x, alpha, p, N);
-  blas_axpby(1, r, -alpha, Ap, N);
+  blas_axpy(alpha, p, x, N);
+  blas_axpy(-alpha, Ap, r, N);
 
-  double beta = blas_dot(r, r, N) / r2;
+  double new_r2 = blas_dot(r, r, N);
+  double beta = new_r2 / r2;
   blas_axpby(1, r, beta, p, N);
 
-  return blas_dot(r, r, N);
+  return new_r2;
 }
 
 size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,

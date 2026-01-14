@@ -20,7 +20,7 @@ static void load_face_vertices(face_mesh &m,
 			       const Vec3 &x0)
 {
   m.positions.resize(N*N);
-  float step_size = 1.0/(N-1);
+  float step_size = 2.0/(N-1);
 
   for(size_t i=0; i<N; ++i)
     for(size_t j=0; j<N; ++j)
@@ -241,9 +241,9 @@ int load_cube(Mesh &m, size_t subdiv) {
     -Vec3::YAxis,
   };
   Vec3 x0[6] = {
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0},
+    {-1, -1, -1},
+    {-1, -1, -1},
+    {-1, -1, -1},
     {1, 1, 1},
     {1, 1, 1},
     {1, 1, 1},
