@@ -5,7 +5,6 @@
 #include <omp.h>
 #endif
 
-
 #include "P1.h"
 #include "adjacency.h"
 #include "fem_matrix.h"

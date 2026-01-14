@@ -6,6 +6,7 @@
 #include "matrix.h"
 #include "tiny_blas.h"
 
+
 double cg_iterate_once(const Matrix &A, double *__restrict x,
 		       double *__restrict r, double *__restrict p,
 		       double *__restrict Ap, double r2)
