@@ -24,8 +24,49 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
  * of r and p are not reset from b, but considered known), this allows e.g. 
  * to observe the algorithm by batches of a few iterates.
  */
+{
+	size_t N = A.rows;
+	assert(A.rows == A.cols);
+
+	A.mvp(p, Ap);
+	double alpha = r2 / blas_dot(p, Ap, N);
+
+	blas_axpy(alpha, p, x, N);
+	blas_axpy(-alpha, Ap, r, N);
+
+	double r2_new = blas_dot(r, r, N);
+
+	double beta = r2_new / r2;
+	blas_axpby(1, r, beta, p, N);
+
+	return (r2_new);
+}
 size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
 				double *__restrict x, double *__restrict r,
 				double *__restrict p, double *__restrict Ap,
 				double *__restrict rel_error, double tol,
 				int max_iter, bool inited = false);
+{
+	size_t N = A.rows;
+	assert(A.rows == A.cols);
+
+	double b2 blas_dot(b,b,N);
+
+	if (!inited) {
+		A.mvp(p, Ap);
+		blas_axpy(1,b,-1,r,N)
+		blas_copy (r, p, N);
+	}
+
+	double r2 = blas_dot(r, r, N);
+	*rel_error = sqrt(b2 / r2);
+
+	int iter =0;
+	while ((iter < max_iter) && (*rel_error > tol)) {
+		r2 =cg_iterate_once(A,x,r,p,Ap);
+		*rel_error = sqrt(b2 / r2);
+		iter++;
+	}
+	return iter;
+
+}
