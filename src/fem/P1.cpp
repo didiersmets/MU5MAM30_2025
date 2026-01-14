@@ -15,11 +15,75 @@
 
 /* CSRMatrix variants */
 
+bool find(const TArray<uint32_t> & arr, uint32_t target,  size_t start, size_t stop){
+	assert(start <= stop && stop <= sizeof(arr));
+
+	for(size_t i = start; i < stop; i ++){
+		if(arr[i] == target){return true;}
+	}
+	return false;
+}
+
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 {
-	/* Your implementation goes here.
-	 * Use a VTAdjacency structure (see include/matrix/adjacency.h)
-	 */
+	P.symmetric = true;
+
+	size_t num_vtx = m.vertex_count();
+	P.rows = num_vtx;
+	P.cols = num_vtx;
+	
+	VTAdjacency adj(m);
+
+	size_t nnz_max  = 3 * m.triangle_count() + num_vtx;
+
+	//Initilalize 
+	size_t nnz = 0;
+	P.row_start[0] = 0;
+	P.col.resize(nnz_max);
+
+	for(size_t i = 0; i < num_vtx; i ++ ){
+		uint32_t start = adj.offset[i];
+		uint32_t stop = start + adj.degree[i];
+		
+		for(uint32_t j = start; j < stop; j++){
+			//look who is adjacent to current index;
+			
+			uint32_t a = adj.vtri[j].prev;
+			uint32_t b = adj.vtri[j].next;
+
+			size_t row_start = P.row_start[i];
+
+			//see if we already added them to the matrix
+			if(a < i && !find(P.col, a, row_start, nnz)){
+				P.col[nnz++] = a;
+			}
+			if(b < i && !find(P.col, b, row_start, nnz)){
+				P.col[nnz++] = b;
+			}	
+		}
+		P.col[nnz++] = i;  // set the diagonal, this will always be the last one anyway.
+		P.row_start[i+1] = nnz;
+	}
+	P.nnz = nnz;
+	P.col.resize(P.nnz);
+	P.col.shrink_to_fit();
+
+	//reorder the indicies
+	uint32_t stop = 0;
+	for(size_t i = 0; i < num_vtx; i ++){
+		uint32_t start = stop;
+		stop = P.row_start[i+1];
+
+		for(size_t j = start+1; j < stop; j++){
+			for(size_t k = start; k <j; k++){
+				if(P.col[j] < P.col[k]){
+					uint32_t tmp = P.col[j];
+					P.col[j] = P.col[k];
+					P.col[k] = tmp;
+				}
+			}
+		}
+	}
 }
 
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
@@ -38,7 +102,31 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 		M.data[i] = 0.0;
 	}
 
-	/* Your implementation goes here */
+
+	for(size_t i = 0; i < M.index_count(); i+=3){
+		//indicies of current triangle
+		uint32_t ind1, ind2, ind3 = M.indices[i], M.indices[i+1], M.indices[i+2];
+		Vec3 v1, v2, v3 = M.poistions[ind2], M.poistions[ind2], M.poistions[ind3];
+		
+		//Compute local mass matrix
+		mass(v2 - v1, v3 - v1, mass_mat);
+
+		//start of the row v1
+		uint32_t start = P.row_start[ind1];
+		uint32_t stop = P.row_start[ind1 +1];
+
+		if(ind2 < ind1){
+		for(uint32_t j = start; j < stop; j ++){
+			if(P.col[j] == ind2){
+				M.data[j] += M[1];
+			}
+		}
+		}
+
+		
+		
+	}
+	
 }
 
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
