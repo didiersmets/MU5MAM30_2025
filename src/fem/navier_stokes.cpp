@@ -62,7 +62,31 @@ void NavierStokesSolver::compute_transport(double *T)
 				  e1.x * e2.y - e1.y * e2.x);
 		double area = 0.5 * sqrt(cross.x * cross.x + cross.y * cross.y + cross.z * cross.z);
 		//Compute gradients of basis functions
-		Vec3 grad_phi0 ;
+		Vec3 grad0 = Vec3(e2.y, -e2.x,0);
+		Vec3 grad1 = Vec3(-e1.y, e1.x, 0);
+		Vec3 grad2 = Vec3(e1.y - e2.y, e2.x - e1.x, 0);
+		grad0 /= (2 * area);
+		grad1 /= (2 * area);
+		grad2 /= (2 * area);
+		//Compute vorticity at triangle centroid
+		double omega0 = omega[i0];
+		double omega1 = omega[i1];
+		double omega2 = omega[i2];
+		
+		for(size_t j = 0; j < 3; ++j){
+			uint32_t vi = m.indices[3*i + j];
+			double psi_val = psi[vi];
+			Vec3 grad_psi;
+			if (j == 0) grad_psi = grad0;
+			else if (j == 1) grad_psi = grad1;
+			else grad_psi = grad2;
+			//Velocity u = curl(psi)
+			Vec3 u = Vec3(grad_psi.y, -grad_psi.x, 0);
+			//Contribution to transport term
+			T[vi] += omega0 * (u.x * grad0.x + u.y * grad0.y) * area / 3.0;
+			T[vi] += omega1 * (u.x * grad1.x + u.y * grad1.y) * area / 3.0;
+			T[vi] += omega2 * (u.x * grad2.x + u.y * grad2.y) * area / 3.0;
+		}		
 	}
 }
 
