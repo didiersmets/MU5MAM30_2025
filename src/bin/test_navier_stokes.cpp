@@ -175,18 +175,27 @@ static void syntax(char* prg_name)
 static int load_mesh(Mesh& mesh, int argc, char** argv)
 {
   int res = -1;
+  printf("Debug: argc=%d\n", argc);
+
   if (argc > 2 && strncmp(argv[1], "cube", 4) == 0)
   {
+    printf("Debug: Attempting load_cube with n=%d\n", atoi(argv[2]));
     res = load_cube(mesh, atoi(argv[2]));
+    printf("Debug: load_cube returned %d\n", res);
   }
   else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0)
   {
+    printf("Debug: Attempting load_sphere with n=%d\n", atoi(argv[2]));
     res = load_sphere(mesh, atoi(argv[2]));
+    printf("Debug: load_sphere returned %d\n", res);
   }
   else if (argc > 1)
   {
+    printf("Debug: Attempting load_obj with file: %s\n", argv[1]);
     res = load_obj(argv[1], mesh);
+    printf("Debug: load_obj returned %d\n", res);
   }
+
   return res;
 }
 

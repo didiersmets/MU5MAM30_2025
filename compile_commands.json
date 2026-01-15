@@ -1,0 +1,302 @@
+[
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/fem/P1.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/fem/P1.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/fem/P1.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/fem/P1.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/fem/poisson.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/fem/poisson.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/fem/navier_stokes.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/fem/navier_stokes.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/linalg/conjugate_gradient.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/linalg/conjugate_gradient.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/matrix/sparse_matrix.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/matrix/sparse_matrix.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/adjacency.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/adjacency.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/cube.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/cube.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/sphere.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/sphere.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/duplicate_verts.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/duplicate_verts.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/mesh_io.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/mesh_io.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas -Wno-missing-field-initializers -o CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/mesh_bounds.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/mesh_bounds.cpp",
+  "output": "CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui.cpp",
+  "output": "CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_draw.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_draw.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_draw.cpp",
+  "output": "CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_draw.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_tables.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_tables.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_tables.cpp",
+  "output": "CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_tables.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_widgets.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_widgets.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_widgets.cpp",
+  "output": "CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_widgets.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_impl_glfw.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_impl_glfw.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_impl_glfw.cpp",
+  "output": "CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_impl_glfw.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_impl_opengl3.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_impl_opengl3.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/imgui/imgui_impl_opengl3.cpp",
+  "output": "CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_impl_opengl3.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -o CMakeFiles/nanoviewer.dir/src/mesh/mesh_gpu.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/mesh_gpu.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/mesh/mesh_gpu.cpp",
+  "output": "CMakeFiles/nanoviewer.dir/src/mesh/mesh_gpu.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -o CMakeFiles/nanoviewer.dir/src/viewer/viewer.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/viewer.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/viewer.cpp",
+  "output": "CMakeFiles/nanoviewer.dir/src/viewer/viewer.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -o CMakeFiles/nanoviewer.dir/src/viewer/camera.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/camera.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/camera.cpp",
+  "output": "CMakeFiles/nanoviewer.dir/src/viewer/camera.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -o CMakeFiles/nanoviewer.dir/src/viewer/frustum.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/frustum.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/frustum.cpp",
+  "output": "CMakeFiles/nanoviewer.dir/src/viewer/frustum.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -o CMakeFiles/nanoviewer.dir/src/viewer/mouse.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/mouse.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/mouse.cpp",
+  "output": "CMakeFiles/nanoviewer.dir/src/viewer/mouse.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -o CMakeFiles/nanoviewer.dir/src/viewer/trackball.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/trackball.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/trackball.cpp",
+  "output": "CMakeFiles/nanoviewer.dir/src/viewer/trackball.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -o CMakeFiles/nanoviewer.dir/src/viewer/shaders.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/shaders.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/viewer/shaders.cpp",
+  "output": "CMakeFiles/nanoviewer.dir/src/viewer/shaders.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc  -I/Users/emanuele/Desktop/MU5MAM30_2025/extern  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -o CMakeFiles/tiny_expr.dir/extern/tiny_expr/tinyexpr.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/tiny_expr/tinyexpr.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/tiny_expr/tinyexpr.c",
+  "output": "CMakeFiles/tiny_expr.dir/extern/tiny_expr/tinyexpr.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -Wno-missing-field-initializers -o CMakeFiles/test_poisson.dir/src/common/logging.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/common/logging.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/common/logging.cpp",
+  "output": "CMakeFiles/test_poisson.dir/src/common/logging.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -Wno-missing-field-initializers -o CMakeFiles/test_poisson.dir/src/bin/test_poisson.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/bin/test_poisson.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/bin/test_poisson.cpp",
+  "output": "CMakeFiles/test_poisson.dir/src/bin/test_poisson.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -Wno-missing-field-initializers -o CMakeFiles/test_NS.dir/src/common/logging.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/common/logging.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/common/logging.cpp",
+  "output": "CMakeFiles/test_NS.dir/src/common/logging.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/c++  -I/Users/emanuele/Desktop/MU5MAM30_2025/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk/System/Library/Frameworks  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -std=c++17 -Wall -Wextra -Wno-missing-field-initializers -o CMakeFiles/test_NS.dir/src/bin/test_navier_stokes.cpp.o -c /Users/emanuele/Desktop/MU5MAM30_2025/src/bin/test_navier_stokes.cpp",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/src/bin/test_navier_stokes.cpp",
+  "output": "CMakeFiles/test_NS.dir/src/bin/test_navier_stokes.cpp.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/context.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/context.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/context.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/context.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/init.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/init.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/init.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/init.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/input.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/input.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/input.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/input.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/monitor.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/monitor.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/monitor.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/monitor.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/platform.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/platform.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/platform.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/platform.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/vulkan.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/vulkan.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/vulkan.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/vulkan.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/window.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/window.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/window.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/window.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/egl_context.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/egl_context.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/egl_context.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/egl_context.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/osmesa_context.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/osmesa_context.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/osmesa_context.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/osmesa_context.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/null_init.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_init.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_init.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/null_init.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/null_monitor.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_monitor.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_monitor.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/null_monitor.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/null_window.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_window.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_window.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/null_window.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/null_joystick.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_joystick.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/null_joystick.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/null_joystick.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/cocoa_time.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_time.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_time.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/cocoa_time.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/posix_module.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/posix_module.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/posix_module.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/posix_module.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/posix_thread.c.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/posix_thread.c",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/posix_thread.c",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/posix_thread.c.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/cocoa_init.m.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_init.m",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_init.m",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/cocoa_init.m.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/cocoa_joystick.m.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_joystick.m",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_joystick.m",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/cocoa_joystick.m.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/cocoa_monitor.m.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_monitor.m",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_monitor.m",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/cocoa_monitor.m.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/cocoa_window.m.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_window.m",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/cocoa_window.m",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/cocoa_window.m.o"
+},
+{
+  "directory": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src",
+  "command": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/cc -D_GLFW_COCOA -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/include -I/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src -std=c99 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk -mmacosx-version-min=15.7 -fPIC -Wall -o CMakeFiles/glfw.dir/nsgl_context.m.o -c /Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/nsgl_context.m",
+  "file": "/Users/emanuele/Desktop/MU5MAM30_2025/extern/glfw/src/nsgl_context.m",
+  "output": "extern/glfw/src/CMakeFiles/glfw.dir/nsgl_context.m.o"
+}
+]

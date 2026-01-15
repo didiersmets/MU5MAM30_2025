@@ -1,8 +1,9 @@
 #include "fem/navier_stokes.h"
 
+#include "common/vec3.h"
 #include "fem/P1.h"
 #include "linalg/conjugate_gradient.h"
-#include "tiny_blas.h"
+#include "linalg/tiny_blas.h"
 
 #include <assert.h>
 #include <stddef.h>
@@ -134,7 +135,41 @@ size_t NavierStokesSolver::compute_stream_function()
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
+  // first computation of PSI comes from an omega with zero mean: see src/test_navier_stokes.cpp
+  // compute PSI from OMEGA
   compute_stream_function();
+  // set_zero_mean(psi.data);
+
+  // compute transport term T(OMEGA, PSI)
+  TArray<double> transport(N);
+  compute_transport(transport.data);
+
+  // compute the right hand side
+  // rhs = M * OMEGA + dt * T(OMEGA, PSI)
+  M.mvp(omega.data, Momega.data);  // Momega = M * omega
+  // Momega = dt * transport + Momega
+  // tiny_blas.axpy(N, dt, transport.data, Momega.data);
+  for (size_t i = 0; i < N; i++)
+  {
+    Momega.data[i] += dt * transport.data[i];
+  }
+
+  // build the left hand side matrix A = M + nu * dt * S
+  CSRMatrix A;
+  A.rows      = M.rows;
+  A.cols      = M.cols;
+  A.nnz       = M.nnz;
+  A.symmetric = M.symmetric;
+  A.row_start = M.row_start;
+  A.col       = M.col;
+  A.data.resize(A.nnz);
+
+  // compute A = M + S
+  double factor = nu * dt;
+  for (size_t k = 0; k < A.nnz; k++)
+  {
+    A.data[k] = M.data[k] + ((factor) *S.data[k]);
+  }
 
   /**********************************************************************
    * Solve the system :
@@ -144,6 +179,21 @@ void NavierStokesSolver::time_step(double dt, double nu)
    *********************************************************************/
 
   /* Your implementation goes here */
+
+  double rel_error      = 0.0;
+  double tolerance      = 1e-6;
+  int    max_iterations = 1000;
+
+  size_t iterations = conjugate_gradient_solve(A,
+                                               Momega.data,  // RHS
+                                               omega.data,   // Initial guess AND result
+                                               r.data,
+                                               p.data,
+                                               Ap.data,
+                                               &rel_error,
+                                               tolerance,
+                                               max_iterations,
+                                               false);
 
   // we ensure that the vorticity omega has zero mean at each time step
   // hence, we are sure that integral of
