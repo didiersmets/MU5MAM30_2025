@@ -19,9 +19,32 @@ NavierStokesSolver::NavierStokesSolver(const Mesh& m)
   t      = 0;
 }
 
+// we need to be sure that the solution PSI coming from The poisson solver S_PSI = - M_OMEGA
+// has zero mean value over the domain
+// that means that the integrale over the domain of PSI is zero
+
 void NavierStokesSolver::set_zero_mean(double* V)
 {
   /* Your implementation goes here */
+
+  // In order to compute the integral over the domain of V, we use the mass matrix M
+  // as int(V) = sum i sum j M_ij * V_j
+
+  double integral = 0.0;
+  M.mvp(V, r.data);  // r = M * V
+
+  for (size_t i = 0; i < N; i++)
+  {
+    integral += r.data[i];
+  }
+
+  double mean_value = integral / vol;
+
+  // we subtract the mean value to each entry of V to ensure zero mean
+  for (size_t i = 0; i < N; i++)
+  {
+    V[i] -= mean_value;
+  }
 }
 
 void NavierStokesSolver::compute_transport(double* T)
@@ -94,6 +117,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
   /* Your implementation goes here */
 
+  // we ensure that the vorticity omega has zero mean at each time step to be sure that integral of
+  // PSI over the domain is zero too.
   set_zero_mean(omega.data);
 
   t += dt;
