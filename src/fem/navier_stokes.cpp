@@ -51,11 +51,51 @@ void NavierStokesSolver::set_zero_mean(double* V)
   }
 }
 
+// Ask which implementation to use for the transport term
+/*
 void NavierStokesSolver::compute_transport(double* T)
 {
   memset(T, 0, N * sizeof(double));  // transport_term
 
-  /* Your implementation goes here */
+  /*
+
+  double* OMEGA = omega.data;
+  double* PSI   = psi.data;
+
+  size_t nt = m.triangle_count();
+*/
+/*
+I used the change of variable to the reference triangle (0,0) (1,0) (0,1)
+the integral on the triangle of phi_i = 1/6
+det(J) = 2* Area(T_ABC)
+*/
+
+/* We use the formula :
+ \forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k .
+ \nabla \phi_j) */
+
+/* As you can see:
+ * The gradient of the basis functions \nabla \phi_i are of order 1/L (L = length scale of the
+ * triangle) term of order 1/Area (since 1/L * 1/L = 1/L^2 ~ 1/Area). The Area terms cancel out
+ * perfectly, leaving a purely topological constant (1/6).*/
+/*
+  for (size_t tri = 0; tri < nt; tri++)
+  {
+    uint32_t a = m.indices[3 * tri];
+    uint32_t b = m.indices[3 * tri + 1];
+    uint32_t c = m.indices[3 * tri + 2];
+
+    double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
+    T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6.0;
+    T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6.0;
+    T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6.0;
+  }
+}
+
+*/
+void NavierStokesSolver::compute_transport(double* T)
+{
+  memset(T, 0, N * sizeof(double));  // transport_term
 
   double* OMEGA = omega.data;
   double* PSI   = psi.data;
@@ -91,6 +131,9 @@ void NavierStokesSolver::compute_transport(double* T)
 
     // Calculate area of the triangle
     double area = 0.5 * norm(cross(AB, AC));
+
+    // integral over the triangle of phi_i = 1/6
+    // det(J) = 2* Area(T_ABC)
 
     double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
     T[a] += (area / 3.0) * omega_sum * (PSI[c] - PSI[b]);
