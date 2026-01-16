@@ -120,9 +120,15 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 		uint32_t b = m.indices[3*i+1]; Vec3f B = m.positions[b];
 		uint32_t c = m.indices[3*i+2]; Vec3f C = m.positions[c];
 
-		// on construit les vecteurs AB et AC qu'on utilise pour calculer l
-		Vec3d AB = Vec3d(B) - Vec3d(A);
-		Vec3d AC = Vec3d(C) - Vec3d(A);
+		//Vec3d AB = Vec3d(B) - Vec3d(A);
+		//Vec3d AC = Vec3d(C) - Vec3d(A);
+		// je me suis permise de regarder la correction parce que je ne comprenais pas pourquoi je pouvais pas faire le truc du dessus
+		Vec3d AB = { (double)B[0] - (double)A[0],
+			(double)B[1] - (double)A[1],
+			(double)B[2] - (double)A[2] };
+			Vec3d AC = { (double)C[0] - (double)A[0],
+				(double)C[1] - (double)A[1],
+				(double)C[2] - (double)A[2] };
 
 		// on initialise notre matrice de masse locale. Si j'ai bien compris on ne doit pas utiliser le format de matrices fem, donc on prends juste un tableau de deux valeurs (0 = coef diag, 1 = coef off diag )'
 		double Mloc[2];
@@ -175,8 +181,16 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 		Vec3f B = m.positions[b];
 		Vec3f C = m.positions[c];
 
-		Vec3d AB = Vec3d(B) - Vec3d(A);
-		Vec3d AC = Vec3d(C) - Vec3d(A);
+
+		//Vec3d AB = Vec3d(B) - Vec3d(A);
+		//Vec3d AC = Vec3d(C) - Vec3d(A);
+		// je me suis permise de regarder la correction parce que je ne comprenais pas pourquoi je pouvais pas faire le truc du dessus
+		Vec3d AB = { (double)B[0] - (double)A[0],
+			(double)B[1] - (double)A[1],
+			(double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0],
+				(double)C[1] - (double)A[1],
+				(double)C[2] - (double)A[2] };
 
 		// calcul de la matrice locale de rigidité
 		double Sloc[6];
@@ -196,6 +210,7 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 
 
 /* FEMatrix variants */
+
 
 void build_P1_mass_matrix(const Mesh &m, FEMatrix &M)
 {
@@ -219,67 +234,54 @@ void build_P1_mass_matrix(const Mesh &m, FEMatrix &M)
 		Vec3f B = m.positions[b];
 		Vec3f C = m.positions[c];
 		Vec3d AB = { (double)B[0] - (double)A[0],
-			     (double)B[1] - (double)A[1],
-			     (double)B[2] - (double)A[2] };
-		Vec3d AC = { (double)C[0] - (double)A[0],
-			     (double)C[1] - (double)A[1],
-			     (double)C[2] - (double)A[2] };
-		double Mloc[2];
-		mass(AB, AC, Mloc);
-		M.diag[a] += Mloc[0];
-		M.diag[b] += Mloc[0];
-		M.diag[c] += Mloc[0];
-		M.off_diag[t] = Mloc[1];
+			(double)B[1] - (double)A[1],
+			(double)B[2] - (double)A[2] };
+			Vec3d AC = { (double)C[0] - (double)A[0],
+				(double)C[1] - (double)A[1],
+				(double)C[2] - (double)A[2] };
+				double Mloc[2];
+				mass(AB, AC, Mloc);
+				M.diag[a] += Mloc[0];
+				M.diag[b] += Mloc[0];
+				M.diag[c] += Mloc[0];
+				M.off_diag[t] = Mloc[1];
 	}
 }
 
-void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
+void build_P1_stiffness_matrix(const Mesh &m, FEMatrix &S)
 {
-    size_t vtx_count = m.vertex_count();
-    size_t tri_count = m.triangle_count();
-    assert(P.row_start.size == vtx_count + 1);
+	size_t vtx_count = m.vertex_count();
+	size_t tri_count = m.triangle_count();
 
-    // initialisation CSR
-    S.symmetric = true;
-    S.rows = S.cols = vtx_count;
-    S.nnz = P.col.size;
-    S.row_start = P.row_start.data;
-    S.col = P.col.data;
-    S.data.resize(S.nnz);
-    for (size_t i = 0; i < S.nnz; ++i) S.data[i] = 0.0;
+	S.fem_type = FEMatrix::P1_sym;
+	S.m = &m;
+	S.rows = S.cols = vtx_count;
 
-    const TArray<uint32_t> &idx = m.indices;
+	S.diag.resize(vtx_count);
+	memset(S.diag.data, 0, vtx_count * sizeof(double));
 
-    // lambda pour ajouter off-diagonale en respectant la symétrie
-    auto add_offdiag = [&](uint32_t i, uint32_t j, double val){
-        if (i < j) std::swap(i,j);
-        S(i,j) += val;
-    };
-
-    for (size_t t = 0; t < tri_count; ++t) {
-        uint32_t a = idx[3*t + 0];
-        uint32_t b = idx[3*t + 1];
-        uint32_t c = idx[3*t + 2];
-
-        Vec3f A = m.positions[a];
-        Vec3f B = m.positions[b];
-        Vec3f C = m.positions[c];
-
-        Vec3d AB = Vec3d(B) - Vec3d(A);
-        Vec3d AC = Vec3d(C) - Vec3d(A);
-
-        // calcul de la matrice locale de rigidité
-        double Sloc[6];
-        stiffness(AB, AC, Sloc);
-
-        // diagonale
-        S(a,a) += Sloc[0];
-        S(b,b) += Sloc[1];
-        S(c,c) += Sloc[2];
-
-        // off-diagonale
-        add_offdiag(a,b, Sloc[3]);
-        add_offdiag(b,c, Sloc[4]);
-        add_offdiag(c,a, Sloc[5]);
-    }
+	S.off_diag.resize(3 * tri_count);
+	const TArray<uint32_t> &idx = m.indices;
+	for (size_t t = 0; t < tri_count; ++t) {
+		uint32_t a = idx[3 * t + 0];
+		uint32_t b = idx[3 * t + 1];
+		uint32_t c = idx[3 * t + 2];
+		Vec3f A = m.positions[a];
+		Vec3f B = m.positions[b];
+		Vec3f C = m.positions[c];
+		Vec3d AB = { (double)B[0] - (double)A[0],
+			(double)B[1] - (double)A[1],
+			(double)B[2] - (double)A[2] };
+			Vec3d AC = { (double)C[0] - (double)A[0],
+				(double)C[1] - (double)A[1],
+				(double)C[2] - (double)A[2] };
+				double Sloc[6];
+				stiffness(AB, AC, Sloc);
+				S.diag[a] += Sloc[0];
+				S.diag[b] += Sloc[1];
+				S.diag[c] += Sloc[2];
+				S.off_diag[3 * t + 0] = Sloc[3];
+				S.off_diag[3 * t + 1] = Sloc[4];
+				S.off_diag[3 * t + 2] = Sloc[5];
+	}
 }

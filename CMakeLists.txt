@@ -39,7 +39,7 @@ add_library(nanofem
 	src/mesh/cube.cpp
 	src/mesh/cube2.cpp
 	src/mesh/sphere.cpp
-	src/mesh/duplicate_verts.cpp
+	solutions/src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
 )

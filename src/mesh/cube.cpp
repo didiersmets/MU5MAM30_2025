@@ -43,7 +43,7 @@ int load_cube(Mesh &m, size_t subdiv)
 static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 {
 	size_t n = subdiv + 1;
-	size_t h = 1/subdiv;
+	//size_t h = 1/subdiv;
 
 	///// Commentaires perso/explication - pas vraiment un commentaires de code mais je suis un peu trop habituée à jupyter
 	// On va remplir toutes les faces en même temps, mais en faisant attention que les triangles d'une même face se succèdent dans pos (plus facile pour remplir les indices après)
@@ -59,9 +59,9 @@ static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 
 	size_t a = 1;
 	size_t h = 2*a/subdiv;
-	for(i = 0;i<n; i++){
+	for(size_t i = 0;i<n; i++){
 		size_t z = -a + h*i;
-		for(j = 0;j<n;j++){
+		for(size_t j = 0;j<n;j++){
 			size_t w = -a + h*j;
 
 			Vec3 v0(w,-a,z); // front
@@ -77,10 +77,10 @@ static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 			Vec3 v3(a,w,z); // right
 			pos[3*POW2(n) + j]  = v3;
 
-			Vec4 v4(w,z,-a); // down
+			Vec3 v4(w,z,-a); // down
 			pos[4*POW2(n) + j]  = v4;
 
-			Vec5 v5(w,z,a); // up
+			Vec3 v5(w,z,a); // up
 			pos[5*POW2(n) + j]  = v5;
 
 
@@ -114,36 +114,11 @@ static void load_cube_indices(uint32_t *idx, size_t subdiv)
 	size_t h = 1/subdiv;
 
 	size_t compteur = 0;
-	for(k = 0;
-		int load_cube(Mesh &m, size_t subdiv)
-		{
-			/* Check subdiv is reasonable and return error if not */
-			if (subdiv <= 0 || subdiv > (1 << 14) /* 16K */) {
-				return (-1);
-			}
 
-			size_t n = subdiv + 1;
+	for(size_t k = 0;k<6;k++){
 
-			/* Reserve memory for vertices and indices */
-			m.positions.resize(6 * POW2(n));
-			m.indices.resize(36 * POW2(subdiv));
-
-			/* First build vertices as six unattached faces of n^2 vertices each */
-			/* See below for implementation */
-			load_cube_vertices(m.positions.data, subdiv);
-
-			/* Build corresponding triangulation indices */
-			/* See below for implementation */
-			load_cube_indices(m.indices.data, subdiv);
-
-			/* Finally attach faces between themselves */
-			/* Implementation in src/duplicate_verts.cpp */
-			remove_duplicate_vertices(m);
-
-			return (0);
-		} k<6;k++){
-		for( i = 0; i<n-1; i++){
-			for(lign = 0; lign<n-1; lign++){
+		for( size_t i = 0; i<n-1; i++){
+			for(size_t lign = 0; lign<n-1; lign++){
 
 				// on récupère nos quatre sommets :
 				size_t a = i + lign*n ;
@@ -160,13 +135,13 @@ static void load_cube_indices(uint32_t *idx, size_t subdiv)
 
 				// on ajoute tout ça à notre liste
 				/// premier triangle : acd
-				idx[compteur++] = a + k*n**2 ;
-				idx[compteur++] = c + k*n**2 ;
-				idx[compteur++] = d+ k*n**2 ;
+				idx[compteur++] = a + k*POW2(n) ;
+				idx[compteur++] = c + k*POW2(n) ;
+				idx[compteur++] = d+ k*POW2(n) ;
 				// deuxième triangle abd
-				idx[compteur++] = a + k*n**2 ;
-				idx[compteur++] = b + k*n**2 ;
-				idx[compteur++] = d + k*n**2 ;
+				idx[compteur++] = a + k*POW2(n) ;
+				idx[compteur++] = b + k*POW2(n) ;
+				idx[compteur++] = d + k*POW2(n) ;
 			}
 		}
 	}
