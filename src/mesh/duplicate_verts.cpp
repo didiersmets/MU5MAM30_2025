@@ -19,76 +19,105 @@ indices after update: [0, 1, 2, 2, 1, 3]
 
 #include "mesh/duplicate_verts.h"
 
-#include <cstdlib>  // Required for malloc/free
+#include "common/array.h"
+#include "common/hash.h"
+#include "common/hash_table.h"
+#include "common/vec3.h"
+#include "mesh/mesh.h"
 
+#include <assert.h>
+#include <cmath>  // Required for std::abs
+#include <stddef.h>
+#include <stdint.h>
+
+// Helper to check if two vertices are close enough to be merged
+static bool are_vertices_close(const Vec3& a, const Vec3& b)
+{
+  // Using a tolerance allows merging vertices that are mathematically
+  // the same but different due to floating point rounding (e.g. 0.99999 vs 1.0)
+  const double epsilon = 1e-5;
+  return (std::abs(a.x - b.x) < epsilon) && (std::abs(a.y - b.y) < epsilon) &&
+         (std::abs(a.z - b.z) < epsilon);
+}
+
+// O(N^2) implementation: Robust for Vertex Welding with Epsilon
 size_t build_position_remap(const Vec3* pos, size_t count, uint32_t* remap)
 {
   size_t unique_count = 0;
 
-  for (size_t i = 0; i < count; i++)
+  for (size_t i = 0; i < count; ++i)
   {
     bool found = false;
-    // Search if this position has already been encountered
-    for (size_t j = 0; j < i; j++)
+
+    // Look backwards to see if this vertex already exists
+    for (size_t j = 0; j < i; ++j)
     {
-      if (pos[i] == pos[j])
+      if (are_vertices_close(pos[i], pos[j]))
       {
-        remap[i] = remap[j];  // Map to the index of the first occurrence
+        remap[i] = remap[j];  // Reuse the index of the existing vertex
         found    = true;
         break;
       }
     }
 
-    // If not found, it's a unique vertex
+    // If not found, it is a new unique vertex
     if (!found)
     {
-      remap[i] = (uint32_t) i;
+      remap[i] = (uint32_t) i;  // Map to itself (initially)
       unique_count++;
     }
   }
+
+  // Note: This logic assumes we will pack the array later.
+  // The 'remap' now holds the index of the "first occurrence" for every vertex.
+  // We need to compact this in the next step (in remove_duplicate_vertices).
   return unique_count;
 }
 
 void remove_duplicate_vertices(Mesh& m)
 {
-  if (m.vertex_count() == 0)
-    return;
+  // 1. Build the Remap Table
+  TArray<uint32_t> remap(m.vertex_count());
 
-  // Allocate memory for the remap table
-  uint32_t* remap = (uint32_t*) std::malloc(m.vertex_count() * sizeof(uint32_t));
+  // Note: We perform the cast to const Vec3* here to match the signature
+  build_position_remap(m.positions.data, m.vertex_count(), remap.data);
 
-  // Step 1: Identify duplicates
-  size_t unique_count = build_position_remap(m.positions.data, m.vertex_count(), remap);
+  // 2. Create the Condensed Position Array
+  // We need to map the "old indices" to "new packed indices"
+  TArray<uint32_t> old_to_new_map(m.vertex_count());
+  size_t           new_idx_counter = 0;
 
-  // Step 2: Create a mapping for the new condensed position array
-  // We need to know where each old unique vertex will end up in the new array
-  uint32_t* final_map      = (uint32_t*) std::malloc(m.vertex_count() * sizeof(uint32_t));
-  uint32_t  cur_unique_idx = 0;
-
-  for (uint32_t i = 0; i < m.vertex_count(); i++)
+  for (size_t i = 0; i < m.vertex_count(); ++i)
   {
-    if (i == remap[i])
-    {  // It's a first occurrence
-      m.positions[cur_unique_idx] = m.positions[i];
-      final_map[i]                = cur_unique_idx;
-      cur_unique_idx++;
-    }
-    else
+    // If this vertex points to itself, it is a "Primary" vertex (the first of its kind)
+    if (remap[i] == i)
     {
-      // It's a duplicate, point it to the already assigned new index
-      final_map[i] = final_map[remap[i]];
+      // Move it to the new packed position
+      m.positions[new_idx_counter] = m.positions[i];
+
+      // Record where it went
+      old_to_new_map[i] = (uint32_t) new_idx_counter;
+
+      new_idx_counter++;
     }
   }
 
-  // Step 3: Update the index buffer to point to new locations
-  for (uint32_t j = 0; j < m.index_count(); j++)
+  // Fill in the map for the duplicate vertices
+  for (size_t i = 0; i < m.vertex_count(); ++i)
   {
-    m.indices[j] = final_map[m.indices[j]];
+    if (remap[i] != i)
+    {
+      // If I am a duplicate of vertex J, my new index is the same as J's new index
+      old_to_new_map[i] = old_to_new_map[remap[i]];
+    }
   }
 
-  // Step 4: Finalize
-  m.positions.resize(unique_count);
+  // 3. Resize the vertex array to the correct size
+  m.positions.resize(new_idx_counter);
 
-  std::free(remap);
-  std::free(final_map);
+  // 4. Update all triangles to point to the new indices
+  for (size_t k = 0; k < m.indices.size; ++k)
+  {
+    m.indices[k] = old_to_new_map[m.indices[k]];
+  }
 }

@@ -37,8 +37,12 @@ float  dt    = 0.005;
 double tol   = 1e-6;
 
 /* RHS expression of the PDE */
-char        rhs_expression[128] = "100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))";
-bool        rhs_show_error      = false;
+// FOR TESTING PURPOSES,It's possible to CHANGE THE constant multiplying z IN THE EXPRESSION BELOW,
+// to become more stable
+// char rhs_expression[128] = "100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))";  // original
+char rhs_expression[128] = "50 * z * exp(-25*z^2) * (1 + 0.5 * cos(20 * theta))";
+
+bool        rhs_show_error = false;
 double      rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x},
                           {"y", &rhs_y},

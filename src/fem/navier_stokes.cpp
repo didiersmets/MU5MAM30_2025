@@ -51,39 +51,55 @@ void NavierStokesSolver::set_zero_mean(double* V)
   }
 }
 
-// Ask which implementation to use for the transport term
-/*
+/* To compute the TRANSPORT TERM We use the formula :
+ \forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k .
+ \nabla \phi_j)
+
+I used the change of variable to the reference triangle (0,0) (1,0) (0,1)
+the integral on the reference triangle of phi_i = 1/6 (notice that gradient terms are constant
+vector for P1 elements) det(J) = 2 * Area(T_ABC)
+*/
 void NavierStokesSolver::compute_transport(double* T)
 {
   memset(T, 0, N * sizeof(double));  // transport_term
-
-  /*
 
   double* OMEGA = omega.data;
   double* PSI   = psi.data;
 
   size_t nt = m.triangle_count();
-*/
-/*
-I used the change of variable to the reference triangle (0,0) (1,0) (0,1)
-the integral on the triangle of phi_i = 1/6
-det(J) = 2* Area(T_ABC)
-*/
 
-/* We use the formula :
- \forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k .
- \nabla \phi_j) */
+  /* On each triangle we have the contribution to T[i] for the three vertices of the triangle
+    1) The integral over the triangle of phi_i = Area / 6
+    2) The term (grad_purp \phi_k . \grad \phi_j) is constant over the triangle since P1 elements
+   are
+   * The gradient of the basis functions \nabla \phi_i are of order 1/L (L = length scale of the
+   * triangle) term of order 1/Area (since 1/L * 1/L = 1/L^2 ~ 2/Area). The Area terms cancel out
+   * perfectly, leaving a purely topological constant (1/6). Differently from what I had previously
+   computed*/
 
-/* As you can see:
- * The gradient of the basis functions \nabla \phi_i are of order 1/L (L = length scale of the
- * triangle) term of order 1/Area (since 1/L * 1/L = 1/L^2 ~ 1/Area). The Area terms cancel out
- * perfectly, leaving a purely topological constant (1/6).*/
-/*
   for (size_t tri = 0; tri < nt; tri++)
   {
     uint32_t a = m.indices[3 * tri];
     uint32_t b = m.indices[3 * tri + 1];
     uint32_t c = m.indices[3 * tri + 2];
+
+    // for PROJECT: I will add the coriolis term too here
+    /*
+    Coriolis term f = 2 * Omega_earth * sin(latitude)
+
+        transport term T(PSI,OMEGA) becomes T(PSI,OMEGA + f)
+
+        Question about the Coriolis term :
+        Latitude (ϕ): Is it correct to assume that sin(ϕ)=z?
+
+        Rotation (Ω): Which value should I use for the angular velocity Ω?
+
+        Smets answered:
+   Angular velocity of the earth is 2\pi every day, But we have assumed the sphere is of radius one
+   so that has some implication in the scaling. For testing though, I'd recommend using very
+   different values and observe how it affects the motions.
+
+    */
 
     double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
     T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6.0;
@@ -92,59 +108,8 @@ det(J) = 2* Area(T_ABC)
   }
 }
 
-*/
-void NavierStokesSolver::compute_transport(double* T)
-{
-  memset(T, 0, N * sizeof(double));  // transport_term
-
-  double* OMEGA = omega.data;
-  double* PSI   = psi.data;
-
-  size_t nt = m.triangle_count();
-
-  /*
-  I used the change of variable to the reference triangle (0,0) (1,0) (0,1)
-  the integral on the triangle of phi_i = 1/6
-  det(J) = 2* Area(T_ABC)
-  */
-
-  /* We use the formula :
-   \forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k .
-   \nabla \phi_j) */
-
-  for (size_t tri = 0; tri < nt; tri++)
-  {
-    uint32_t a = m.indices[3 * tri];
-    uint32_t b = m.indices[3 * tri + 1];
-    uint32_t c = m.indices[3 * tri + 2];
-
-    Vec3f A_pos = m.positions[a];
-    Vec3f B_pos = m.positions[b];
-    Vec3f C_pos = m.positions[c];
-    // Edge vectors
-    Vec3d AB = {(double) B_pos[0] - A_pos[0],
-                (double) B_pos[1] - A_pos[1],
-                (double) B_pos[2] - A_pos[2]};
-    Vec3d AC = {(double) C_pos[0] - A_pos[0],
-                (double) C_pos[1] - A_pos[1],
-                (double) C_pos[2] - A_pos[2]};
-
-    // Calculate area of the triangle
-    double area = 0.5 * norm(cross(AB, AC));
-
-    // integral over the triangle of phi_i = 1/6
-    // det(J) = 2* Area(T_ABC)
-
-    double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
-    T[a] += (area / 3.0) * omega_sum * (PSI[c] - PSI[b]);
-    T[b] += (area / 3.0) * omega_sum * (PSI[a] - PSI[c]);
-    T[c] += (area / 3.0) * omega_sum * (PSI[b] - PSI[a]);
-  }
-}
-
 // To compute the stream function PSI from the vorticity OMEGA we need to solve the linear system
 // associated to the poisson problem S * PSI = - M * OMEGA
-
 size_t NavierStokesSolver::compute_stream_function()
 {
   size_t iter = 0;
@@ -181,7 +146,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
   // first computation of PSI comes from an omega with zero mean: see src/test_navier_stokes.cpp
   // compute PSI from OMEGA
   compute_stream_function();
-  // set_zero_mean(psi.data);
+  //  we ensure that PSI over the domain is zero too.
+  set_zero_mean(psi.data);
 
   // compute transport term T(OMEGA, PSI)
   TArray<double> transport(N);
@@ -238,9 +204,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
                                                max_iterations,
                                                false);
 
-  // we ensure that the vorticity omega has zero mean at each time step
-  // hence, we are sure that integral of
-  //  PSI over the domain is zero too.
+  // Necessary to ensure that omega has zero mean at each time step
   set_zero_mean(omega.data);
 
   t += dt;
