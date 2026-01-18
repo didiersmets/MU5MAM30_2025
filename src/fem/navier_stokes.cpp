@@ -16,9 +16,9 @@ NavierStokesSolver::NavierStokesSolver(const Mesh& m)
   build_P1_mass_matrix(m, P, M);
   build_P1_stiffness_matrix(m, P, S);
 
-  vol    = M.sum();  // volume
+  vol = M.sum();  // volume
   inited = false;
-  t      = 0;
+  t = 0;
 
 }
 
@@ -69,7 +69,7 @@ void NavierStokesSolver::compute_transport(double* T)
 
 size_t NavierStokesSolver::compute_stream_function()
 {
-  size_t iter = 0;
+  size_t iteration = 0;
 
   /* Your implementation goes here */
   // we first compute M * OMEGA
@@ -81,21 +81,14 @@ size_t NavierStokesSolver::compute_stream_function()
     Momega.data[i] = -Momega.data[i];
   }
 
-  double rel_error      = 0.0;
-  double tol            = 1e-6;
+  double relative_error = 0.0;
+  double tolerance = 1e-6;
   int    max_iterations = 1000;
   // solve with conjugate gradient S * PSI = b
-  iter = conjugate_gradient_solve(S,
-                                  Momega.data,
-                                  psi.data,
-                                  r.data,
-                                  p.data,
-                                  Ap.data,
-                                  &rel_error,
-                                  tol,
-                                  max_iterations);
 
-  return iter;
+  iteration = conjugate_gradient_solve(S,Momega.data, psi.data, r.data, p.data, Ap.data, &relative_error, tolerance, max_iterations);
+
+  return iteration;
 }
 
 void NavierStokesSolver::time_step(double dt, double nu)
@@ -113,6 +106,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
   // compute the right hand side
   // rhs = M * OMEGA + dt * T(OMEGA, PSI)
   M.mvp(omega.data, Momega.data);  // Momega = M * omega
+
   // Momega = dt * transport + Momega
   // tiny_blas.axpy(N, dt, transport.data, Momega.data);
   for (size_t i = 0; i < N; i++)
@@ -122,12 +116,12 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
   // build the left hand side matrix A = M + nu * dt * S
   CSRMatrix A;
-  A.rows      = M.rows;
-  A.cols      = M.cols;
-  A.nnz       = M.nnz;
+  A.rows = M.rows;
+  A.cols = M.cols;
+  A.nnz = M.nnz;
   A.symmetric = M.symmetric;
   A.row_start = M.row_start;
-  A.col       = M.col;
+  A.col = M.col;
   A.data.resize(A.nnz);
 
   // compute A = M + S
@@ -145,23 +139,15 @@ void NavierStokesSolver::time_step(double dt, double nu)
    *********************************************************************/
 
 
-  double rel_error      = 0.0;
-  double tolerance      = 1e-6;
+  double rel_error = 0.0;
+  double tolerance = 1e-6;
   int    max_iterations = 1000;
 
-  size_t iterations = conjugate_gradient_solve(A,
-                                               Momega.data,  // RHS
-                                               omega.data,   // Initial guess AND result
-                                               r.data,
-                                               p.data,
-                                               Ap.data,
-                                               &rel_error,
-                                               tolerance,
-                                               max_iterations,
-                                               false);
+  size_t iterations = conjugate_gradient_solve(A, Momega.data, omega.data, r.data, p.data, Ap.data, &rel_error, tolerance, max_iterations, false);
 
   // Necessary to ensure that omega has zero mean at each time step
   set_zero_mean(omega.data);
+
 
   t += dt;
 }
