@@ -23,10 +23,12 @@ struct NavierStokesSolver {
 	CSRPattern P; // Pattern arrays
 	CSRMatrix S;  // Stiffness matrix
 	CSRMatrix M;  // Mass matrix
+	CSRMatrix A; // Matrix for time stepping
 #endif
 	TArray<double> r;  // current residue r = Mf - Su
 	TArray<double> p;  // internal for cg
 	TArray<double> Ap; // internal for cg
+	TArray<double> T;  // Transport term
 
 	bool inited; // Initialization computes first residue and error
 

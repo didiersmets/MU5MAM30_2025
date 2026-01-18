@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include "navier_stokes.h"
+#include "conjugate_gradient.h"
 
 #include "P1.h"
 #include "tiny_blas.h"
@@ -16,6 +17,7 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	, r(N)
 	, p(N)
 	, Ap(N)
+  , T(N)
 {
 #if USE_FEM_MATRIX
 	build_P1_mass_matrix(m, M);
@@ -24,6 +26,14 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	build_P1_CSRPattern(m, P);
 	build_P1_mass_matrix(m, P, M);
 	build_P1_stiffness_matrix(m, P, S);
+
+  A.rows      = M.rows;
+  A.cols      = M.cols;
+  A.nnz       = M.nnz;
+  A.symmetric = M.symmetric;
+  A.row_start = M.row_start;
+  A.col       = M.col;
+  A.data.resize(A.nnz);
 #endif
 	vol = M.sum();
 	inited = false;
@@ -33,6 +43,17 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 void NavierStokesSolver::set_zero_mean(double *V)
 {
 	/* Your implementation goes here */
+  double integral = 0.0;
+  TArray<double> MV(N);
+  M.mvp(V, MV.data);
+  for (size_t i = 0; i < N; i++) {
+      integral += MV[i];
+  }
+  const double mean = integral / vol;
+  for (size_t i = 0; i < N; i++) {
+      V[i] -= mean;
+  }
+
 }
 
 void NavierStokesSolver::compute_transport(double *T)
@@ -97,12 +118,39 @@ size_t NavierStokesSolver::compute_stream_function()
 
 	/* Your implementation goes here */
 
+  // compute Momega
+  M.mvp(omega.data, Momega.data);
+
+  // rhs is -Momega
+  for (size_t i = 0; i < N; i++)
+  {
+    Momega.data[i] = -Momega.data[i];
+  }
+
+  double rel_error = 0.0;
+  iter = conjugate_gradient_solve(S,
+                                  Momega.data,
+                                  psi.data,
+                                  r.data,
+                                  p.data,
+                                  Ap.data,
+                                  &rel_error,
+                                  tol,
+                                  iter_max);
+
+  // restore value of Momega
+  for (size_t i = 0; i < N; i++)
+  {
+    Momega.data[i] = -Momega.data[i];
+  } 
+
 	return iter;
 }
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
 	compute_stream_function();
+  set_zero_mean(psi.data);
 
 	/**********************************************************************
 	 * Solve the system :
@@ -113,11 +161,39 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 	/* Your implementation goes here */
 
+  // compute transport term
+  compute_transport(T.data);
+
+  // compute rhs = M * omega + dt * T
+  TArray<double> rhs(N);
+  for(size_t i = 0; i < N; i++) {
+      rhs[i] = Momega[i] + dt * T[i];
+  }
+
+  // compute matrix A = M + nu * dt * S (only once)
+  if(!inited) {
+    for(size_t i = 0; i < A.nnz; i++) {
+        A.data[i] = M.data[i] + nu * dt * S.data[i];
+    }
+    inited = true;
+  }
+
+  // solve system
+  double rel_error = 0.0;
+  size_t iterations = conjugate_gradient_solve(A,
+                                               rhs.data,
+                                               omega.data,
+                                               r.data,
+                                               p.data,
+                                               Ap.data,
+                                               &rel_error,
+                                               tol,
+                                               iter_max,
+                                               false);
+
+
+
 	set_zero_mean(omega.data);
-
-	// find psi_+1
-
-	// find omega_+1
 
 	t += dt;
 }
