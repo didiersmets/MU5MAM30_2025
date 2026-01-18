@@ -1,7 +1,7 @@
 #include "mesh.h"
 #include "adjacency.h"
 
-VTAdjacency::VTAdjacency(const Mesh &m) //: degree (nv, 0), offset (nv, 0), vtri ()
+VTAdjacency::VTAdjacency(const Mesh &m) 
 {
 
 	int nv { m.vertex_count() };
@@ -13,10 +13,8 @@ VTAdjacency::VTAdjacency(const Mesh &m) //: degree (nv, 0), offset (nv, 0), vtri
 		offset[i] = 0;
 	}
 
-	//TArray<uint32_t> degree (nv, 0);
-	//TArray<uint32_t> offset (nv, 0);
-	//TArray<VTri> vtri {};
 
+	//first : we complete degree
 	for (int i = 0; i < nt; ++i)
 	{
 		uint32_t a = m.indices[3*i];
@@ -30,6 +28,7 @@ VTAdjacency::VTAdjacency(const Mesh &m) //: degree (nv, 0), offset (nv, 0), vtri
 
 
 
+	//Second : we complete offset
 	for (int i = 1; i < nv; ++i)
 	{
 		for (int j = 0; j < i; ++j)
@@ -38,6 +37,12 @@ VTAdjacency::VTAdjacency(const Mesh &m) //: degree (nv, 0), offset (nv, 0), vtri
 		}
 	}
 
+
+	/*Then : for vtri  
+			 we create a list of shape 2x3xnt 
+			 containing the previous and the next ertex 
+			 of each vertex in each triangle
+	*/
 
 	TArray<uint32_t> pre_vtri (2*3*nt, 0);
 	TArray<uint32_t> ind_for_vtri;
