@@ -25,6 +25,7 @@ void inline blas_axpy(double a, const double *__restrict x,
 	}
 }
 
+
 void inline blas_axpby(double a, const double *__restrict x, double b,
 		       double *__restrict y, size_t N)
 {
