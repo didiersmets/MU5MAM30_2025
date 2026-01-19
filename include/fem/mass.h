@@ -17,5 +17,12 @@
  */
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
-	/* Your implementation goes here ! */
+  // find the area of ABC
+  double area = norm(cross(AB, AC)) / 2;
+  int    coef;
+    
+  for (int i=0; i<9; i++){
+    coef =  (i%4==0) ? 2:1;
+    M[i] = coef * area / 12;
+  }
 }
