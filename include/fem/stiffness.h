@@ -21,7 +21,34 @@
  * Hiden for now.
  *
  */
+
+/*
+
+  BC = BA+AC = -AB + AC
+  Area4 = Area*4 = 2 * |AB x AC|
+  
+  S[0] = S_00  A<->A : |BC|^2 / Area4
+  S[4] = S_11  B<->B : |AC|^2 / Area4
+  S[8] = S_22  C<->C : |AB|^2 / Area4
+  
+  S[1]=S[3] = S_01  A<->B : - (AC . BC) / Area4
+  S[5]=S[4] = S_12  B<->C : - (AC . AB) / Area4
+  S[2]=S[6] = S_20  C<->A :   (AB . BC) / Area4
+
+*/
+
+
+
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-	/* Your implementation goes here */
+  double Area4 = 2 * norm(cross(AB, AC));
+  Vec3d BC = AC - AB;
+
+  S[0] = norm2(BC) / Area4;
+  S[1] = (-1) * dot(AC,BC) / Area4;
+  S[2] =        dot(AB,BC) / Area4;
+  
+  S[4] = norm2(AC) / Area4;
+  S[5] = (-1) * dot(AC,AB) / Area4;
+  S[8] = norm2(AB) / Area4;
 }
