@@ -60,10 +60,24 @@ void NavierStokesSolver::compute_transport(double* T)
     uint32_t b = m.indices[3 * tri + 1];
     uint32_t c = m.indices[3 * tri + 2];
 
+	// get vertex positions
+	Vec3f A = m.positions[a];
+	Vec3f B = m.positions[b];
+	Vec3f C = m.positions[c];
+
+	// compute edges
+	Vec3f AB = B - A;
+	Vec3f AC = C - A;
+
+	// area of the triangle
+	double area = 0.5 * norm(cross(AB, AC));
+
+	// compute transport term contribution for each vertex of the triangle
+	// I think that the area term is not necessary since it is included in the mass matrix
     double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
-    T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6.0;
-    T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6.0;
-    T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6.0;
+    T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6.0; //* 2 * area;
+    T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6.0; //* 2 * area;
+    T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6.0; //* 2 * area;
   }
 }
 
@@ -85,7 +99,6 @@ size_t NavierStokesSolver::compute_stream_function()
   double tolerance = 1e-6;
   int    max_iterations = 1000;
   // solve with conjugate gradient S * PSI = b
-
   iteration = conjugate_gradient_solve(S,Momega.data, psi.data, r.data, p.data, Ap.data, &relative_error, tolerance, max_iterations);
 
   return iteration;
