@@ -4,6 +4,8 @@
 
 #include "navier_stokes.h"
 
+#include "conjugate_gradient.h"
+
 #include "P1.h"
 #include "tiny_blas.h"
 
@@ -20,6 +22,7 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 #endif
 	vol = M.sum();
 	inited = false;
+	rel_error = (double *)malloc(sizeof(double));
 	t = 0;
 }
 
@@ -27,7 +30,7 @@ void NavierStokesSolver::set_zero_mean(double *V)
 {
 	/* We use the formula : \bar v = (\sum_{i, j} V_i * M_{ij})  / vol
 	Then we set V <- V - \bar v */
-	double *TEMP = nullptr;
+	double *TEMP = (double *)malloc(N * sizeof(double));
 	M.mvp(V, TEMP);
 	double sum = blas_sum_in_place(TEMP, N);
 	for (size_t i = 0; i < N; i++)
@@ -78,23 +81,93 @@ size_t NavierStokesSolver::compute_stream_function()
 	 *
 	 *********************************************************************/
 
+	double *PSI = psi.data;
+	double *MOMEGA = Momega.data;
+	double *OMEGA = omega.data;
+	double *R = r.data;
+	double *P = p.data;
+	double *AP = Ap.data;
+
+	M.mvp(OMEGA, MOMEGA);
+
+	/* Solve using CG */
+	iter = conjugate_gradient_solve(S, MOMEGA, PSI, R, P, AP, rel_error, tol, iter_max, false);
+
 	return iter;
 }
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
-	double *T;
+	double *T = (double *)malloc(N * sizeof(double));
 	compute_stream_function();
 	compute_transport(T);
 
 	/**********************************************************************
 	 * Solve the system :
 	 *
-	 *  (M + \nu * dt * S)omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
+	 *  (M + \nu * dt * S) * omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
 	 *
 	 *********************************************************************/
 
-	set_zero_mean(omega.data);
+	double *MOMEGA = Momega.data;
+	double *OMEGA = omega.data;
+	double *R = r.data;
+	double *P = p.data;
+	double *AP = Ap.data;
+
+	double *RHS = (double *)malloc(N * sizeof(double));
+	;
+	blas_copy(MOMEGA, RHS, N);
+	blas_axpy(dt, T, RHS, N);
+
+	/* We directly solve the CG here to avoid creating the matrix M + \nu * dt * S */
+	double *TEMP = (double *)malloc(N * sizeof(double));
+
+	b2 = blas_dot(RHS, RHS, N);
+
+	/* r_0 = RHS - M * omega(t) - \nu * dt * S * omega(t) */
+	M.mvp(OMEGA, R);
+	S.mvp(OMEGA, TEMP);
+	blas_axpby(1, RHS, -1., R, N);
+	blas_axpby(-nu * dt, TEMP, 1., R, N);
+
+	/* p_0 = r_0 */
+	blas_copy(R, P, N);
+
+	r2 = blas_dot(R, R, N);
+	*rel_error = sqrt(r2 / b2);
+
+	size_t iter = 0;
+	while ((iter < iter_max) && (*rel_error > tol))
+	{
+		/* Computation of (M + \nu * dt * S) * p_n */
+		M.mvp(P, AP);
+		S.mvp(P, TEMP);
+		blas_axpby(nu * dt, TEMP, 1., AP, N);
+
+		/* Computation of \alpha_n */
+		double p_A2 = blas_dot(P, AP, N);
+		double alpha = r2 / p_A2;
+
+		/* Computation of omega_{n+1} */
+		blas_axpby(alpha, P, 1., OMEGA, N);
+
+		/* Computation of r_{n+1} */
+		blas_axpby(-alpha, AP, 1., R, N);
+
+		/* Computation of \beta_{n+1} */
+		double new_r2 = blas_dot(R, R, N);
+		double beta = new_r2 / r2;
+
+		/* Computation of p_{n+1} */
+		blas_axpby(1., R, beta, P, N);
+
+		r2 = new_r2;
+		*rel_error = sqrt(r2 / b2);
+		iter++;
+	}
+
+	set_zero_mean(OMEGA);
 
 	t += dt;
 }

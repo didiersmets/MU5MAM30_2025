@@ -10,7 +10,8 @@
  *
  *****************************************************************************/
 
-struct CSRPattern {
+struct CSRPattern
+{
 	bool symmetric;
 	size_t rows;
 	size_t cols;
@@ -19,14 +20,15 @@ struct CSRPattern {
 	 * are stored at indices row_start(i) <= k < row_start(i + 1).
 	 * Corresponding column indices are read into col(k). */
 	TArray<uint32_t> row_start; /* Size = nrows + 1 */
-	TArray<uint32_t> col; /* Size = nnz */
+	TArray<uint32_t> col;		/* Size = nnz */
 };
 
-struct CSRMatrix : public Matrix {
+struct CSRMatrix : public Matrix
+{
 	bool symmetric = false;
-	size_t nnz; /* Number of (non zero) entries */
+	size_t nnz;			 /* Number of (non zero) entries */
 	uint32_t *row_start; /* pointer to the corresponding data in pattern */
-	uint32_t *col; /* pointer to the corresponding data in pattern */
+	uint32_t *col;		 /* pointer to the corresponding data in pattern */
 	TArray<double> data; /* Size = nnz  */
 	void mvp(const double *__restrict x, double *__restrict y) const;
 	double sum() const;
