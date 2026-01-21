@@ -64,24 +64,23 @@ void NavierStokesSolver::compute_transport(double *T)
 		grad1 /= (2 * area);
 		grad2 /= (2 * area);
 		// Commpute the transport terms
-		double omega0 = omega[i0];
-		double omega1 = omega[i1];
-		double omega2 = omega[i2];
+		T[i0] = area/3.0*(omega[i0]*psi[i1]*dot(grad0,grad1) + omega[i0]*psi[i2]*dot(grad0,grad2) + omega[i1]*psi[i1]*dot(grad1,grad0)
+				+ omega[i1]*psi[i2]*dot(grad2,grad0) + omega[i2]*psi[i1]*dot(grad1,grad0) + omega[i2]*psi[i2]*dot(grad2,grad0));
 
-		double psi0 = psi[i0];
-		double psi1 = psi[i1];
-		double psi2 = psi[i2];
+		T[i1] = area/3.0*(omega[i0]*psi[i0]*dot(grad0,grad0) + omega[i0]*psi[i2]*dot(grad2,grad1) + omega[i1]*psi[i0]*dot(grad0,grad1)
+				+ omega[i1]*psi[i2]*dot(grad2,grad1) + omega[i2]*psi[i0]*dot(grad0,grad1) + omega[i2]*psi[i1]*dot(grad1,grad1));
 
-		T[i0] += 
+		T[i2] = area/3.0*(omega[i0]*psi[i0]*dot(grad0,grad2) + omega[i0]*psi[i1]*dot(grad1,grad2) + omega[i1]*psi[i0]*dot(grad0,grad2)
+	             +omega[i1]*psi[i1]
 	}
 }
-
 
 size_t NavierStokesSolver::compute_stream_function()
 {
 	size_t iter = 0;
 
 	/* Your implementation goes here */
+	
 
 	return iter;
 }
