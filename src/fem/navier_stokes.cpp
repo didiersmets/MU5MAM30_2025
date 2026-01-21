@@ -168,11 +168,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
   }
 
   // compute matrix A = M + nu * dt * S (only once)
-  if(!inited) {
-    for(size_t i = 0; i < A.nnz; i++) {
-        A.data[i] = M.data[i] + nu * dt * S.data[i];
-    }
-    inited = true;
+  for(size_t i = 0; i < A.nnz; i++) {
+      A.data[i] = M.data[i] + nu * dt * S.data[i];
   }
 
   // solve system
