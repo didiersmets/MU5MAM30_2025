@@ -4,23 +4,33 @@
 #include "array.h"
 #include "conjugate_gradient.h"
 #if USE_FEM_MATRIX
-	#include "fem_matrix.h"
+#include "fem_matrix.h"
 #else
-	#include "sparse_matrix.h"
+#include "sparse_matrix.h"
 #endif
 #include "mesh.h"
 #include "tiny_blas.h"
 
 PoissonSolver::PoissonSolver(const Mesh &m)
-    : m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
+	: m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
 {
 #if USE_FEM_MATRIX
+#if USE_FEM_P2
+	throw std::runtime_error("P2 Lagrange elements are not available for FEM matrix framework");
+#else
 	build_P1_mass_matrix(m, M);
 	build_P1_stiffness_matrix(m, A);
+#endif
+#else
+#if USE_FEM_P2
+	build_P2_CSRPattern(m, P);
+	build_P2_mass_matrix(m, P, M);
+	build_P2_stiffness_matrix(m, P, A);
 #else
 	build_P1_CSRPattern(m, P);
 	build_P1_mass_matrix(m, P, M);
 	build_P1_stiffness_matrix(m, P, A);
+#endif
 #endif
 	vol = M.sum();
 	inited = false;
@@ -30,7 +40,8 @@ PoissonSolver::PoissonSolver(const Mesh &m)
 
 void PoissonSolver::clear_solution()
 {
-	for (size_t i = 0; i < N; i++) {
+	for (size_t i = 0; i < N; i++)
+	{
 		u[i] = 0;
 	}
 	init_cg();
@@ -42,7 +53,8 @@ void PoissonSolver::set_zero_mean(double *V)
 {
 	M.mvp(V, Ap.data);
 	double s = blas_sum_in_place(Ap.data, N);
-	for (size_t i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i)
+	{
 		V[i] -= s / vol;
 	}
 }
@@ -75,7 +87,8 @@ void PoissonSolver::init_cg()
 
 void PoissonSolver::do_iterate(size_t max_iter, double tol)
 {
-	if (!inited) {
+	if (!inited)
+	{
 		init_cg();
 	}
 
@@ -84,7 +97,8 @@ void PoissonSolver::do_iterate(size_t max_iter, double tol)
 	double *P = p.data;
 	double *AP = Ap.data;
 
-	while (max_iter-- && rel_error > tol) {
+	while (max_iter-- && rel_error > tol)
+	{
 		r2 = cg_iterate_once(A, U, R, P, AP, r2);
 		iterate++;
 		rel_error = sqrt(r2 / b2);
