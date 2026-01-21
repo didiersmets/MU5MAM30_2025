@@ -29,7 +29,7 @@ add_library(nanofem
 	#        before building the project.
 	src/fem/P1.cpp
 	src/fem/poisson.cpp
-	#src/fem/navier_stokes.cpp
+	src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
@@ -99,14 +99,14 @@ target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr)
 ###############################################################################
 
 ###############################################################################
-#add_executable(test_NS
-#	src/common/logging.cpp
-#	src/bin/test_navier_stokes.cpp
-#)
-#target_compile_options(test_NS PRIVATE 
-#	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
-#)
-#target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+add_executable(test_NS
+	src/common/logging.cpp
+	src/bin/test_navier_stokes.cpp
+)
+target_compile_options(test_NS PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
 ###############################################################################
 
 ###############################################################################
