@@ -30,11 +30,16 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	t = 0;
 }
 
+// Pourquoi prendre cette moyenne à 0 ? temps n à n+1 => moyenne pas tout a fait 0 numériquement donc on force la moyenne a 0
 void NavierStokesSolver::set_zero_mean(double *V)
 {
-	/* Your implementation goes here */
+	M.mvp(V, Ap.data);
+	double s = blas_sum_in_place(Ap.data, N);
+	for (size_t i = 0; i < N; ++i) {
+		V[i] -= s / vol;
+	}
 }
-
+// T dans les notes de cours 
 void NavierStokesSolver::compute_transport(double *T)
 {
 	memset(T, 0, N * sizeof(double));
@@ -42,6 +47,7 @@ void NavierStokesSolver::compute_transport(double *T)
 	/* Your implementation goes here */
 }
 
+// 
 size_t NavierStokesSolver::compute_stream_function()
 {
 	size_t iter = 0;

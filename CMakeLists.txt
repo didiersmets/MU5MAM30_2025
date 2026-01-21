@@ -44,6 +44,7 @@ endif()
 # 	src/mesh/mesh_bounds.cpp
 # )
 add_library(nanofem
+<<<<<<< HEAD
     # --- FEM ---
     solutions/src/fem/P1.cpp
     src/fem/poisson.cpp
@@ -66,6 +67,35 @@ add_library(nanofem
     solutions/src/mesh/duplicate_verts.cpp
     src/mesh/mesh_io.cpp
     src/mesh/mesh_bounds.cpp
+=======
+	# NOTE : If you want to test your code step by step, before completion
+	#        of all the files with "holes" (i.e. sections labeled 
+	#        /* Your implementation goes here */ ), you can simply prefix
+	#        the corresponding unfinished source files below with the
+	#        solutions directory. 
+	#        If P1.cpp has not been completed yet e.g., you simply replace :
+	#	    src/fem/P1.cpp
+	#        by
+	#           solutions/src/fem/P1.cpp
+	#        The files mass.h and stiffness.h are specific since they are
+	#        header files, you should complete (or copy them from solutions)
+	#        before building the project.
+	src/fem/P1.cpp
+	src/fem/poisson.cpp
+	src/fem/navier_stokes.cpp
+	src/linalg/conjugate_gradient.cpp
+	#src/linalg/cholesky.cpp
+	src/matrix/fem_matrix.cpp
+	src/matrix/sparse_matrix.cpp
+	#src/matrix/spy.cpp
+	src/mesh/adjacency.cpp
+	src/mesh/cube.cpp
+	src/mesh/cube2.cpp
+	src/mesh/sphere.cpp
+	src/mesh/duplicate_verts.cpp
+	src/mesh/mesh_io.cpp
+	src/mesh/mesh_bounds.cpp
+>>>>>>> main
 )
 target_include_directories(nanofem PUBLIC 
 	include/common 
@@ -123,14 +153,14 @@ target_link_libraries(test_poisson PRIVATE nanofem nanoviewer tiny_expr)
 ###############################################################################
 
 ###############################################################################
-#add_executable(test_NS
-#	src/common/logging.cpp
-#	src/bin/test_navier_stokes.cpp
-#)
-#target_compile_options(test_NS PRIVATE 
-#	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
-#)
-#target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+add_executable(test_NS
+	src/common/logging.cpp
+	src/bin/test_navier_stokes.cpp
+)
+target_compile_options(test_NS PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
 ###############################################################################
 
 ###############################################################################
