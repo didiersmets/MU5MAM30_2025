@@ -28,6 +28,9 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 		vtri[offset[b]++]={c,a};
 		vtri[offset[c]++]={a,b};
 	}
+	for(int i = 0, i<nv,i++){
+		offset[i] = offset[i]- degree[i];
+	}
 
 	/* Your implementation goes here */
 }
