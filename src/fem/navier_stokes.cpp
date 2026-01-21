@@ -101,14 +101,11 @@ void NavierStokesSolver::compute_transport(double *T)
 		Vec3f AB = B - A;
 		Vec3f AC = C - A;
 
-		// area of the triangle
-		double area = 0.5 * norm(cross(AB, AC));
-
 		double sum_omega = v_omega[ia] + v_omega[ib] + v_omega[ic];
 		// compute local contributions to transport term
-		T[ia] += (area / 3.0) * sum_omega * (v_psi[ic] - v_psi[ib]);
-		T[ib] += (area / 3.0) * sum_omega * (v_psi[ia] - v_psi[ic]);
-		T[ic] += (area / 3.0) * sum_omega * (v_psi[ib] - v_psi[ia]);
+		T[ia] += sum_omega * (v_psi[ic] - v_psi[ib]) / 6.0f;
+		T[ib] += sum_omega * (v_psi[ia] - v_psi[ic]) / 6.0f;
+		T[ic] += sum_omega * (v_psi[ib] - v_psi[ia]) / 6.0f;
 	}
 }
 
