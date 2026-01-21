@@ -14,29 +14,23 @@
  * Output: the six coefficients S_{00} S_{11} S_{22} S_{01} S_{12} S_{20},
  *         corresponding to the interactions A<->A, B<->B, C<->C, A<->B, B<->C,
  *         C<->A
- *
- * Idea behind computation :
- * -------------------------
- *
- * Hiden for now.
- *
  */
 
-void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
+void inline stiffness_P1(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
 	/* Computation of ||AB x AC|| */
-	double det = norm(cross(AB, AC));
+	double K = norm(cross(AB, AC));
 	
-	if (det == 0)
+	if (K == 0)
 		throw std::runtime_error("The two vectors must be linearly independent.");
 	else
 	{
 		Vec3d BC = AC - AB;
-		S[0] = norm2(BC) / (2 * det); // A <-> A
-		S[1] = norm2(AC) / (2 * det); // B <-> B
-		S[2] = norm2(AB) / (2 * det); // C <-> C
-		S[3] = -dot(AC, BC) / (2 * det); // A <-> B
-		S[4] = -dot(AB, AC) / (2 * det); // B <-> C
-		S[5] = dot(AB, BC) / (2 * det); // C <-> A
+		S[0] = norm2(BC) / (2 * K); // A <-> A
+		S[1] = norm2(AC) / (2 * K); // B <-> B
+		S[2] = norm2(AB) / (2 * K); // C <-> C
+		S[3] = -dot(AC, BC) / (2 * K); // A <-> B
+		S[4] = -dot(AB, AC) / (2 * K); // B <-> C
+		S[5] = dot(AB, BC) / (2 * K); // C <-> A
 	}
 }
