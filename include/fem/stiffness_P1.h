@@ -34,3 +34,23 @@ void inline stiffness_P1(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 		S[5] = dot(AB, BC) / (2 * K); // C <-> A
 	}
 }
+
+/* To be consistent with the solutions repository */
+void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
+{
+	/* Computation of ||AB x AC|| */
+	double K = norm(cross(AB, AC));
+	
+	if (K == 0)
+		throw std::runtime_error("The two vectors must be linearly independent.");
+	else
+	{
+		Vec3d BC = AC - AB;
+		S[0] = norm2(BC) / (2 * K); // A <-> A
+		S[1] = norm2(AC) / (2 * K); // B <-> B
+		S[2] = norm2(AB) / (2 * K); // C <-> C
+		S[3] = -dot(AC, BC) / (2 * K); // A <-> B
+		S[4] = -dot(AB, AC) / (2 * K); // B <-> C
+		S[5] = dot(AB, BC) / (2 * K); // C <-> A
+	}
+}
