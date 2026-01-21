@@ -6,6 +6,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE OFF)
 
 project(MU5MAM30 LANGUAGES CXX C)
+find_package(glfw3 REQUIRED)
 
 find_package(OpenGL REQUIRED)
 
@@ -23,7 +24,7 @@ add_library(nanofem
 	#        If P1.cpp has not been completed yet e.g., you simply replace :
 	#	    src/fem/P1.cpp
 	#        by
-	#           solutions/src/fem/P1.cpp
+	#           src/fem/P1.cpp
 	#        The files mass.h and stiffness.h are specific since they are
 	#        header files, you should complete (or copy them from solutions)
 	#        before building the project.
@@ -133,7 +134,13 @@ add_library(imgui_glfw_opengl3
 target_include_directories(imgui_glfw_opengl3 PUBLIC
 	extern/glfw/include
 )
-###############################################################################
+
+target_include_directories(imgui_glfw_opengl3 PUBLIC
+	/usr/include
+)
+
+######
+#########################################################################
 
 ###############################################################################
 add_library(tiny_expr
@@ -144,5 +151,5 @@ target_include_directories(tiny_expr PUBLIC
 )
 ###############################################################################
 
-add_subdirectory(extern/glfw)
+# add_subdirectory(extern/glfw)
 
