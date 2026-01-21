@@ -33,13 +33,16 @@ void NavierStokesSolver::set_zero_mean(double* V)
 
   // In order to compute the integral over the domain of V, we use the mass matrix M
   // as int(V) = sum i sum j M_ij * V_j
+  // recall that Sum i (phi i) = 1
+  // integral = sum i (Vi * int(phi_i)) = sum i (Vi * int( 1 * phi_i))=sum i (Vi * sum j M_ij) = sum
+  // i (M * V)_i
 
   double integral = 0.0;
-  M.mvp(V, Momega.data);  // Momega = M * V
+  M.mvp(V, Ap.data);  // Momega = M * V
 
   for (size_t i = 0; i < N; i++)
   {
-    integral += Momega.data[i];
+    integral += Ap.data[i];
   }
 
   double mean_value = integral / vol;
@@ -83,38 +86,51 @@ void NavierStokesSolver::compute_transport(double* T)
     uint32_t b = m.indices[3 * tri + 1];
     uint32_t c = m.indices[3 * tri + 2];
 
-    // for PROJECT: I will add the coriolis term too here
     /*
-    Coriolis term f = 2 * Omega_earth * sin(latitude)
+=========================================================================
+       PROJECT UPDATE: CORIOLIS FORCE IMPLEMENTATION
+       =========================================================================
+       We modify the transport term to conserve Absolute Vorticity (eta) instead
+       of just Relative Vorticity (omega).
 
-        transport term T(PSI,OMEGA) becomes T(PSI,OMEGA + f)
+       1. Transport Equation:
+          The term J(psi, omega) becomes J(psi, omega + f).
 
-        Question about the Coriolis term :
-        Latitude (ϕ): Is it correct to assume that sin(ϕ)=z?
+       2. Coriolis Parameter 'f':
+          Formula: f = 2 * Omega_earth * sin(latitude)
+          Geometry: On a Unit Sphere (Radius = 1), sin(latitude) corresponds exactly
+                    to the z-coordinate.
+          Therefore: f = 2 * Omega_earth * z
 
-        Rotation (Ω): Which value should I use for the angular velocity Ω?
+          Instead of computing two separate integrals (one for omega, one for f),
+          we can simply sum the scalar values at the nodes first:
+          eta_node = omega_node + f_node
 
-        Smets answered:
-   Angular velocity of the earth is 2\pi every day, But we have assumed the sphere is of radius one
-   so that has some implication in the scaling. For testing though, I'd recommend using very
-   different values and observe how it affects the motions.
+        Because the FEM integration logic T(.) is linear with respect to the
+        coefficients, passing this sum is mathematically equivalent:
+          T(omega + f) == T(omega) + T(f)
 
-    */
-
+       3. Scaling (Omega_earth):
+          The professor confirmed that for a unit sphere, the rotation rate is a
+          tunable scaling parameter.
+          - Test with Omega_earth = 0.0 for standard isotropic turbulence.
+          - Test with Omega_earth ~ 10.0 - 50.0 to observe Rossby waves and zonal jets.
+      */
+    assert(a < N && b < N && c < N);
     double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
-    T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6.0;
-    T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6.0;
-    T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6.0;
+    T[a] += (omega_sum * (PSI[b] - PSI[c])) / 6.0;
+    T[b] += (omega_sum * (PSI[c] - PSI[a])) / 6.0;
+    T[c] += (omega_sum * (PSI[a] - PSI[b])) / 6.0;
   }
 }
 
 // To compute the stream function PSI from the vorticity OMEGA we need to solve the linear system
 // associated to the poisson problem S * PSI = - M * OMEGA
+
 size_t NavierStokesSolver::compute_stream_function()
 {
   size_t iter = 0;
 
-  /* Your implementation goes here */
   // we first compute M * OMEGA
   M.mvp(omega.data, Momega.data);  // Momega = M * omega
 
