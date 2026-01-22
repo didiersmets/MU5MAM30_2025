@@ -160,7 +160,6 @@ static void load_cube_indices(uint32_t *idx, size_t subdiv)
 
 		}
 	}
-
 	
 	return;
 }

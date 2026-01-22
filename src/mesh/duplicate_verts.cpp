@@ -53,6 +53,7 @@ struct PositionHasher {
 	}
 };
 
+
 size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 {
 	PositionHasher hasher{ pos };
@@ -61,41 +62,22 @@ size_t build_position_remap(Vec3 *pos, size_t count, uint32_t *remap)
 	/* Your implementation goes here */
 	size_t new_count{ 0 };
 
-	uint32_t *keys = vtx_remap.keys;
-	uint32_t *vals = vtx_remap.vals;
-
 	for (int p = 0; p < count; ++p)
 	{
-		uint32_t k{ hasher.hash(p) };
+		uint32_t *v = vtx_remap.get_or_set(p,p);
 
-		if (is_empty(keys[k]))
+		if (v==nullptr)
 		{
 			new_count++;
-			keys[k] = p;
-			remap[p] = p;
 		}
 
-		else{
-			uint32_t k1 = keys[k];
-			while (hasher.is_empty(vals[k1])==false && hasher.is_equal(p,k1)==false)
-			{
-				k1 = vals[k1];
-			}
-
-			if (hasher.is_empty(vals[k1]))
-			{
-				new_count++;  // if this position is empty, it means
-							  // we encounter this vertice for the first time
-				vals[k1] = p;
-				k1=p;
-			}
-
-			remap[p] = k1;
-		}
+		remap[p] = vtx_remap.get(p)[0];
 	}
 
 	return new_count;
 }
+
+
 
 void remove_duplicate_vertices(Mesh &m)
 {
@@ -124,6 +106,6 @@ void remove_duplicate_vertices(Mesh &m)
 	for (int i = 0; i < m.index_count(); ++i)
 	{
 		/* code */
-		m.indices[i] = remap[m.indices[i]]
+		m.indices[i] = remap[m.indices[i]];
 	}
 }

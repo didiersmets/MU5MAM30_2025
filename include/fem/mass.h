@@ -19,13 +19,6 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 	float area {norm(cross(AB, AC)) /2};
 
-	for (int i = 0; i < 3; ++i)
-	{
-		for (int j = 0; j < 3; ++j)
-		{
-			M[i][j] = (i==j)?2:1;
-		}
-	}
-
-	M = (area/12)*M
+	M[0] = area/6;   //coefficient on the diagonale
+	M[1] = area/12;	 //coefficient not on the diagonal
 }
