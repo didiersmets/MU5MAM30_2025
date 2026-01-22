@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <vector>
 
 NavierStokesSolver::NavierStokesSolver(const Mesh& m)
     : m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
@@ -51,6 +52,18 @@ void NavierStokesSolver::set_zero_mean(double* V)
   for (size_t i = 0; i < N; i++)
   {
     V[i] -= mean_value;
+  }
+}
+
+void compute_coriolis(const Mesh& m, double* coriolis, double omega_earth)
+{
+  // const double omega_earth = 2.0 / M_PI;  // angular velocity of the earth
+  size_t N = m.vertex_count();
+  for (size_t i = 0; i < N; i++)
+  {
+    // On a unit sphere, sin(latitude) corresponds to the z-coordinate
+    double z    = m.positions[i].z;
+    coriolis[i] = 2.0 * omega_earth * z;
   }
 }
 
@@ -124,9 +137,74 @@ void NavierStokesSolver::compute_transport(double* T)
   }
 }
 
+void NavierStokesSolver::compute_transport_coriolis(double* T)
+{
+  memset(T, 0, N * sizeof(double));              // transport_term
+  const double        omega_earth = 2.0 / M_PI;  // angular velocity of the earth
+  std::vector<double> coriolis(N);
+  compute_coriolis(m, coriolis.data(), omega_earth);
+
+  double* OMEGA = omega.data;
+  double* PSI   = psi.data;
+
+  size_t nt = m.triangle_count();
+
+  /* On each triangle we have the contribution to T[i] for the three vertices of the triangle
+    1) The integral over the triangle of phi_i = Area / 6
+    2) The term (grad_purp \phi_k . \grad \phi_j) is constant over the triangle since P1 elements
+   are
+   * The gradient of the basis functions \nabla \phi_i are of order 1/L (L = length scale of the
+   * triangle) term of order 1/Area (since 1/L * 1/L = 1/L^2 ~ 2/Area). The Area terms cancel out
+   * perfectly, leaving a purely topological constant (1/6). Differently from what I had previously
+   computed*/
+
+  for (size_t tri = 0; tri < nt; tri++)
+  {
+    uint32_t a = m.indices[3 * tri];
+    uint32_t b = m.indices[3 * tri + 1];
+    uint32_t c = m.indices[3 * tri + 2];
+
+    /*
+=========================================================================
+       PROJECT UPDATE: CORIOLIS FORCE IMPLEMENTATION
+       =========================================================================
+       We modify the transport term to conserve Absolute Vorticity (eta) instead
+       of just Relative Vorticity (omega).
+
+       1. Transport Equation:
+          The term J(psi, omega) becomes J(psi, omega + f).
+
+       2. Coriolis Parameter 'f':
+          Formula: f = 2 * Omega_earth * sin(latitude)
+          Geometry: On a Unit Sphere (Radius = 1), sin(latitude) corresponds exactly
+                    to the z-coordinate.
+          Therefore: f = 2 * Omega_earth * z
+
+          Instead of computing two separate integrals (one for omega, one for f),
+          we can simply sum the scalar values at the nodes first:
+          eta_node = omega_node + f_node
+
+        Because the FEM integration logic T(.) is linear with respect to the
+        coefficients, passing this sum is mathematically equivalent:
+          T(omega + f) == T(omega) + T(f)
+
+       3. Scaling (Omega_earth):
+          The professor confirmed that for a unit sphere, the rotation rate is a
+          tunable scaling parameter.
+          - Test with Omega_earth = 0.0 for standard isotropic turbulence.
+          - Test with Omega_earth ~ 10.0 - 50.0 to observe Rossby waves and zonal jets.
+      */
+    assert(a < N && b < N && c < N);
+    double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
+    omega_sum += coriolis[a] + coriolis[b] + coriolis[c];  // linear addition of coriolis term
+    T[a] += (omega_sum * (PSI[b] - PSI[c])) / 6.0;
+    T[b] += (omega_sum * (PSI[c] - PSI[a])) / 6.0;
+    T[c] += (omega_sum * (PSI[a] - PSI[b])) / 6.0;
+  }
+}
+
 // To compute the stream function PSI from the vorticity OMEGA we need to solve the linear system
 // associated to the poisson problem S * PSI = - M * OMEGA
-
 size_t NavierStokesSolver::compute_stream_function()
 {
   size_t iter = 0;
@@ -166,8 +244,9 @@ void NavierStokesSolver::time_step(double dt, double nu)
   set_zero_mean(psi.data);
 
   // compute transport term T(OMEGA, PSI)
+
   TArray<double> transport(N);
-  compute_transport(transport.data);
+  compute_transport_coriolis(transport.data);  // transport = T(OMEGA + f, PSI)
 
   // compute the right hand side
   // rhs = M * OMEGA + dt * T(OMEGA, PSI)

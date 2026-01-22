@@ -21,6 +21,7 @@ int load_sphere(Mesh& m, size_t subdiv)
   for (size_t i = 0; i < vtx_count; ++i)
   {
     pos[i] = normalized(pos[i]);
+    // pos[i] *= 5.0f;  // scale sphere radius to 5.0
   }
 
   return (0);

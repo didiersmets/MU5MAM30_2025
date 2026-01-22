@@ -32,4 +32,5 @@ struct NavierStokesSolver
   size_t compute_stream_function();
   void   compute_transport(double* T);
   void   time_step(double dt, double nu);
+  void   compute_transport_coriolis(double* T);
 };
