@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <vector>
 
 NavierStokesSolver::NavierStokesSolver(const Mesh& m)
     : m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
@@ -22,11 +23,8 @@ NavierStokesSolver::NavierStokesSolver(const Mesh& m)
 
 }
 
-
 void NavierStokesSolver::set_zero_mean(double* V)
 {
-  /* Your implementation goes here */
-
   double integral = 0.0;
   M.mvp(V, Momega.data);  // Momega = M * V
 
@@ -44,6 +42,22 @@ void NavierStokesSolver::set_zero_mean(double* V)
   }
 }
 
+// For the project I introducee the coriolis term 
+// so create a function to compute the coriolis term
+
+void compute_coriolis(const Mesh& m, double* coriolis, double omega_earth)
+{
+  // const double omega_earth = 2.0 / M_PI;  // angular velocity of the earth
+  size_t N = m.vertex_count();
+  for (size_t i = 0; i < N; i++)
+  {
+    // On a unit sphere, sin(latitude) corresponds to the z-coordinate
+    double z    = m.positions[i].z;
+    coriolis[i] = 2.0 * omega_earth * z;
+  }
+}
+
+
 
 void NavierStokesSolver::compute_transport(double* T)
 {
@@ -60,24 +74,46 @@ void NavierStokesSolver::compute_transport(double* T)
     uint32_t b = m.indices[3 * tri + 1];
     uint32_t c = m.indices[3 * tri + 2];
 
-	// get vertex positions
-	Vec3f A = m.positions[a];
-	Vec3f B = m.positions[b];
-	Vec3f C = m.positions[c];
-
-	// compute edges
-	Vec3f AB = B - A;
-	Vec3f AC = C - A;
-
-	// area of the triangle
-	double area = 0.5 * norm(cross(AB, AC));
 
 	// compute transport term contribution for each vertex of the triangle
 	// I think that the area term is not necessary since it is included in the mass matrix
     double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
-    T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6.0; //* 2 * area;
-    T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6.0; //* 2 * area;
-    T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6.0; //* 2 * area;
+    T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6.0 ;
+    T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6.0 ;
+    T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6.0 ;
+  }
+}
+
+// function to use to change the variables of the initial condition on the fluid and see better the cosriolius effect
+// 100 * x * exp(-50*x^2) * (1 + 0.5 * cos(0.05 * atan2(z, y)))
+
+// Now we compute the transport term with the coriolis effect included
+void NavierStokesSolver::compute_transport_coriolis(double* T)
+{
+  memset(T, 0, N * sizeof(double));              // transport_term
+  const double        omega_earth = - 2.0 * M_PI ;  // angular velocity of the earth
+  std::vector<double> coriolis(N);
+  compute_coriolis(m, coriolis.data(), omega_earth);
+
+  double* OMEGA = omega.data;
+  double* PSI   = psi.data;
+
+  size_t nt = m.triangle_count();
+
+
+  for (size_t tri = 0; tri < nt; tri++)
+  {
+    uint32_t a = m.indices[3 * tri];
+    uint32_t b = m.indices[3 * tri + 1];
+    uint32_t c = m.indices[3 * tri + 2];
+
+
+    assert(a < N && b < N && c < N);
+    double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
+    omega_sum += coriolis[a] + coriolis[b] + coriolis[c];  // linear addition of coriolis term
+    T[a] += (omega_sum * (PSI[b] - PSI[c])) / 6.0;
+    T[b] += (omega_sum * (PSI[c] - PSI[a])) / 6.0;
+    T[c] += (omega_sum * (PSI[a] - PSI[b])) / 6.0;
   }
 }
 
@@ -104,6 +140,7 @@ size_t NavierStokesSolver::compute_stream_function()
   return iteration;
 }
 
+
 void NavierStokesSolver::time_step(double dt, double nu)
 {
   // first computation of PSI comes from an omega with zero mean: see src/test_navier_stokes.cpp
@@ -114,7 +151,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
   // compute transport term T(OMEGA, PSI)
   TArray<double> transport(N);
-  compute_transport(transport.data);
+  // compute_transport(transport.data);
+  compute_transport_coriolis(transport.data);
 
   // compute the right hand side
   // rhs = M * OMEGA + dt * T(OMEGA, PSI)
