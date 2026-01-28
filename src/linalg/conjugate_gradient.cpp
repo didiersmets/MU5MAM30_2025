@@ -38,6 +38,7 @@ size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
 				double *__restrict p, double *__restrict Ap,
 				double *rel_error, double tol, int max_iter,
 				bool inited)
+// we pass some  things by argument since we want to modify them
 {
 	size_t N = A.rows;
 	assert(A.rows == A.cols);
