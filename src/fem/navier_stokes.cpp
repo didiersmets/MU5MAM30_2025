@@ -47,7 +47,7 @@ void NavierStokesSolver::set_zero_mean(double* V)
 
 void compute_coriolis(const Mesh& m, double* coriolis, double omega_earth)
 {
-  // const double omega_earth = 2.0 / M_PI;  // angular velocity of the earth
+  // double omega_earth = 2.0 / M_PI;  // angular velocity of the earth
   size_t N = m.vertex_count();
   for (size_t i = 0; i < N; i++)
   {
@@ -88,10 +88,10 @@ void NavierStokesSolver::compute_transport(double* T)
 // 100 * x * exp(-50*x^2) * (1 + 0.5 * cos(0.05 * atan2(z, y)))
 
 // Now we compute the transport term with the coriolis effect included
-void NavierStokesSolver::compute_transport_coriolis(double* T)
+void NavierStokesSolver::compute_transport_coriolis(double* T , double omega_earth)
 {
   memset(T, 0, N * sizeof(double));              // transport_term
-  const double        omega_earth = - 2.0 * M_PI ;  // angular velocity of the earth
+   // angular velocity of the earth
   std::vector<double> coriolis(N);
   compute_coriolis(m, coriolis.data(), omega_earth);
 
@@ -120,11 +120,11 @@ void NavierStokesSolver::compute_transport_coriolis(double* T)
 size_t NavierStokesSolver::compute_stream_function()
 {
   size_t iteration = 0;
-
+   
   /* Your implementation goes here */
   // we first compute M * OMEGA
   M.mvp(omega.data, Momega.data);  // Momega = M * omega
-
+  
   // we set the right hand side b = - M * OMEGA
   for (size_t i = 0; i < N; i++)
   {
@@ -151,8 +151,71 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
   // compute transport term T(OMEGA, PSI)
   TArray<double> transport(N);
-  // compute_transport(transport.data);
-  compute_transport_coriolis(transport.data);
+  compute_transport(transport.data);
+  //compute_transport_coriolis(transport.data, double omega_earth);
+
+  // compute the right hand side
+  // rhs = M * OMEGA + dt * T(OMEGA, PSI)
+  M.mvp(omega.data, Momega.data);  // Momega = M * omega
+
+  // Momega = dt * transport + Momega
+  // tiny_blas.axpy(N, dt, transport.data, Momega.data);
+  for (size_t i = 0; i < N; i++)
+  {
+    Momega.data[i] += dt * transport.data[i];
+  }
+
+  // build the left hand side matrix A = M + nu * dt * S
+  CSRMatrix A;
+  A.rows = M.rows;
+  A.cols = M.cols;
+  A.nnz = M.nnz;
+  A.symmetric = M.symmetric;
+  A.row_start = M.row_start;
+  A.col = M.col;
+  A.data.resize(A.nnz);
+
+  // compute A = M + S
+  double factor = nu * dt;
+  for (size_t k = 0; k < A.nnz; k++)
+  {
+    A.data[k] = M.data[k] + ((factor) *S.data[k]);
+  }
+
+  /**********************************************************************
+   * Solve the system :
+   *
+   *  (M + \nu * dt * S)omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
+   *
+   *********************************************************************/
+
+
+  double rel_error = 0.0;
+  double tolerance = 1e-6;
+  int    max_iterations = 1000;
+
+  size_t iterations = conjugate_gradient_solve(A, Momega.data, omega.data, r.data, p.data, Ap.data, &rel_error, tolerance, max_iterations, false);
+
+  // Necessary to ensure that omega has zero mean at each time step
+  set_zero_mean(omega.data);
+
+
+  t += dt;
+}
+
+void NavierStokesSolver::time_step_coriolis(double dt, double nu, double omega_earth)
+{
+
+  // first computation of PSI comes from an omega with zero mean: see src/test_navier_stokes.cpp
+  // compute PSI from OMEGA
+  compute_stream_function();
+
+  //  we ensure that PSI over the domain is zero too.
+  set_zero_mean(psi.data);
+
+  // compute transport term T(OMEGA, PSI)
+  TArray<double> transport(N);
+  compute_transport_coriolis(transport.data, omega_earth);
 
   // compute the right hand side
   // rhs = M * OMEGA + dt * T(OMEGA, PSI)
