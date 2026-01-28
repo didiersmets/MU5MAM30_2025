@@ -14,6 +14,7 @@ double cg_iterate_once(const Matrix &A,
 					   double r2)
 {
 	const size_t N = A.rows;
+	A.mvp(p, Ap);
 
 	//alpha k-1
 	double pAp = blas_dot(p, Ap, N);//<p_{k-1}, Ap_{k-1}>
@@ -34,8 +35,7 @@ double cg_iterate_once(const Matrix &A,
 	// On met à jorus pk => p<-r + beta*p
 	blas_axpby(1.0, r, beta, p, N);
 
-	// On doit mettre à jours Ap ?
-	A.mvp(p, Ap);
+
 
 
 	return r2_new;

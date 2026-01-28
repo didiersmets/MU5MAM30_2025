@@ -133,21 +133,55 @@ size_t NavierStokesSolver::compute_stream_function()
 	memset(p.data, 0, N * sizeof(double));
 	memset(Ap.data, 0, N * sizeof(double));
 
-	// On va résoudre le système S*\psi = M*\omega = b <=> S*psi = b
 
-	// Conjugate gradient resolution
-	// on reprend le code de
 
-	size_t iter = conjugate_gradient_solve(S, // A
-										   Momega,//b
-										psi, //x, Ax=b
-										r, // résidus r = Ax-b
-										p,
-										Ap,
-										&rel_error,
-										tol,
-										iter_max,
-										inited);
+
+
+	double rel_error, b2, ;
+	b2 = blas_dot(Momega, Momega, N);
+	r2 = blas_dot(r,r, N);
+	rel_error = sqrt(r2 / b2);
+
+
+	// résolution par gradient conjugué
+
+	if (!inited) {
+		/* r_0 = b - Ax_0 */
+		S.mvp(psi, r);
+		blas_axpby(1, Momega, -1, r, N);
+		/* p_0 = r_0 */
+		blas_copy(r, p, N);
+	}
+	while ((iter < max_iter) && (*rel_error > tol))
+	{
+		const size_t N = S.rows;
+		S.mvp(p, Ap);
+
+		//alpha k-1
+		double pAp = blas_dot(p, Ap, N);//<p_{k-1}, Ap_{k-1}>
+		double alpha = r2 / pAp;
+
+		// mise à jour de x => x<- x + alpha*p (on a une forme axpy )
+		blas_axpy(alpha, p, , N);
+
+		// mise à jour de r => r<- r - alpha Ap
+		blas_axpy(-alpha, Ap, r, N);
+
+		//on calcul le nouveau r², on a toujours le ||r_{k-1}||**2 en stock dans r2
+		double r2_new = blas_dot(r, r, N);
+
+		// on calcul beta qui est  ||r_k||**2 / ||r_{k-1}||**2
+		double beta = r2_new / r2;
+
+		// On met à jorus pk => p<-r + beta*p
+		blas_axpby(1.0, r, beta, p, N);
+
+		iter++;
+
+	}
+	//(S, // A
+										  // Momega,//b
+										//psi, //x, Ax=b
 
 	// le fameux problème d'infinité de solution avec psi+C'
 
@@ -207,8 +241,30 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 	int iter = 0;
 	while ((iter < max_iter) && (*rel_error > tol)) {
-		r2 = cg_iterate_once(A, omega, r, p, Ap, r2);
+		const size_t N = A.rows;
+		A.mvp(p, Ap);
+
+		//alpha k-1
+		double pAp = blas_dot(p, Ap, N);//<p_{k-1}, Ap_{k-1}>
+		double alpha = r2 / pAp;
+
+		// mise à jour de x => x<- x + alpha*p (on a une forme axpy )
+		blas_axpy(alpha, p, x, N);
+
+		// mise à jour de r => r<- r - alpha Ap
+		blas_axpy(-alpha, Ap, r, N);
+
+		//on calcul le nouveau r², on a toujours le ||r_{k-1}||**2 en stock dans r2
+		double r2_new = blas_dot(r, r, N);
+
+		// on calcul beta qui est  ||r_k||**2 / ||r_{k-1}||**2
+		double beta = r2_new / r2;
+
+		// On met à jorus pk => p<-r + beta*p
+		blas_axpby(1.0, r, beta, p, N);
+
 		*rel_error = sqrt(r2 / b2);
+
 		iter++;
 	}
 
