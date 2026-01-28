@@ -50,6 +50,14 @@ void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const{
 		}
 	}
 }
+void CSRMatrix::add_mvp(const double *__restrict x, double *__restrict y) const{
+	for (size_t row = 0; row<rows;row++){
+		for(uint32_t k = row_start[row]; k<row_start[row+1];k++){
+			uint32_t collumn = col[k];
+			y[row]+= data[k] * x[collumn];
+		}
+	}
+}
 double CSRMatrix::sum() const{
 	double acc = 0;
 	for (size_t i=0;i<nnz;i++){

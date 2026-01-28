@@ -31,6 +31,7 @@ size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
 	
 	if (inited){
 		// r0 = b - Ax0
+		// p0 = r0
 		A.mvp(x,r);
 		blas_axpby(1,b,-1,r,N);
 		blas_copy(r,p,N);

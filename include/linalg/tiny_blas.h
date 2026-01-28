@@ -25,6 +25,13 @@ void inline blas_axpy(double a, const double *__restrict x,
 	}
 }
 
+void inline blas_scal(double a, double *__restrict x, size_t N)
+{
+	for (size_t i = 0; i < N; ++i) {
+		x[i] *= a;
+	}
+}
+
 void inline blas_axpby(double a, const double *__restrict x, double b,
 		       double *__restrict y, size_t N)
 {
