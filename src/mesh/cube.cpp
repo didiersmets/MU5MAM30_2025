@@ -57,31 +57,31 @@ static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 	// On va faire une subdivision classique : on a n points par ligne de cadrillage. si on est sur des intervalles [-a;a] on peut prendre le pas
 	//h = 2a/subdiv et considérer les points {-a + h*k} avec k = 0,...,subdiv. Quand k = subdiv on a bien -a+h*k = -a+ 2a = a.
 
-	size_t a = 1;
-	size_t h = 2*a/subdiv;
+	float a = 1.0;
+	float h = 2*a/subdiv;
 	for(size_t i = 0;i<n; i++){
-		size_t z = -a + h*i;
+		float z = -a + h*i;
 		for(size_t j = 0;j<n;j++){
-			size_t w = -a + h*j;
+			float w = -a + h*j;
 
-			Vec3 v0(w,-a,z); // front
-			pos[j] = v0;
+			Vec3 v0(w,-a,z); // front // c'est lui qu'on affiche pas je pense !
+			pos[j +  i*n] = v0;
 
 			Vec3 v1(w,a,z);
-			pos[1*POW2(n) + j] = v1; // back
+			pos[1*POW2(n) + i*n+ j] = v1; // back
 
 
 			Vec3 v2(-a,w,z); // left
-			pos[2*POW2(n) + j]  = v2;
+			pos[2*POW2(n) + i*n+ j]  = v2;
 
 			Vec3 v3(a,w,z); // right
-			pos[3*POW2(n) + j]  = v3;
+			pos[3*POW2(n) + i*n+ j]  = v3;
 
 			Vec3 v4(w,z,-a); // down
-			pos[4*POW2(n) + j]  = v4;
+			pos[4*POW2(n) + i*n+ j]  = v4;
 
 			Vec3 v5(w,z,a); // up
-			pos[5*POW2(n) + j]  = v5;
+			pos[5*POW2(n) +  i*n+j]  = v5;
 
 
 
@@ -111,7 +111,7 @@ static void load_cube_indices(uint32_t *idx, size_t subdiv)
 	// Pour retrouve les indices correspondant sur chaque face n°k, il suffit d'ajouter k*n**2. Le remplissage de indices se fait en considérant des modulo 6n**2. En vrai, on va juste faire parcours un compteur et traiter chaque face (avec 6 face donc une petite constante le cout est pas vraiment plus grand) .
 
 	size_t n = subdiv + 1;
-	size_t h = 1/subdiv;
+	float h = 1/subdiv;
 
 	size_t compteur = 0;
 
