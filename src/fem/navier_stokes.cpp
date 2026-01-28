@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <iostream>
 
 #include "navier_stokes.h"
 
@@ -33,11 +34,11 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 
 void NavierStokesSolver::set_zero_mean(double *V)
 {
-	double sum_M = M.sum();
-	double sum_VM[N];
-	M.mvp(V, sum_VM);
-	blas_axpy(-1/sum_M, sum_VM, V, N);
-	//V -= sum_VM/sum_M;
+	M.mvp(V, Ap.data);
+	double sum_VM = blas_sum_in_place(Ap.data, N);
+	for(size_t i = 0;  i < N; i ++){
+		V[i] -= sum_VM/vol;
+	}
 }
 
 void NavierStokesSolver::compute_transport(double *T)
@@ -97,7 +98,6 @@ size_t NavierStokesSolver::compute_stream_function()
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
-	
 	compute_stream_function();
 	
 
@@ -109,23 +109,20 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	 *********************************************************************/
 
 	/* Your implementation goes here */
-	double T[N];
 
-	compute_transport(T);
+	compute_transport(p.data); //we save it in p as we will overwrite it anyway later
 	//we are putting the 'b'-term of the GC in T
-	blas_axpby(1, Momega.data, dt, T, N);
+	blas_axpby(1, Momega.data, dt, p.data, N);
 	//before iterations
-	double b2 = blas_dot(T, T , N);
+	double b2 = blas_dot(p.data, p.data , N);
 
 	// for x_0 take omgea_n --> r_0 = Momega + v*t*S
 	S.mvp(omega.data, r.data); //first compute Somgea
 	blas_axpby(1, Momega.data, dt*nu, r.data, N); //then we add with Momega that we have
-	blas_axpby(1, T, -1, r.data, N); //then compute r_0
+	blas_axpby(1, p.data, -1, r.data, N); //then compute r_0
 	
 	/* p_0 = r_0 */
 	blas_copy(r.data, p.data, N);
-	
-	
 
 	double r2 = blas_dot(r.data, r.data, N);
 	double rel_error = sqrt(r2/b2);
@@ -135,9 +132,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	while ((iter < iter_max) && (rel_error > tol)){
 		//update Ap
 		S.mvp(p.data, Ap.data); //first do Sp
-		double temp[N];
-		M.mvp(p.data, temp);
-		blas_axpby(1, temp, nu*dt, Ap.data, N);
+		M.mvp(p.data, Momega.data); //same here, we use this as storage beacuse we do not need it
+		blas_axpby(1, Momega.data, nu*dt, Ap.data, N);
 
 		float alpha = r2/blas_dot(p.data, Ap.data, N); //compute alpha
 		blas_axpy(alpha, p.data, omega.data, N); //Compute new x

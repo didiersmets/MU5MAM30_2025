@@ -16,7 +16,7 @@
 /* CSRMatrix variants */
 
 bool find(const TArray<uint32_t> & arr, uint32_t target,  size_t start, size_t stop){
-	assert(start <= stop && stop <= sizeof(arr));
+	assert(start <= stop && stop <= arr.size);
 
 	for(size_t i = start; i < stop; i ++){
 		if(arr[i] == target){return true;}
@@ -38,9 +38,10 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 
 	//Initilalize 
 	size_t nnz = 0;
+	P.row_start.resize(P.rows + 1);
 	P.row_start[0] = 0;
 	P.col.resize(nnz_max);
-
+	
 	for(size_t i = 0; i < num_vtx; i ++ ){
 		uint32_t start = adj.offset[i];
 		uint32_t stop = start + adj.degree[i];
