@@ -34,16 +34,17 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 void NavierStokesSolver::set_zero_mean(double *V)
 {
 	double sum_M = M.sum();
-	double sum_VM;
+	double sum_VM[N];
 	M.mvp(V, sum_VM);
-	V -= sum_VM/sum_M;
+	blas_axpy(-1/sum_M, sum_VM, V, N);
+	//V -= sum_VM/sum_M;
 }
 
 void NavierStokesSolver::compute_transport(double *T)
 {
 	memset(T, 0, N * sizeof(double));
 
-	size_t num_ind = m.index_count;
+	size_t num_ind = m.index_count();
 
 	for(size_t i = 0; i < num_ind; i += 3){
 		uint32_t A = m.indices[i];
@@ -61,23 +62,44 @@ void NavierStokesSolver::compute_transport(double *T)
 
 size_t NavierStokesSolver::compute_stream_function()
 {
-	//prepare everything
-
-	double x[N];
-	memset(X, 0, N * sizeof(double));
-	double rel_error = 0;
-	double 
 	
+	//before iterations
+	double b2 = blas_dot(Momega.data, Momega.data , N);
+	S.mvp(psi.data, r.data);
+	blas_axpby(1, psi.data, -1, r.data, N);
+	/* p_0 = r_0 */
+	blas_copy(r.data, p.data, N);
+
+	double r2 = blas_dot(r.data, r.data, N);
+	double rel_error = sqrt(r2/b2);
 
 
-	size_t iter = conjugate_gradient_solve(S, -Momega, x, r, p, Ap, rel_error, tol,  iter_max, inited );
+	size_t iter = 0;
+
+	while ((iter < iter_max) && (rel_error > tol)){
+		S.mvp(p.data, Ap.data);
+
+		float alpha = r2/blas_dot(p.data, Ap.data, N); //compute alpha
+		blas_axpy(alpha, p.data, psi.data, N); //Compute new x
+	 	blas_axpy(-alpha, Ap.data, r.data, N); // Compute new r
+	 	double r2_new = blas_dot(r.data, r.data, N);
+	
+	 	double beta = r2_new/ r2;
+	 	blas_axpby(1, p.data, beta , r.data, N); //compute new p
+		r2 = r2_new;
+		rel_error = sqrt(r2 / b2);
+		iter++;
+
+	}
 
 	return iter;
 }
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
+	
 	compute_stream_function();
+	
 
 	/**********************************************************************
 	 * Solve the system :
@@ -90,35 +112,42 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	double T[N];
 
 	compute_transport(T);
+	//we are putting the 'b'-term of the GC in T
+	blas_axpby(1, Momega.data, dt, T, N);
+	//before iterations
+	double b2 = blas_dot(T, T , N);
 
-	double b[N] = Momega + t*T;
+	// for x_0 take omgea_n --> r_0 = Momega + v*t*S
+	S.mvp(omega.data, r.data); //first compute Somgea
+	blas_axpby(1, Momega.data, dt*nu, r.data, N); //then we add with Momega that we have
+	blas_axpby(1, T, -1, r.data, N); //then compute r_0
+	
+	/* p_0 = r_0 */
+	blas_copy(r.data, p.data, N);
+	
+	
 
-	double b2 = blas_dot(b, b, N);
+	double r2 = blas_dot(r.data, r.data, N);
+	double rel_error = sqrt(r2/b2);
 
-	if (!inited) {
-		/* r_0 = b - Ax_0 */
-		A.mvp(x, r);
-		blas_axpby(1, b, -1, r, N);
-		/* p_0 = r_0 */
-		blas_copy(r, p, N);
-	}
+	size_t iter = 0;
 
-	double r2 = blas_dot(r, r, N);
-	*rel_error = sqrt(r2 / b2);
+	while ((iter < iter_max) && (rel_error > tol)){
+		//update Ap
+		S.mvp(p.data, Ap.data); //first do Sp
+		double temp[N];
+		M.mvp(p.data, temp);
+		blas_axpby(1, temp, nu*dt, Ap.data, N);
 
-	int iter = 0;
-	while ((iter < iter_max) && (*rel_error > tol)) {
-		size_t N = A.rows;
-	 
-		A.mvp(p, Ap); // update Ap
-	 	float alpha = r2 / blas_dot(p, Ap, N); //Compute alpha
-	 	blas_axpy(alpha, p, x, N); //Compute new x
-	 	blas_axpy(-alpha, Ap, r, N); // Compute new r
-	 	double r2_new = blas_dot(r, r, N);
+		float alpha = r2/blas_dot(p.data, Ap.data, N); //compute alpha
+		blas_axpy(alpha, p.data, omega.data, N); //Compute new x
+	 	blas_axpy(-alpha, Ap.data, r.data, N); // Compute new r
+	 	double r2_new = blas_dot(r.data, r.data, N);
 	
 	 	double beta = r2_new/ r2;
-	 	blas_axpby(1, p, beta , r, N); //compute new p
-		*rel_error = sqrt(r2 / b2);
+	 	blas_axpby(1, p.data, beta , r.data, N); //compute new p
+		r2 = r2_new;
+		rel_error = sqrt(r2 / b2);
 		iter++;
 	}
 	
