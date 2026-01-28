@@ -29,7 +29,7 @@ add_library(nanofem
 	#        before building the project.
 	src/fem/P1.cpp
 	src/fem/poisson.cpp
-	#src/fem/navier_stokes.cpp
+	src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
@@ -55,7 +55,7 @@ target_include_directories(nanofem PUBLIC
 	extern
 )
 target_compile_options(nanofem PRIVATE 
-	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
+	-std=c++17 -Wall -Wextra -march=native -Wno-unknown-pragmas
 	-Wno-missing-field-initializers
 )
 if (USE_OPENMP AND OpenMP_CXX_FOUND)
@@ -110,14 +110,14 @@ target_link_libraries(main PRIVATE nanofem )
 ###############################################################################
 
 ###############################################################################
-#add_executable(test_NS
-#	src/common/logging.cpp
-#	src/bin/test_navier_stokes.cpp
-#)
-#target_compile_options(test_NS PRIVATE 
-#	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
-#)
-#target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+add_executable(test_NS
+	src/common/logging.cpp
+	src/bin/test_navier_stokes.cpp
+)
+target_compile_options(test_NS PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
 ###############################################################################
 
 ###############################################################################
