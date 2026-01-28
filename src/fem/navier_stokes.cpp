@@ -6,6 +6,8 @@
 
 #include "P1.h"
 #include "tiny_blas.h"
+#include "conjugate_gradient.h"
+#include "logging.h"
 
 NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	: m(m)
@@ -22,11 +24,17 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	build_P1_stiffness_matrix(m, S);
 #else
 	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, S);
+	M = std::move(CSRMatrix(P,0));
+	S = std::move(CSRMatrix(P,0));
+	build_P1_mass_matrix(m, M);
+	build_P1_stiffness_matrix(m, S);
+	LOG_MSG("M :");
+	M.print();
+	LOG_MSG("S :");
+	S.print();
 #endif
 	vol = M.sum();
-	inited = false;
+	inited = true;
 	t = 0;
 }
 
@@ -48,8 +56,6 @@ void NavierStokesSolver::compute_transport(double *T,double dt)
 		uint32_t Bi = m.indices[t+1];
 		uint32_t Ci = m.indices[t+2];
 		uint32_t points[3] = {Ai,Bi,Ci};
-		Vec3 AB = B-A;
-		Vec3 AC = C-A;
 		double sum = omega[Ai] + omega[Bi] + omega[Ci];
 		for (uint32_t k =0;k<3;k++)
 			T[points[k]]+= dt * sum * (psi[points[(k-1)%3]] - psi[points[(k+1)%3]]);
@@ -60,32 +66,37 @@ size_t NavierStokesSolver::compute_stream_function()
 {
 	// solves for psi in : S psi = -M omega
 	size_t iter = 0;
-	M.mvp(omega,Momega)
+	double omega_norm = blas_dot(omega.data,omega.data,N);
+	LOG_MSG("compute_stream_function : ||omega|| = %lf",omega_norm);
+	M.mvp(omega.data,Momega.data);
+	double Momega_norm = blas_dot(Momega.data,Momega.data,N);
+	LOG_MSG("compute_stream_function : ||Momega|| = %lf",Momega_norm);
 
 	double rel_error;
 	iter = conjugate_gradient_solve(
 			S,
-			Momega,
-			psi,
-			r,
-			p,
-			Ap
+			Momega.data,
+			psi.data,
+			r.data,
+			p.data,
+			Ap.data,
 			&rel_error,
 			10e-6,
 			500,
 			inited);
+	LOG_MSG("compute stream function : %d iter; %lf rel_error",iter,rel_error);
 	return iter;
 }
-double NavierStokesSolver::cg_iterate_once(double dt, double nu, double *__restrict x,
-		       double *__restrict r, double *__restrict p,
-	       	double *__restrict Ap, double r2){
-	size_t N = M.rows;
+double NavierStokesSolver::cg_iterate_once(
+		double dt, double nu, double *__restrict x,
+		double *__restrict r, double *__restrict p,
+		double *__restrict Ap, double r2){
 	// Ap = (M + nu dt S)p
 	S.mvp(p,Ap);
-	blas_scal(dt * nu);
+	blas_scal(dt * nu,x,N);
 	M.add_mvp(p,Ap);
 	double alpha = r2/blas_dot(p,Ap,N); //alpha = r2/p2_A
-	blas_axpy(alpha,p,omega,N); // x = x + alpha*p
+	blas_axpy(alpha,p,omega.data,N); // x = x + alpha*p
 	blas_axpy(-alpha,Ap,r,N); // r = r -alpha*A*p
 	double new_r2 = blas_dot(r,r,N); //r2_{n+1}
 	double beta = new_r2/r2; // beta = r2_{n+1}/r2_n
@@ -96,7 +107,7 @@ double NavierStokesSolver::cg_iterate_once(double dt, double nu, double *__restr
 void NavierStokesSolver::time_step(double dt, double nu)
 {
 	compute_stream_function();
-	compute_transport(Momega,dt);
+	compute_transport(Momega.data,dt);
 	// at this stage Momega = b = M * omega(t) + dt * T(Omega,Psi)(t)
 	/**********************************************************************
 	 * Solve the system :
@@ -107,20 +118,24 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	// initialization
 	// r0 = b - Ax0 = Momega - (M + dt * nu * S) Omega
 	S.mvp(omega.data,r.data);
-	blas_scal(dt * nu);
+	blas_scal(dt * nu, omega.data, N);
 	M.add_mvp(p.data,r.data);
-	blas_axpby(1,Momega,-1,r.data,N);
+	blas_axpby(1,Momega.data,-1,r.data,N);
 	blas_copy(r.data,p.data,N);
 	// code bellow copied from conjugate_gradient.cpp
-	double b2 = blas_dot(Momega,Momega,N);
+	double b2 = blas_dot(Momega.data,Momega.data,N);
+	LOG_MSG("time step : b2 = %lf",b2);
 	double r2 = blas_dot(r.data,r.data,N);
-	*rel_error = r2/b2;
+	double rel_error = r2/b2;
 	size_t iter = 0;
-	while(iter<max_iter && *rel_error>tol){
+	size_t max_iter = 500;
+	while(iter<max_iter && rel_error>tol){
 		r2 = cg_iterate_once(dt, nu,omega.data, r.data, p.data, Ap.data, r2);
-		*rel_error = r2/b2;
+		rel_error = r2/b2;
 		iter++;
 	}
+
+	LOG_MSG("time step : %d iterations; %f relative error",iter,rel_error);
 	set_zero_mean(omega.data);
 	t += dt;
 }

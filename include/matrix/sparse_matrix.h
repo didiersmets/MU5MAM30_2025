@@ -37,6 +37,7 @@ struct CSRMatrix : public Matrix {
 	void add_mvp(const double *__restrict x, double *__restrict y) const;
 	double sum() const;
 	double &operator()(uint32_t i, uint32_t j);
+	void print();
 };
 
 /* Visualisation of non zeros */

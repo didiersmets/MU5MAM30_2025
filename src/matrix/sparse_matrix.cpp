@@ -91,6 +91,21 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j){
 	return data[k];
 }
 
+void CSRMatrix::print(){
+	for (uint32_t r=0;r<rows;r++){
+		uint32_t non_zero_col = row_start[r];
+		for (uint32_t y=0; y<cols; y++){
+			if (y==col[non_zero_col]){
+				printf("%lf ",data[non_zero_col]);
+				non_zero_col++;
+			} else {
+				printf("%lf ",0.0);
+			}
+		}
+		printf("\n");
+	}
+}
+
 /* Visualisation of non zeros */
 void spy(const CSRPattern &P, uint32_t width, const char *fname){
 	TArray<uint8_t> img(width*width,0);
