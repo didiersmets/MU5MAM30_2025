@@ -534,16 +534,13 @@ static void update_all(NavierStokesSolver& solver, Mesh& mesh, GPUMesh& gpu_mesh
 {
   bool needs_upload = true;
 
-  // const double PI                   = 3.14159265358979323846;
-  const double SIDEREAL_DAY_SECONDS = 86164.0905;
-  double       omega                = (2 * PI) / SIDEREAL_DAY_SECONDS;
-
   if (started || one_step)
   {
-    float omega = 2 / pow(10, denominator);  // angular velocity of the earth
-    // float omega = 0;
-    // solver.time_step(dt, pow(10, lognu));
-    solver.time_step_coriolis(dt, pow(10, lognu), omega);
+    // Calculate omega as 10^-denominator.
+    // If denominator = 4.13, we obtain the actual Earth angular velocity (~7.29e-5 rad/s).
+    float omega_value = 1.0f / pow(10.0f, denominator);
+
+    solver.time_step_coriolis(dt, pow(10, lognu), (double) omega_value);
 
     if (one_step)
     {
@@ -691,9 +688,17 @@ static void draw_gui(NavierStokesSolver& solver)
   ImGui::Text("Viscosity (negative power of 10):");
   ImGui::SliderFloat("nu", &lognu, -8, 0, "10^(%.1f)");
 
-  // Adding cursor for omega control
-  ImGui::Text("Angular velocity denominator (power of 10):");
-  ImGui::SliderFloat("omega", &denominator, 1, 10000, "(%.1f)");
+  // --- OMEGA SLIDER SETUP ---
+  // A range from 0 to 6 provides optimal control:
+  // 0    = Fast rotation (1 rad/s)
+  // 4.13 = Real Earth rotation (~7.29e-5 rad/s)
+  // 6    = Nearly imperceptible rotation
+  ImGui::Text("Angular velocity (10^-n rad/s):");
+  ImGui::SliderFloat("omega exponent", &denominator, 0.0f, 6.0f, "n = %.1f");
+
+  // Display the actual numerical value for user convenience
+  float current_omega = 1.0f / std::pow(10.0f, denominator);
+  ImGui::Text("Current Omega: %.2e rad/s", (double) current_omega);
 
   ImGui::Text("Time step :");
   ImGui::SliderFloat("dt", &dt, 0.f, 0.01f, "%.4f");
