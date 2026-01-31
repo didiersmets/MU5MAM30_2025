@@ -104,6 +104,16 @@ target_compile_options(test_NS PRIVATE
 	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 )
 target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+
+add_executable(test_coriolis
+	src/common/logging.cpp
+	src/bin/test_coriolis.cpp
+)
+target_compile_options(test_coriolis PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_coriolis PRIVATE nanofem nanoviewer tiny_expr)
+
 ###############################################################################
 
 ###############################################################################

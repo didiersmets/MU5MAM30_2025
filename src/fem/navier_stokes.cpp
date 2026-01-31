@@ -137,10 +137,110 @@ void NavierStokesSolver::compute_transport(double* T)
   }
 }
 
-void NavierStokesSolver::compute_transport_coriolis(double* T)
+// To compute the stream function PSI from the vorticity OMEGA we need to solve the linear system
+// associated to the poisson problem S * PSI = - M * OMEGA
+size_t NavierStokesSolver::compute_stream_function()
 {
-  memset(T, 0, N * sizeof(double));              // transport_term
-  const double        omega_earth = 2.0 / M_PI;  // angular velocity of the earth
+  size_t iter = 0;
+
+  // we first compute M * OMEGA
+  M.mvp(omega.data, Momega.data);  // Momega = M * omega
+
+  // we set the right hand side b = - M * OMEGA
+  for (size_t i = 0; i < N; i++)
+  {
+    Momega.data[i] = -Momega.data[i];
+  }
+
+  double rel_error      = 0.0;
+  double tol            = 1e-6;
+  int    max_iterations = 1000;
+  // solve with conjugate gradient S * PSI = b
+  iter = conjugate_gradient_solve(S,
+                                  Momega.data,
+                                  psi.data,
+                                  r.data,
+                                  p.data,
+                                  Ap.data,
+                                  &rel_error,
+                                  tol,
+                                  max_iterations);
+
+  return iter;
+}
+
+void NavierStokesSolver::time_step(double dt, double nu)
+{
+  // first computation of PSI comes from an omega with zero mean: see src/test_navier_stokes.cpp
+  // compute PSI from OMEGA
+  compute_stream_function();
+  //  we ensure that PSI over the domain is zero too.
+  set_zero_mean(psi.data);
+
+  // compute transport term T(OMEGA, PSI)
+  TArray<double> transport(N);
+  compute_transport(transport.data);
+  // compute_transport_coriolis(transport.data, double omega_earth);
+
+  // compute the right hand side
+  // rhs = M * OMEGA + dt * T(OMEGA, PSI)
+  M.mvp(omega.data, Momega.data);  // Momega = M * omega
+
+  // Momega = dt * transport + Momega
+  // tiny_blas.axpy(N, dt, transport.data, Momega.data);
+  for (size_t i = 0; i < N; i++)
+  {
+    Momega.data[i] += dt * transport.data[i];
+  }
+
+  // build the left hand side matrix A = M + nu * dt * S
+  CSRMatrix A;
+  A.rows      = M.rows;
+  A.cols      = M.cols;
+  A.nnz       = M.nnz;
+  A.symmetric = M.symmetric;
+  A.row_start = M.row_start;
+  A.col       = M.col;
+  A.data.resize(A.nnz);
+
+  // compute A = M + S
+  double factor = nu * dt;
+  for (size_t k = 0; k < A.nnz; k++)
+  {
+    A.data[k] = M.data[k] + ((factor) *S.data[k]);
+  }
+
+  /**********************************************************************
+   * Solve the system :
+   *
+   *  (M + \nu * dt * S)omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
+   *
+   *********************************************************************/
+
+  double rel_error      = 0.0;
+  double tolerance      = 1e-6;
+  int    max_iterations = 1000;
+
+  size_t iterations = conjugate_gradient_solve(A,
+                                               Momega.data,
+                                               omega.data,
+                                               r.data,
+                                               p.data,
+                                               Ap.data,
+                                               &rel_error,
+                                               tolerance,
+                                               max_iterations,
+                                               false);
+
+  // Necessary to ensure that omega has zero mean at each time step
+  set_zero_mean(omega.data);
+
+  t += dt;
+}
+
+void NavierStokesSolver::compute_transport_coriolis(double* T, double omega_earth)
+{
+  memset(T, 0, N * sizeof(double));  // transport_term
   std::vector<double> coriolis(N);
   compute_coriolis(m, coriolis.data(), omega_earth);
 
@@ -203,39 +303,7 @@ void NavierStokesSolver::compute_transport_coriolis(double* T)
   }
 }
 
-// To compute the stream function PSI from the vorticity OMEGA we need to solve the linear system
-// associated to the poisson problem S * PSI = - M * OMEGA
-size_t NavierStokesSolver::compute_stream_function()
-{
-  size_t iter = 0;
-
-  // we first compute M * OMEGA
-  M.mvp(omega.data, Momega.data);  // Momega = M * omega
-
-  // we set the right hand side b = - M * OMEGA
-  for (size_t i = 0; i < N; i++)
-  {
-    Momega.data[i] = -Momega.data[i];
-  }
-
-  double rel_error      = 0.0;
-  double tol            = 1e-6;
-  int    max_iterations = 1000;
-  // solve with conjugate gradient S * PSI = b
-  iter = conjugate_gradient_solve(S,
-                                  Momega.data,
-                                  psi.data,
-                                  r.data,
-                                  p.data,
-                                  Ap.data,
-                                  &rel_error,
-                                  tol,
-                                  max_iterations);
-
-  return iter;
-}
-
-void NavierStokesSolver::time_step(double dt, double nu)
+void NavierStokesSolver::time_step_coriolis(double dt, double nu, double omega_earth)
 {
   // first computation of PSI comes from an omega with zero mean: see src/test_navier_stokes.cpp
   // compute PSI from OMEGA
@@ -246,7 +314,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
   // compute transport term T(OMEGA, PSI)
 
   TArray<double> transport(N);
-  compute_transport_coriolis(transport.data);  // transport = T(OMEGA + f, PSI)
+  compute_transport_coriolis(transport.data, omega_earth);  // transport = T(OMEGA + f, PSI)
 
   // compute the right hand side
   // rhs = M * OMEGA + dt * T(OMEGA, PSI)

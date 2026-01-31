@@ -31,6 +31,7 @@ struct NavierStokesSolver
   void   set_zero_mean(double* V);
   size_t compute_stream_function();
   void   compute_transport(double* T);
+  void   time_step_coriolis(double dt, double nu, double omega_earth);
   void   time_step(double dt, double nu);
-  void   compute_transport_coriolis(double* T);
+  void   compute_transport_coriolis(double* T, double omega_earth);
 };
