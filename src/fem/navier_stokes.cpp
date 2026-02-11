@@ -93,7 +93,7 @@ size_t NavierStokesSolver::compute_stream_function()
 {
 	double b2, r2, r2_temp, rel_error;
 	size_t iter = 0;
-	TArray<double> p(N);
+
 	/* Your implementation goes here */
 	M.mvp(omega.data, Momega.data);
 	/* Compute rhs norm2 */
@@ -132,6 +132,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	double b2, r2, rel_error;
 	size_t iter = 0;
 	compute_stream_function();
+
+	double* Mom = Momega.data;
 	
 	/**********************************************************************
 	 * Solve the system :
@@ -151,7 +153,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 	// Form initial residual and search direction
 	S.mvp(omega.data, r.data);
-	blas_axpby(1, Momega.data, -1, r.data, N);
+	blas_axpy(1, Momega.data, r.data, N);
 	blas_copy(r.data, p.data, N);
 	r2 = blas_dot(r.data,r.data,N);
 	rel_error = sqrt(r2 / b2);
@@ -159,8 +161,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	//Ierate until convergence
 	for(size_t i = 0; i < iter_max; ++i){
 		S.mvp(p.data, Ap.data);
-		M.mvp(p.data, Ap.data);
-		blas_axpy(nu * dt, Momega.data, Ap.data, N);
+		M.mvp(p.data, Mom); //Using a temporary for M*p to avoid overwriting p before computing Ap which caused errors
+		blas_axpby(1, Mom, nu * dt, Ap.data, N); //Ap = M*p + nu*dt*S*p
 
 		double alpha = r2 / blas_dot(p.data, Ap.data, N);
 		blas_axpy(alpha, p.data, omega.data, N); //Update omega
