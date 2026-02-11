@@ -11,7 +11,7 @@
 #include <vector>
 
 NavierStokesSolver::NavierStokesSolver(const Mesh& m)
-    : m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
+    : m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N), velocity(0)
 {
   build_P1_CSRPattern(m, P);
   build_P1_mass_matrix(m, P, M);

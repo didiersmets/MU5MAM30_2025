@@ -27,6 +27,7 @@ struct NavierStokesSolver {
 	TArray<double> r;  // current residue r = Mf - Su
 	TArray<double> p;  // internal for cg
 	TArray<double> Ap; // internal for cg
+	TArray<Vec3> velocity;  // Velocity field at vertices, calculated from psi
 
 	bool inited; // Initialization computes first residue and error
 
@@ -41,4 +42,5 @@ struct NavierStokesSolver {
 	void time_step(double dt, double nu);
 	void compute_transport_coriolis(double* T, double omega_earth);
 	void time_step_coriolis(double dt, double nu, double omega_earth);
+	void compute_velocity();  // Compute velocity field u = ∇⊥psi from stream function
 };

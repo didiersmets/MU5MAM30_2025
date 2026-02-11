@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <vector>
+#include <algorithm>
 #include "gl_utils.h"
 #include "imgui/imgui.h"
 #include "tiny_expr/tinyexpr.h"
@@ -22,7 +24,13 @@ float bgcolor[4] = {0.3, 0.3, 0.3, 1.0};
 bool draw_surface = true;
 bool draw_edges = false;
 bool show_axes = false;  // NEW: Toggle for axis display (default off to avoid initial issues)
+bool show_psi = false;  // Toggle to show psi (stream function) instead of omega
+bool show_velocity_magnitude = false;  // Toggle to show |u| (speed) instead of omega
+bool show_velocity_vectors = false;  // Toggle to show velocity vectors (meteorological style)
+bool show_psi_contours = false;  // Toggle to show psi contour lines
+bool show_omega_contours = false;  // Toggle to show omega contour lines
 float axis_length = 1.5f;  // NEW: Length of axes
+float velocity_scale = 0.1f;  // Scale factor for velocity arrow length
 float scale_min;
 float scale_max;
 float mesh_deform = 0;
@@ -58,6 +66,8 @@ static void init_camera_for_mesh(const Mesh &mesh, Camera &camera);
 static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &mesh_gpu);
 static void draw_scene(const Viewer &viewer, int shader, const GPUMesh &gpu_mesh);
 static void draw_gui(NavierStokesSolver &solver);
+static void draw_velocity_field(const Mesh &mesh, const NavierStokesSolver &solver, const Viewer &viewer, int shader);
+static void draw_psi_contours(const Mesh &mesh, const NavierStokesSolver &solver, int shader);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
@@ -179,6 +189,237 @@ static void init_axes() {
     glDeleteShader(frag_shader);
 }
 
+/* Draw velocity field as meteorological wind barbs */
+static void draw_velocity_field(const Mesh &mesh, const NavierStokesSolver &solver, 
+                                 const Viewer &viewer, int shader)
+{
+    // Check if velocity has been computed (size > 0 and matches vertex count)
+    if (!show_velocity_vectors || solver.velocity.size == 0 || solver.velocity.size != mesh.vertex_count()) return;
+    
+    // Compute velocity magnitude range for coloring
+    float vel_min = 1e9, vel_max = -1e9;
+    for (size_t v = 0; v < mesh.vertex_count(); ++v) {
+        float vel_mag = sqrt(solver.velocity[v][0]*solver.velocity[v][0] + 
+                            solver.velocity[v][1]*solver.velocity[v][1]);
+        vel_min = fmin(vel_min, vel_mag);
+        vel_max = fmax(vel_max, vel_mag);
+    }
+    if (vel_max <= vel_min) vel_max = vel_min + 1e-6;
+    
+    // Build vertex data for velocity arrows at vertices
+    std::vector<float> vertex_data;
+    std::vector<float> color_data;
+    size_t vert_count = mesh.vertex_count();
+    
+    for (size_t v = 0; v < vert_count; ++v) {
+        // Get vertex position
+        Vec3f pos = mesh.positions[v];
+        
+        // Get velocity at this vertex
+        Vec3f vel = solver.velocity[v] * velocity_scale;
+        float vel_mag = sqrt(solver.velocity[v][0]*solver.velocity[v][0] + 
+                            solver.velocity[v][1]*solver.velocity[v][1]);
+        
+        // Normalize color to [0, 1]
+        float color_val = (vel_mag - vel_min) / (vel_max - vel_min);
+        color_val = fmax(0.0f, fmin(1.0f, color_val));
+        
+        // Map to RGB: blue (low) -> green (mid) -> red (high)
+        float r, g, b_col;
+        if (color_val < 0.5f) {
+            r = 0.0f;
+            g = 2.0f * color_val;
+            b_col = 1.0f - 2.0f * color_val;
+        } else {
+            r = 2.0f * (color_val - 0.5f);
+            g = 2.0f * (1.0f - color_val);
+            b_col = 0.0f;
+        }
+        
+        // Start point (vertex position)
+        vertex_data.push_back(pos.x);
+        vertex_data.push_back(pos.y);
+        vertex_data.push_back(pos.z);
+        color_data.push_back(r);
+        color_data.push_back(g);
+        color_data.push_back(b_col);
+        color_data.push_back(1.0f);
+        
+        // End point (vertex + velocity)
+        vertex_data.push_back(pos.x + vel.x);
+        vertex_data.push_back(pos.y + vel.y);
+        vertex_data.push_back(pos.z + vel.z);
+        color_data.push_back(r);
+        color_data.push_back(g);
+        color_data.push_back(b_col);
+        color_data.push_back(1.0f);
+    }
+    
+    if (vertex_data.empty()) return;
+    
+    // Create VAO and VBO for velocity vectors
+    GLuint vel_vao, vel_vbo, col_vbo;
+    glGenVertexArrays(1, &vel_vao);
+    glGenBuffers(1, &vel_vbo);
+    glGenBuffers(1, &col_vbo);
+    
+    glBindVertexArray(vel_vao);
+    
+    // Position data
+    glBindBuffer(GL_ARRAY_BUFFER, vel_vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), vertex_data.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    // Color data
+    glBindBuffer(GL_ARRAY_BUFFER, col_vbo);
+    glBufferData(GL_ARRAY_BUFFER, color_data.size() * sizeof(float), color_data.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    
+    // Draw with shader
+    glUseProgram(shader);
+    glUniform1i(glGetUniformLocation(shader, "lighting"), false);
+    
+    const Camera &camera = viewer.camera;
+    Mat4 proj = camera.view_to_clip();
+    Mat4 vm = camera.world_to_view();
+    glUniformMatrix4fv(glGetUniformLocation(shader, "vm"), 1, 0, &vm(0, 0));
+    glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, 0, &proj(0, 0));
+    
+    glLineWidth(2.0f);
+    glBindVertexArray(vel_vao);
+    glDrawArrays(GL_LINES, 0, vertex_data.size() / 3);
+    glBindVertexArray(0);
+    glLineWidth(1.0f);
+    
+    // Cleanup and restore state
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDeleteBuffers(1, &vel_vbo);
+    glDeleteBuffers(1, &col_vbo);
+    glDeleteVertexArrays(1, &vel_vao);
+    glUseProgram(0);
+    while (glGetError() != GL_NO_ERROR);  // Clear any remaining errors
+}
+
+/* Draw psi contour lines */
+static void draw_psi_contours(const Mesh &mesh, const NavierStokesSolver &solver, int shader)
+{
+    if (!show_psi_contours || solver.psi.size == 0) return;
+    
+    // Number of contour levels
+    int num_contours = 12;
+    
+    // Find psi min/max
+    double psi_min = solver.psi[0];
+    double psi_max = solver.psi[0];
+    for (size_t i = 0; i < solver.psi.size; ++i) {
+        psi_min = fmin(psi_min, solver.psi[i]);
+        psi_max = fmax(psi_max, solver.psi[i]);
+    }
+    if (psi_max <= psi_min) psi_max = psi_min + 1e-6;
+    
+    // Build vertex data for contour lines
+    std::vector<float> vertex_data;
+    std::vector<float> color_data;
+    
+    // For each triangle, check which contour levels it crosses
+    for (size_t t = 0; t < mesh.triangle_count(); ++t) {
+        uint32_t a = mesh.indices[3 * t + 0];
+        uint32_t b = mesh.indices[3 * t + 1];
+        uint32_t c = mesh.indices[3 * t + 2];
+        
+        double psi_a = solver.psi[a];
+        double psi_b = solver.psi[b];
+        double psi_c = solver.psi[c];
+        
+        Vec3f va = mesh.positions[a];
+        Vec3f vb = mesh.positions[b];
+        Vec3f vc = mesh.positions[c];
+        
+        // For each contour level
+        for (int level = 0; level < num_contours; ++level) {
+            double contour_value = psi_min + (level + 1.0) / (num_contours + 1.0) * (psi_max - psi_min);
+            
+            // Find edges that cross this contour
+            std::vector<Vec3f> segment_points;
+            
+            // Check edge AB
+            if ((psi_a - contour_value) * (psi_b - contour_value) < 0) {
+                double t_param = (contour_value - psi_a) / (psi_b - psi_a);
+                Vec3f pt = va + (vb - va) * (float)t_param;
+                segment_points.push_back(pt);
+            }
+            // Check edge BC
+            if ((psi_b - contour_value) * (psi_c - contour_value) < 0) {
+                double t_param = (contour_value - psi_b) / (psi_c - psi_b);
+                Vec3f pt = vb + (vc - vb) * (float)t_param;
+                segment_points.push_back(pt);
+            }
+            // Check edge CA
+            if ((psi_c - contour_value) * (psi_a - contour_value) < 0) {
+                double t_param = (contour_value - psi_c) / (psi_a - psi_c);
+                Vec3f pt = vc + (va - vc) * (float)t_param;
+                segment_points.push_back(pt);
+            }
+            
+            // Draw line segment if we have exactly 2 intersection points
+            if (segment_points.size() == 2) {
+                vertex_data.push_back(segment_points[0].x);
+                vertex_data.push_back(segment_points[0].y);
+                vertex_data.push_back(segment_points[0].z);
+                color_data.push_back(1.0f);  // White
+                color_data.push_back(1.0f);
+                color_data.push_back(1.0f);
+                color_data.push_back(1.0f);
+                
+                vertex_data.push_back(segment_points[1].x);
+                vertex_data.push_back(segment_points[1].y);
+                vertex_data.push_back(segment_points[1].z);
+                color_data.push_back(1.0f);  // White
+                color_data.push_back(1.0f);
+                color_data.push_back(1.0f);
+                color_data.push_back(1.0f);
+            }
+        }
+    }
+    
+    if (vertex_data.empty()) return;
+    
+    // Create VAO and VBO
+    GLuint contour_vao, contour_vbo, contour_col_vbo;
+    glGenVertexArrays(1, &contour_vao);
+    glGenBuffers(1, &contour_vbo);
+    glGenBuffers(1, &contour_col_vbo);
+    
+    glBindVertexArray(contour_vao);
+    
+    // Position data
+    glBindBuffer(GL_ARRAY_BUFFER, contour_vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), vertex_data.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    // Color data
+    glBindBuffer(GL_ARRAY_BUFFER, contour_col_vbo);
+    glBufferData(GL_ARRAY_BUFFER, color_data.size() * sizeof(float), color_data.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    
+    // Draw
+    glUseProgram(shader);
+    glDrawArrays(GL_LINES, 0, vertex_data.size() / 3);
+    
+    // Cleanup
+    glDeleteBuffers(1, &contour_vbo);
+    glDeleteBuffers(1, &contour_col_vbo);
+    glDeleteVertexArrays(1, &contour_vao);
+}
+
 /* NEW: Draw the 3D axes */
 static void draw_axes(const Viewer &viewer) {
     if (!show_axes) return;
@@ -218,7 +459,7 @@ static void draw_axes(const Viewer &viewer) {
     while (glGetError() != GL_NO_ERROR);
 }
 
-/* NEW: Draw axis labels using ImGui */
+
 static void draw_axis_labels(const Viewer &viewer) {
     if (!show_axes) return;
     
@@ -361,6 +602,12 @@ int main(int argc, char **argv) {
         // Draw scene first
         draw_scene(viewer, shader, gpu_mesh);
         
+        // Draw velocity vectors if enabled
+        draw_velocity_field(mesh, solver, viewer, shader);
+        
+        // Draw psi contour lines if enabled
+        draw_psi_contours(mesh, solver, shader);
+        
         // Draw axes on top
         draw_axes(viewer);
         
@@ -462,19 +709,63 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
         // float omega = 0;
         //solver.time_step(dt, pow(10, lognu));
         solver.time_step_coriolis(dt, pow(10, lognu), omega);
+        
+        // Compute velocity field from psi
+        solver.compute_velocity();
 
         if (one_step) {
             one_step = false;
         }
 
-        transfer_to_mesh(solver.omega, mesh);
+        // Transfer appropriate field to mesh for visualization
+        if (show_psi) {
+            transfer_to_mesh(solver.psi, mesh);
+        } else if (show_velocity_magnitude) {
+            // Compute velocity magnitude at vertices (average from adjacent triangles)
+            TArray<double> vel_mag(solver.N);
+            for (size_t i = 0; i < solver.N; ++i) {
+                vel_mag[i] = 0.0;
+            }
+            // Average velocity magnitude from adjacent triangles
+            std::vector<int> vertex_count(solver.N, 0);
+            for (size_t t = 0; t < mesh.triangle_count(); ++t) {
+                uint32_t a = mesh.indices[3*t];
+                uint32_t b = mesh.indices[3*t+1];
+                uint32_t c = mesh.indices[3*t+2];
+                double vel_mag_t = sqrt(solver.velocity[t][0]*solver.velocity[t][0] + 
+                                        solver.velocity[t][1]*solver.velocity[t][1]);
+                vel_mag[a] += vel_mag_t; vertex_count[a]++;
+                vel_mag[b] += vel_mag_t; vertex_count[b]++;
+                vel_mag[c] += vel_mag_t; vertex_count[c]++;
+            }
+            for (size_t i = 0; i < solver.N; ++i) {
+                if (vertex_count[i] > 0) {
+                    vel_mag[i] /= vertex_count[i];
+                }
+            }
+            transfer_to_mesh(vel_mag, mesh);
+        } else if (show_psi_contours || show_velocity_vectors) {
+            transfer_to_mesh(solver.psi, mesh);
+        } else {
+            transfer_to_mesh(solver.omega, mesh);
+        }
 
         if (autoscale) {
             get_attr_bounds(mesh, &scale_min, &scale_max);
         }
     } else if (reset) {
         reset_solver(solver);
-        transfer_to_mesh(solver.omega, mesh);
+        if (show_psi) {
+            transfer_to_mesh(solver.psi, mesh);
+        } else if (show_velocity_magnitude) {
+            TArray<double> vel_mag(solver.N);
+            for (size_t i = 0; i < solver.N; ++i) vel_mag[i] = 0.0;
+            transfer_to_mesh(vel_mag, mesh);
+        } else if (show_psi_contours || show_velocity_vectors) {
+            transfer_to_mesh(solver.psi, mesh);
+        } else {
+            transfer_to_mesh(solver.omega, mesh);
+        }
         get_attr_bounds(mesh, &scale_min, &scale_max);
         reset = false;
     } else {
@@ -526,6 +817,10 @@ static void draw_scene(const Viewer &viewer, int shader, const GPUMesh &gpu_mesh
         glUniform1i(glGetUniformLocation(shader, "lighting"), false);
         gpu_mesh.draw();
     }
+    
+    // Draw velocity field (if needed)
+    // Note: draw_velocity_field accesses solver through gpu_mesh.m reference
+    // We need to pass solver separately - will be called from main loop instead
 }
 
 static void draw_gui(NavierStokesSolver &solver) {
@@ -595,7 +890,25 @@ static void draw_gui(NavierStokesSolver &solver) {
 
     ImGui::Checkbox("Autoscale colors to bounds", &autoscale);
     ImGui::Checkbox("Show mesh edges", &draw_edges);
-    ImGui::Checkbox("Show coordinate axes", &show_axes);  // NEW: Toggle for axes
+    ImGui::Checkbox("Show coordinate axes", &show_axes);
+    
+    ImGui::Text("Visualization mode:");
+    if (ImGui::RadioButton("Vorticity (omega)", !show_psi && !show_velocity_magnitude && !show_velocity_vectors && !show_psi_contours)) {
+        show_psi = false; show_velocity_magnitude = false; show_velocity_vectors = false; show_psi_contours = false;
+    }
+    if (ImGui::RadioButton("Stream function (psi)", show_psi && !show_velocity_vectors && !show_psi_contours)) {
+        show_psi = true; show_velocity_magnitude = false; show_velocity_vectors = false; show_psi_contours = false;
+    }
+    if (ImGui::RadioButton("Velocity magnitude |u|", show_velocity_magnitude && !show_velocity_vectors && !show_psi_contours)) {
+        show_psi = false; show_velocity_magnitude = true; show_velocity_vectors = false; show_psi_contours = false;
+    }
+    if (ImGui::RadioButton("Velocity vectors (wind)", show_velocity_vectors && !show_psi_contours)) {
+        show_psi = false; show_velocity_magnitude = false; show_velocity_vectors = true; show_psi_contours = false;
+    }
+    if (ImGui::RadioButton("Psi contour lines", show_psi_contours)) {
+        show_psi = false; show_velocity_magnitude = false; show_velocity_vectors = false; show_psi_contours = true;
+    }
+    ImGui::SliderFloat("Velocity scale", &velocity_scale, 0.01f, 0.5f);
 
     ImGui::Text("Artificially deform mesh according to omega :");
     ImGui::Text("(may help visualize oscillations)");

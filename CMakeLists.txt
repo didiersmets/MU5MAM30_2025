@@ -30,6 +30,7 @@ add_library(nanofem
 	src/fem/P1.cpp
 	src/fem/poisson.cpp
 	src/fem/navier_stokes.cpp
+	src/fem/velocity.cpp
 	src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
