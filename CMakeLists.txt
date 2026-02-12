@@ -52,7 +52,7 @@ target_include_directories(nanofem PUBLIC
 	extern
 )
 target_compile_options(nanofem PRIVATE 
-	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
+	-std=c++17 -Wall -Wextra -march=native -Wno-unknown-pragmas
 	-Wno-missing-field-initializers
 )
 if (USE_OPENMP AND OpenMP_CXX_FOUND)

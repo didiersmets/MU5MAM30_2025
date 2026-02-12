@@ -35,8 +35,8 @@ bool one_step = false;
 bool reset = false;
 
 /* Parameters */
-float lognu = -4;
-float dt = 0.005;
+float lognu = -3.7;
+float dt = 0.002;
 double tol = 1e-6;
 
 /* RHS expression of the PDE */
