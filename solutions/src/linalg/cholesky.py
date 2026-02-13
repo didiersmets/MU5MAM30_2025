@@ -3,7 +3,7 @@ from elimination_tree import *
 
 def sorted_list_non_zeros_L(i, A_csr, parent):
     """
-    Fonction qui la liste triée des colonnes k<i où L[i,k] peut être non nul
+    Fonction qui renvoie la liste triée des colonnes k<i où L[i,k] est non nul
     (S(L_{i,1:i-1}) dans le pseudo-code)
     """
     start = A_csr.indptr[i]
@@ -21,4 +21,4 @@ def sorted_list_non_zeros_L(i, A_csr, parent):
     # On renvoie la liste triée des colonnes non nulles de L[i, :]
     return sorted(lst)
 
-print(sorted_list_non_zeros_L(2,A,elimination_tree(A)))
+print(sorted_list_non_zeros_L(3,A,elimination_tree(A)))
