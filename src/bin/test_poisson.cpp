@@ -20,8 +20,11 @@
 #include "sphere.h"
 #include "viewer.h"
 
+#include <iostream>
+using namespace std;
+
 /* Viewer config */
-float bgcolor[4] = { 0.3, 0.3, 0.3, 1.0 };
+float bgcolor[4] = {0.3, 0.3, 0.3, 1.0};
 bool draw_surface = true;
 bool draw_edges = false;
 float scale_min;
@@ -40,9 +43,7 @@ char rhs_expression[128] =
 	"cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
-te_variable rhs_vars[] = { { "x", &rhs_x },	{ "y", &rhs_y },
-			   { "z", &rhs_z },	{ "phi", &rhs_p },
-			   { "theta", &rhs_t }, { "rand", &rhs_r } };
+te_variable rhs_vars[] = {{"x", &rhs_x}, {"y", &rhs_y}, {"z", &rhs_z}, {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}};
 te_expr *te_rhs = NULL;
 
 static void syntax(char *prg_name);
@@ -51,7 +52,7 @@ static void rescale_and_recenter_mesh(Mesh &mesh);
 static void init_camera_for_mesh(const Mesh &mesh, Camera &camera);
 static void update_all(PoissonSolver &solver, Mesh &mesh, GPUMesh &mesh_gpu);
 static void draw_scene(const Viewer &viewer, int shader,
-		       const GPUMesh &gpu_mesh);
+					   const GPUMesh &gpu_mesh);
 static void draw_gui(PoissonSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
@@ -60,21 +61,38 @@ bool new_rhs(PoissonSolver &solver)
 {
 	srand((int)time(NULL));
 	te_expr *test = te_compile(rhs_expression, rhs_vars,
-				   sizeof(rhs_vars) / sizeof(rhs_vars[0]),
-				   NULL);
+							   sizeof(rhs_vars) / sizeof(rhs_vars[0]),
+							   NULL);
 	if (!test)
 		return false;
 
 	te_free(te_rhs);
 	te_rhs = test;
-	for (size_t i = 0; i < solver.N; ++i) {
+	size_t nv = solver.m.vertex_count();
+	for (size_t i = 0; i < solver.m.vertex_count(); ++i)
+	{
 		rhs_x = solver.m.positions[i].x;
 		rhs_y = solver.m.positions[i].y;
 		rhs_z = solver.m.positions[i].z;
+
 		rhs_p = atan2(rhs_y, rhs_x);
 		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
 		rhs_r = (double)rand() / RAND_MAX;
 		solver.f[i] = te_eval(te_rhs);
+	}
+	if (solver.use_fem_P2)
+	{
+		for (size_t i = 0; i < solver.m.edge_count(); ++i)
+		{
+			rhs_x = 0.5 * (solver.m.positions[solver.m.edges[i].v0].x + solver.m.positions[solver.m.edges[i].v1].x);
+			rhs_y = 0.5 * (solver.m.positions[solver.m.edges[i].v0].y + solver.m.positions[solver.m.edges[i].v1].y);
+			rhs_z = 0.5 * (solver.m.positions[solver.m.edges[i].v0].z + solver.m.positions[solver.m.edges[i].v1].z);
+
+			rhs_p = atan2(rhs_y, rhs_x);
+			rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
+			rhs_r = (double)rand() / RAND_MAX;
+			solver.f[i + nv] = te_eval(te_rhs);
+		}
 	}
 
 	solver.init_cg();
@@ -86,7 +104,8 @@ bool new_rhs(PoissonSolver &solver)
 void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 {
 	m.attr.resize(m.vertex_count());
-	for (size_t i = 0; i < m.vertex_count(); ++i) {
+	for (size_t i = 0; i < m.vertex_count(); ++i)
+	{
 		m.attr[i] = V[i];
 	}
 }
@@ -97,7 +116,8 @@ int main(int argc, char **argv)
 
 	/* Load Mesh */
 	Mesh mesh;
-	if (load_mesh(mesh, argc, argv)) {
+	if (load_mesh(mesh, argc, argv))
+	{
 		syntax(argv[0]);
 		exit(EXIT_FAILURE);
 	}
@@ -106,27 +126,37 @@ int main(int argc, char **argv)
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	PoissonSolver solver(mesh);
-	if (!new_rhs(solver)) {
+	bool use_fem_P2 = false;
+	if (argc > 3 && strcmp(argv[3], "P2") == 0)
+	{
+		use_fem_P2 = true;
+	}
+	PoissonSolver solver(mesh, use_fem_P2);
+	if (!new_rhs(solver))
+	{
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
 	}
 	transfer_to_mesh(solver.f, mesh);
 	get_attr_bounds(mesh, &scale_min, &scale_max);
-	LOG_MSG("Prepared FEM data.");
+	if (!solver.use_fem_P2)
+		LOG_MSG("Prepared FEM P1 data.");
+	else
+		LOG_MSG("Prepared FEM P2 data.");
 
 	/* Get an OpenGL context through a viewer app. */
 	Viewer viewer;
 	init_camera_for_mesh(mesh, viewer.camera);
 	viewer.init("Poisson solver");
-	viewer.register_key_callback({ key_cb, NULL });
+	viewer.register_key_callback({key_cb, NULL});
 	LOG_MSG("Viewer initialized.");
 
 	/* Prepare GPU data */
 	const char *vert_shader = "./shaders/fem.vert";
 	const char *frag_shader = "./shaders/fem.frag";
 	int shader = create_shader(vert_shader, frag_shader);
-	if (!shader) {
+	if (!shader)
+	{
 		exit(EXIT_FAILURE);
 	}
 	LOG_MSG("Shader initialized.");
@@ -135,7 +165,8 @@ int main(int argc, char **argv)
 	gpu_mesh.upload();
 
 	/* Main Loop */
-	while (!viewer.should_close()) {
+	while (!viewer.should_close())
+	{
 		viewer.poll_events();
 		update_all(solver, mesh, gpu_mesh);
 		viewer.begin_frame();
@@ -152,21 +183,29 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n]\n", prg_name);
+	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n] [P2]\n", prg_name);
+	printf("         Optional argument P2 enables quadratic FEM.\n");
 	printf("         Subdivision number n must be provided in case of "
-	       "cube or sphere mesh.\n");
+		   "cube or sphere mesh.\n");
 }
 
 static int load_mesh(Mesh &mesh, int argc, char **argv)
 {
 	int res = -1;
-	if (argc > 2 && strncmp(argv[1], "cube2", 5) == 0) {
+	if (argc > 2 && strncmp(argv[1], "cube2", 5) == 0)
+	{
 		res = load_cube_nested_dissect(mesh, atoi(argv[2]));
-	} else if (argc > 2 && strncmp(argv[1], "cube", 4) == 0) {
+	}
+	else if (argc > 2 && strncmp(argv[1], "cube", 4) == 0)
+	{
 		res = load_cube(mesh, atoi(argv[2]));
-	} else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0) {
+	}
+	else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0)
+	{
 		res = load_sphere(mesh, atoi(argv[2]));
-	} else if (argc > 1) {
+	}
+	else if (argc > 1)
+	{
 		res = load_obj(argv[1], mesh);
 	}
 	return res;
@@ -178,11 +217,13 @@ static void rescale_and_recenter_mesh(Mesh &mesh)
 	Vec3 model_center = (bbox.min + bbox.max) * 0.5f;
 	Vec3 model_extent = (bbox.max - bbox.min);
 	float model_size = max(model_extent);
-	if (model_size == 0) {
+	if (model_size == 0)
+	{
 		printf("Warning : Mesh is empty or reduced to a point.\n");
 		model_size = 1;
 	}
-	for (size_t i = 0; i < mesh.vertex_count(); ++i) {
+	for (size_t i = 0; i < mesh.vertex_count(); ++i)
+	{
 		mesh.positions[i] -= model_center;
 		mesh.positions[i] /= (model_size / 2);
 	}
@@ -194,7 +235,8 @@ static void init_camera_for_mesh(const Mesh &mesh, Camera &camera)
 	Vec3 model_center = (bbox.min + bbox.max) * 0.5f;
 	Vec3 model_extent = (bbox.max - bbox.min);
 	float model_size = max(model_extent);
-	if (model_size == 0) {
+	if (model_size == 0)
+	{
 		printf("Warning : Mesh is empty or reduced to a point.\n");
 		model_size = 1;
 	}
@@ -211,10 +253,14 @@ static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max)
 		return;
 	float min = m.attr[0];
 	float max = min;
-	for (size_t i = 1; i < m.vertex_count(); ++i) {
-		if (m.attr[i] < min) {
+	for (size_t i = 1; i < m.vertex_count(); ++i)
+	{
+		if (m.attr[i] < min)
+		{
 			min = m.attr[i];
-		} else if (m.attr[i] > max) {
+		}
+		else if (m.attr[i] > max)
+		{
 			max = m.attr[i];
 		}
 	}
@@ -225,33 +271,42 @@ static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max)
 static void update_all(PoissonSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh)
 {
 	bool needs_upload = true;
-	if (started || one_step) {
+	if (started || one_step)
+	{
 		solver.do_iterate(iter_per_frame, 1e-6);
-		if (one_step) {
+		if (one_step)
+		{
 			one_step = false;
 		}
 		transfer_to_mesh(solver.u, mesh);
-		if (autoscale) {
+		if (autoscale)
+		{
 			get_attr_bounds(mesh, &scale_min, &scale_max);
 		}
-	} else if (reset) {
+	}
+	else if (reset)
+	{
 		solver.clear_solution();
 		transfer_to_mesh(solver.f, mesh);
 		get_attr_bounds(mesh, &scale_min, &scale_max);
 		reset = false;
-	} else {
+	}
+	else
+	{
 		needs_upload = false;
 	}
-	if (needs_upload) {
+	if (needs_upload)
+	{
 		gpu_mesh.update_attr();
 	}
-	if (solver.converged) {
+	if (solver.converged)
+	{
 		started = false;
 	}
 }
 
 static void draw_scene(const Viewer &viewer, int shader,
-		       const GPUMesh &gpu_mesh)
+					   const GPUMesh &gpu_mesh)
 {
 	glClearColor(bgcolor[0], bgcolor[1], bgcolor[2], bgcolor[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -267,14 +322,15 @@ static void draw_scene(const Viewer &viewer, int shader,
 	Vec3 camera_pos = camera.get_position();
 	glUniformMatrix4fv(glGetUniformLocation(shader, "vm"), 1, 0, &vm(0, 0));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, 0,
-			   &proj(0, 0));
+					   &proj(0, 0));
 	glUniform3fv(glGetUniformLocation(shader, "camera_pos"), 1,
-		     &camera_pos[0]);
+				 &camera_pos[0]);
 	glUniform1f(glGetUniformLocation(shader, "scale_min"), scale_min);
 	glUniform1f(glGetUniformLocation(shader, "scale_max"), scale_max);
 	glUniform1f(glGetUniformLocation(shader, "deform"), mesh_deform);
 
-	if (draw_surface) {
+	if (draw_surface)
+	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		float offset = reversed_z ? -1.f : 1.f;
 		glPolygonOffset(offset, offset);
@@ -282,7 +338,8 @@ static void draw_scene(const Viewer &viewer, int shader,
 		glUniform1i(glGetUniformLocation(shader, "lighting"), true);
 		gpu_mesh.draw();
 	}
-	if (draw_edges) {
+	if (draw_edges)
+	{
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(0.f, 0.f);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -300,17 +357,21 @@ static void draw_gui(PoissonSolver &solver)
 	ImGui::Text("Enter math expression for f below:");
 	ImGui::Text("(available variables : x, y, z, theta, phi, rand)");
 	ImGui::InputText("", rhs_expression, IM_ARRAYSIZE(rhs_expression));
-	if (ImGui::Button("Apply")) {
-		if (!new_rhs(solver)) {
+	if (ImGui::Button("Apply"))
+	{
+		if (!new_rhs(solver))
+		{
 			rhs_show_error = true;
 		}
 		started = false;
 		reset = true;
 	}
-	if (rhs_show_error) {
+	if (rhs_show_error)
+	{
 		ImGui::Begin("Error");
 		ImGui::Text("Syntax error in expresion (missing * ?)");
-		if (ImGui::Button("Got it!")) {
+		if (ImGui::Button("Got it!"))
+		{
 			rhs_show_error = false;
 		}
 		ImGui::End();
@@ -323,21 +384,26 @@ static void draw_gui(PoissonSolver &solver)
 
 	ImGui::Text(" ");
 
-	if (ImGui::Button("Start")) {
+	if (ImGui::Button("Start"))
+	{
 		started = true;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Stop")) {
+	if (ImGui::Button("Stop"))
+	{
 		started = false;
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("One step")) {
-		if (!started) {
+	if (ImGui::Button("One step"))
+	{
+		if (!started)
+		{
 			one_step = true;
 		}
 	}
 	ImGui::SameLine();
-	if (ImGui::Button("Reset")) {
+	if (ImGui::Button("Reset"))
+	{
 		reset = true;
 	}
 
@@ -345,7 +411,7 @@ static void draw_gui(PoissonSolver &solver)
 	ImGui::Text("Iterate : %zu", solver.iterate);
 	ImGui::Text("Relative error : %g", solver.rel_error);
 	ImGui::Text("Scale min %.2f Scale max %.2f  (Span : %g)", scale_min,
-		    scale_max, scale_max - scale_min);
+				scale_max, scale_max - scale_min);
 
 	ImGui::Text(" ");
 	ImGui::Text("Controls :");
@@ -375,13 +441,14 @@ static void key_cb(int key, int action, int mods, void *args)
 {
 	(void)mods;
 	(void)args;
-	if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_S && action == GLFW_PRESS)
+	{
 		draw_surface = !draw_surface;
 		return;
 	}
-	if (key == GLFW_KEY_E && action == GLFW_PRESS) {
+	if (key == GLFW_KEY_E && action == GLFW_PRESS)
+	{
 		draw_edges = !draw_edges;
 		return;
 	}
 }
-
