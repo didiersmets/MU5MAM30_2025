@@ -11,31 +11,44 @@
 #include "mesh.h"
 #include "tiny_blas.h"
 
-PoissonSolver::PoissonSolver(const Mesh &m)
-	: m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
+PoissonSolver::PoissonSolver(Mesh &m, const bool &use_fem_P2)
+	: m(m), f(0), u(0, 0.0), r(0), p(0), Ap(0), use_fem_P2(use_fem_P2)
 {
 #if USE_FEM_MATRIX
-#if USE_FEM_P2
-	throw std::runtime_error("P2 Lagrange elements are not available for FEM matrix framework");
+	if (use_fem_P2)
+		throw std::runtime_error("P2 Lagrange elements are not available for FEM matrix framework");
+	else
+	{
+		build_P1_mass_matrix(m, M);
+		build_P1_stiffness_matrix(m, A);
+	}
 #else
-	build_P1_mass_matrix(m, M);
-	build_P1_stiffness_matrix(m, A);
+	if (!use_fem_P2)
+	{
+		build_P1_CSRPattern(m, P);
+		build_P1_mass_matrix(m, P, M);
+		build_P1_stiffness_matrix(m, P, A);
+	}
+	else
+	{
+		m.build_edges();
+		build_P2_CSRPattern(m, P);
+		build_P2_mass_matrix(m, P, M);
+		build_P2_stiffness_matrix(m, P, A);
+	}
 #endif
-#else
-#if USE_FEM_P2
-	build_P2_CSRPattern(m, P);
-	build_P2_mass_matrix(m, P, M);
-	build_P2_stiffness_matrix(m, P, A);
-#else
-	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, A);
-#endif
-#endif
+
 	vol = M.sum();
 	inited = false;
 	iterate = 0;
 	converged = false;
+
+	N = M.cols;
+	f.resize(N);
+	u.resize(N);
+	r.resize(N);
+	p.resize(N);
+	Ap.resize(N);
 }
 
 void PoissonSolver::clear_solution()

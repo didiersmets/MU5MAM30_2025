@@ -7,19 +7,15 @@
 #include "sparse_matrix.h"
 #endif
 
-#define USE_FEM_P2 false
-#if USE_FEM_P2
-#include "P2.h"
-#else
-#include "P1.h"
-#endif
 
+#include "P2.h"
+#include "P1.h"
 #include "mesh.h"
 
 struct PoissonSolver
 {
-	PoissonSolver(const Mesh &m);
-	const Mesh &m;
+	PoissonSolver(Mesh &m, const bool &use_fem_P2);
+	Mesh &m;
 	size_t N;	// DoF
 	double vol; // Surface(m), used for insuring zero mean to f and u
 	TArray<double> f;
@@ -42,6 +38,8 @@ struct PoissonSolver
 	double r2;		  // current ||r||^2
 	bool converged;	  //
 	double rel_error; // sqrt(r2 / b2)
+
+	bool use_fem_P2;
 
 	void clear_solution();
 	void init_cg();
