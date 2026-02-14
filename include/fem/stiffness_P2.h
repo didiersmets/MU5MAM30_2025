@@ -34,34 +34,36 @@ void inline stiffness_P2(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 	{
 		/* Computation of the coefficients in the bloc vertex-vertex */
 		S[0] = K_6 * 3 * L[0];
-		S[1] = K_6 * 3 * L[1];
-		S[2] = K_6 * 3 * L[2];
+		S[1] = -K_6 * L[3];
+		S[2] = -K_6 * L[4];
 
-		S[6] = -K_6 * L[3];
-		S[7] = -K_6 * L[4];
-		S[11] = -K_6 * L[5];
+		S[7] = K_6 * 3 * L[1];
+		S[8] = -K_6 * L[5];
+
+		S[14] = K_6 * 3 * L[2];
 
 		/* Computation of the coefficients in the bloc vertex-edge */
-		S[8] = K_6 * 4 * L[3];
-		S[13] = K_6 * 4 * L[5];
-		S[17] = K_6 * 4 * L[4];
+		S[3] = K_6 * 4 * L[3];
+		S[4] = 0;
+		S[5] = K_6 * 4 * L[4];
 
-		S[9] = 0;
-		S[10] = K_6 * 4 * L[4];
-		S[14] = 0;
+		S[9] = K_6 * 4 * L[3];
+		S[10] = K_6 * 4 * L[5];
+		S[11] = 0;
 
-		S[12] = K_6 * 4 * L[3];
 		S[15] = 0;
 		S[16] = K_6 * 4 * L[5];
+		S[17] = K_6 * 4 * L[4];
 
 		/* Computation of the coefficients in the bloc edge-edge */
-		S[3] = K_6 * 8 * (L[0] - L[5]);
-		S[4] = K_6 * 8 * (L[1] - L[4]);
-		S[5] = K_6 * 8 * (L[2] - L[3]);
+		S[21] = K_6 * 8 * (L[0] - L[5]);
+		S[22] = K_6 * 8 * L[4];
+		S[23] = K_6 * 8 * L[5];
 
-		S[18] = K_6 * 8 * L[4];
-		S[19] = K_6 * 8 * L[5];
-		S[20] = K_6 * 8 * L[3];
+		S[28] = K_6 * 8 * (L[1] - L[4]);
+		S[29] = K_6 * 8 * L[3];
+
+		S[35] = K_6 * 8 * (L[2] - L[3]);
 
 		/* Computation of the symmetric part */
 		for (int i = 0; i < 6; i++)
