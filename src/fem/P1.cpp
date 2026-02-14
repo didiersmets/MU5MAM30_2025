@@ -15,46 +15,11 @@
 #include "stiffness_P1.h"
 #include "hash_table.h"
 #include "hash.h"
+#include "hashers.h"
 
 #include <unordered_set>
 
 using namespace std;
-
-/* Neighbors structure for searching ends, behave as std::pair */
-struct Neigh
-{
-	uint32_t first;
-	uint32_t second;
-	bool operator==(const Neigh &other) const
-	{
-		return first == other.first && second == other.second;
-	}
-};
-
-/* Neighbors structure hasher */
-struct NeighHasher
-{
-	static constexpr uint32_t empty_int = ~uint32_t(0);
-	static constexpr Neigh empty_key{empty_int, empty_int};
-
-	size_t hash(Neigh nei) const
-	{
-		uint32_t hash = 0;
-		hash = murmur2_32(hash, nei.first);
-		hash = murmur2_32(hash, nei.second);
-		return hash;
-	}
-
-	bool is_empty(Neigh nei) const
-	{
-		return nei.first == empty_int && nei.second == empty_int;
-	}
-
-	bool is_equal(Neigh nei_1, Neigh nei_2) const
-	{
-		return nei_1.first == nei_2.first && nei_1.second == nei_2.second;
-	}
-};
 
 /* CSRMatrix variants */
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
@@ -76,71 +41,70 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 	P.row_start.resize(nv + 1);
 	P.col.resize(nnz_non_symmetric);
 
-	NeighHasher hasher{};
-	HashTable<Neigh, uint32_t, NeighHasher> seen(nnz_non_symmetric, hasher);
+	VertexPairHasher hasher_vv{};
+	VertexPair current_vertex_pair;
 
 	uint32_t *current_key;
-	Neigh current_neigh;
 	uint32_t dummy = 0;
+
 	size_t nnz = 0;
 
-	for (size_t k = 0; k < nv; k++)
+	for (uint32_t k = 0; k < nv; k++)
 	{
+		HashTable<VertexPair, uint32_t, VertexPairHasher> seen_vv(2 * vt_adj.degree[k] + 4, hasher_vv);
+
 		P.row_start[k] = nnz;
+
+		/* The first vertex is the current one */
+		current_vertex_pair.first = k;
+
+		/* Add the diagonal */
+		P.col[nnz++] = k;
+		seen_vv.set_at({k, k}, dummy);
+
 		for (size_t j = vt_adj.offset[k]; j < vt_adj.offset[k] + vt_adj.degree[k]; j++)
 		{
-			/* The first neighbor is the current vertex */
-			current_neigh.first = k;
+			uint32_t next = vt_adj.vtri[j].next;
+			uint32_t prev = vt_adj.vtri[j].prev;
 
-			/* The second neighbor is either the vertex, the next or the previous */
-			current_neigh.second = k;
-			current_key = seen.get(current_neigh);
+			uint32_t second_neigh[2] = {next, prev};
 
-			if (!current_key)
+			for (size_t l = 0; l < 2; l++)
 			{
-				P.col[nnz++] = current_neigh.second;
-				seen.set_at(current_neigh, dummy);
+				current_vertex_pair.second = second_neigh[l];
+				current_key = seen_vv.get(current_vertex_pair);
+
+				/* Keep only the new interactions, belonging to the lower triangular part of the pattern */
+				if (!current_key && current_vertex_pair.second <= k)
+				{
+					P.col[nnz++] = current_vertex_pair.second;
+					seen_vv.set_at(current_vertex_pair, dummy);
+				}
 			}
-
-			current_neigh.second = vt_adj.vtri[j].next;
-			current_key = seen.get(current_neigh);
-
-			if (current_neigh.second <= k)
-				if (!current_key)
-				{
-					P.col[nnz++] = current_neigh.second;
-					seen.set_at(current_neigh, dummy);
-				}
-
-			current_neigh.second = vt_adj.vtri[j].prev;
-			current_key = seen.get(current_neigh);
-
-			if (current_neigh.second <= k)
-				if (!current_key)
-				{
-					P.col[nnz++] = current_neigh.second;
-					seen.set_at(current_neigh, dummy);
-				}
 		}
 	}
 	P.row_start[nv] = nnz;
 	P.nnz = nnz;
 	P.col.resize(nnz);
 
-	/* Reorder col so that it is consistent with the matrix point of view */
-	uint32_t temp;
+	/* Reorder P.col */
 	for (size_t i = 0; i < nv; i++)
 	{
-		for (size_t j = 1; j < P.row_start[i + 1] - P.row_start[i]; j++)
-			for (size_t k = P.row_start[i]; k < P.row_start[i + 1] - j; k++)
+		size_t start = P.row_start[i];
+		size_t end = P.row_start[i + 1];
+
+		for (size_t j = start; j < end; j++)
+		{
+			for (size_t k = j + 1; k < end; k++)
 			{
-				if (P.col[k + 1] < P.col[k])
+				if (P.col[k] < P.col[j])
 				{
-					temp = P.col[k];
-					P.col[k] = P.col[k + 1];
-					P.col[k + 1] = temp;
+					uint32_t temp = P.col[j];
+					P.col[j] = P.col[k];
+					P.col[k] = temp;
 				}
 			}
+		}
 	}
 }
 
