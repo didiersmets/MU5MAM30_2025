@@ -84,7 +84,7 @@ void NavierStokesSolver::compute_transport(double* T)
   }
 }
 
-// function to use to change the variables of the initial condition on the fluid and see better the cosriolius effect
+// function to use to change the variables of the initial condition on the fluid and see better the coriolis effect
 // 100 * x * exp(-50*x^2) * (1 + 0.5 * cos(0.05 * atan2(z, y)))
 
 // Now we compute the transport term with the coriolis effect included
@@ -109,11 +109,11 @@ void NavierStokesSolver::compute_transport_coriolis(double* T , double omega_ear
 
 
     assert(a < N && b < N && c < N);
-    double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
-    omega_sum += coriolis[a] + coriolis[b] + coriolis[c];  // linear addition of coriolis term
-    T[a] += (omega_sum * (PSI[b] - PSI[c])) / 6.0;
-    T[b] += (omega_sum * (PSI[c] - PSI[a])) / 6.0;
-    T[c] += (omega_sum * (PSI[a] - PSI[b])) / 6.0;
+    double omega_sum = (OMEGA[a] + OMEGA[b] + OMEGA[c]) / 6.0;
+    omega_sum += (coriolis[a] + coriolis[b] + coriolis[c]) / 2.0;  // linear addition of coriolis term
+    T[a] += (omega_sum * (PSI[b] - PSI[c]));
+    T[b] += (omega_sum * (PSI[c] - PSI[a]));
+    T[c] += (omega_sum * (PSI[a] - PSI[b]));
   }
 }
 
