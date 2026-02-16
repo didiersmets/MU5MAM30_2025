@@ -50,11 +50,11 @@ void build_P2_CSRPattern_vertex_rows(const Mesh &m, const VTAdjacency &vt_adj, s
             uint32_t next = vt_adj.vtri[j].next;
             uint32_t prev = vt_adj.vtri[j].prev;
 
-            uint32_t second_neigh[2] = {next, prev};
+            uint32_t second_vertex[2] = {next, prev};
 
             for (size_t l = 0; l < 2; l++)
             {
-                current_vertex_pair.second = second_neigh[l];
+                current_vertex_pair.second = second_vertex[l];
                 current_key = seen_vv.get(current_vertex_pair);
 
                 /* Keep only the new interactions, belonging to the lower triangular part of the pattern */
@@ -103,16 +103,16 @@ void build_P2_CSRPattern_edge_rows(const Mesh &m, const ETAdjacency &et_adj, siz
             uint32_t b = m.indices[3 * tri + 1];
             uint32_t c = m.indices[3 * tri + 2];
 
-            uint32_t current_vertices[3] = {a, b, c};
+            uint32_t current_vertex[3] = {a, b, c};
 
             for (size_t l = 0; l < 3; l++)
             {
-                current_vertex_edge_pair.vertex_idx = current_vertices[l];
+                current_vertex_edge_pair.vertex_idx = current_vertex[l];
                 current_key = seen_ve.get(current_vertex_edge_pair);
 
                 if (!current_key)
                 {
-                    P.col[nnz++] = current_vertices[l];
+                    P.col[nnz++] = current_vertex[l];
                     seen_ve.set_at(current_vertex_edge_pair, dummy);
                 }
             }

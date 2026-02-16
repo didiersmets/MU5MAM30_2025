@@ -7,23 +7,47 @@
 #include "conjugate_gradient.h"
 
 #include "P1.h"
+#include "P2.h"
 #include "tiny_blas.h"
 
-NavierStokesSolver::NavierStokesSolver(const Mesh &m)
-	: m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
+NavierStokesSolver::NavierStokesSolver(Mesh &m, const bool &use_fem_P2)
+	: m(m), omega(0), Momega(0), psi(0), r(0), p(0), Ap(0), use_fem_P2(use_fem_P2)
 {
 #if USE_FEM_MATRIX
-	build_P1_mass_matrix(m, M);
-	build_P1_stiffness_matrix(m, S);
+	if (use_fem_P2)
+		throw std::runtime_error("P2 Lagrange elements are not available for FEM matrix framework");
+	else
+	{
+		build_P1_mass_matrix(m, M);
+		build_P1_stiffness_matrix(m, S);
+	}
 #else
-	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, S);
+	if (!use_fem_P2)
+	{
+		build_P1_CSRPattern(m, P);
+		build_P1_mass_matrix(m, P, M);
+		build_P1_stiffness_matrix(m, P, S);
+	}
+	else
+	{
+		m.build_edges();
+		build_P2_CSRPattern(m, P);
+		build_P2_mass_matrix(m, P, M);
+		build_P2_stiffness_matrix(m, P, S);
+	}
 #endif
-	vol = M.sum();
-	inited = false;
 	rel_error = (double *)malloc(sizeof(double));
 	t = 0;
+	vol = M.sum();
+	inited = false;
+
+	N = M.cols;
+	omega.resize(N);
+	Momega.resize(N);
+	psi.resize(N);
+	r.resize(N);
+	p.resize(N);
+	Ap.resize(N);
 }
 
 void NavierStokesSolver::set_zero_mean(double *V)

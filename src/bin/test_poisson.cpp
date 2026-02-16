@@ -69,7 +69,7 @@ bool new_rhs(PoissonSolver &solver)
 	te_free(te_rhs);
 	te_rhs = test;
 	size_t nv = solver.m.vertex_count();
-	for (size_t i = 0; i < solver.m.vertex_count(); ++i)
+	for (size_t i = 0; i < nv; ++i)
 	{
 		rhs_x = solver.m.positions[i].x;
 		rhs_y = solver.m.positions[i].y;

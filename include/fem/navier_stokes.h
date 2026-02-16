@@ -9,8 +9,8 @@
 
 struct NavierStokesSolver
 {
-	NavierStokesSolver(const Mesh &m);
-	const Mesh &m;
+	NavierStokesSolver(Mesh &m, const bool &use_fem_P2);
+	Mesh &m;
 	size_t N;	// DoF
 	double vol; // Surface(m), used for insuring zero mean to omega and psi
 
@@ -34,10 +34,12 @@ struct NavierStokesSolver
 	size_t iter_max = 500;
 	double tol = 1e-6;
 	double *rel_error; // sqrt(r2 / b2)
-	double b2;		  // ||Mf||^2
-	double r2;		  // current ||r||^2
+	double b2;		   // ||Mf||^2
+	double r2;		   // current ||r||^2
 
 	double t;
+
+	bool use_fem_P2;
 
 	void set_zero_mean(double *V);
 	size_t compute_stream_function();
