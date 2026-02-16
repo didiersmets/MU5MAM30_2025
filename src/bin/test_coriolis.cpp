@@ -858,7 +858,9 @@ static void draw_gui(NavierStokesSolver &solver) {
     ImGui::Checkbox("Show mesh edges", &draw_edges);
     ImGui::Checkbox("Show coordinate axes", &show_axes);
     
-    ImGui::Text("Underlying function:");
+    ImGui::Text(" ");
+    ImGui::Text("Underlying function");
+    ImGui::Text("-------------------");
     if (ImGui::RadioButton("Vorticity (omega)", !show_psi)) {
         show_psi = false;
     }
@@ -867,7 +869,8 @@ static void draw_gui(NavierStokesSolver &solver) {
     }
     
     ImGui::Text(" ");
-    ImGui::Text("Overlays (independent):");
+    ImGui::Text("Overlays");
+    ImGui::Text("--------");
     ImGui::Checkbox("Show contour lines", &show_contours);
     ImGui::Checkbox("Show velocity vectors", &show_velocity_vectors);
     ImGui::SliderFloat("Velocity scale", &velocity_scale, 0.01f, 0.5f);
