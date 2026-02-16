@@ -37,4 +37,5 @@ inline void mass_P2(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
     // 4. Construir la matriz final
     for (int i = 0; i < 36; ++i)
         M[i] = scale * Mref[i];
+
 }

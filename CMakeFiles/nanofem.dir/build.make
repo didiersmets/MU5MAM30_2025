@@ -100,10 +100,24 @@ CMakeFiles/nanofem.dir/src/fem/P2.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nanofem.dir/src/fem/P2.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/fem/P2.cpp" -o CMakeFiles/nanofem.dir/src/fem/P2.cpp.s
 
+CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o: CMakeFiles/nanofem.dir/flags.make
+CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o: src/fem/P2_custom.cpp
+CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o -MF CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o.d -o CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/fem/P2_custom.cpp"
+
+CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/fem/P2_custom.cpp" > CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.i
+
+CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/fem/P2_custom.cpp" -o CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.s
+
 CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o: src/fem/poisson.cpp
 CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o -MF CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o.d -o CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/fem/poisson.cpp"
 
 CMakeFiles/nanofem.dir/src/fem/poisson.cpp.i: cmake_force
@@ -117,7 +131,7 @@ CMakeFiles/nanofem.dir/src/fem/poisson.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o: src/fem/navier_stokes.cpp
 CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o -MF CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o.d -o CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/fem/navier_stokes.cpp"
 
 CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.i: cmake_force
@@ -131,7 +145,7 @@ CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o: src/linalg/conjugate_gradient.cpp
 CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o -MF CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o.d -o CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/linalg/conjugate_gradient.cpp"
 
 CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.i: cmake_force
@@ -145,7 +159,7 @@ CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o: src/matrix/fem_matrix.cpp
 CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o -MF CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o.d -o CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/matrix/fem_matrix.cpp"
 
 CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.i: cmake_force
@@ -159,7 +173,7 @@ CMakeFiles/nanofem.dir/src/matrix/fem_matrix.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o: src/matrix/sparse_matrix.cpp
 CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o -MF CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o.d -o CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/matrix/sparse_matrix.cpp"
 
 CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.i: cmake_force
@@ -173,7 +187,7 @@ CMakeFiles/nanofem.dir/src/matrix/sparse_matrix.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o: src/mesh/adjacency.cpp
 CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o -MF CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o.d -o CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/mesh/adjacency.cpp"
 
 CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.i: cmake_force
@@ -187,7 +201,7 @@ CMakeFiles/nanofem.dir/src/mesh/adjacency.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o: src/mesh/cube.cpp
 CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o -MF CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o.d -o CMakeFiles/nanofem.dir/src/mesh/cube.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/mesh/cube.cpp"
 
 CMakeFiles/nanofem.dir/src/mesh/cube.cpp.i: cmake_force
@@ -201,7 +215,7 @@ CMakeFiles/nanofem.dir/src/mesh/cube.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o: src/mesh/cube2.cpp
 CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o -MF CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o.d -o CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/mesh/cube2.cpp"
 
 CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.i: cmake_force
@@ -215,7 +229,7 @@ CMakeFiles/nanofem.dir/src/mesh/cube2.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o: src/mesh/sphere.cpp
 CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o -MF CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o.d -o CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/mesh/sphere.cpp"
 
 CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.i: cmake_force
@@ -229,7 +243,7 @@ CMakeFiles/nanofem.dir/src/mesh/sphere.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o: src/mesh/duplicate_verts.cpp
 CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o -MF CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o.d -o CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/mesh/duplicate_verts.cpp"
 
 CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.i: cmake_force
@@ -243,7 +257,7 @@ CMakeFiles/nanofem.dir/src/mesh/duplicate_verts.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o: src/mesh/mesh_io.cpp
 CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o -MF CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o.d -o CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/mesh/mesh_io.cpp"
 
 CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.i: cmake_force
@@ -257,7 +271,7 @@ CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.s: cmake_force
 CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o: CMakeFiles/nanofem.dir/flags.make
 CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o: src/mesh/mesh_bounds.cpp
 CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o: CMakeFiles/nanofem.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o -MF CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o.d -o CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o -c "/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/src/mesh/mesh_bounds.cpp"
 
 CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.i: cmake_force
@@ -272,6 +286,7 @@ CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.s: cmake_force
 nanofem_OBJECTS = \
 "CMakeFiles/nanofem.dir/src/fem/P1.cpp.o" \
 "CMakeFiles/nanofem.dir/src/fem/P2.cpp.o" \
+"CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o" \
 "CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o" \
 "CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o" \
 "CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o" \
@@ -290,6 +305,7 @@ nanofem_EXTERNAL_OBJECTS =
 
 libnanofem.a: CMakeFiles/nanofem.dir/src/fem/P1.cpp.o
 libnanofem.a: CMakeFiles/nanofem.dir/src/fem/P2.cpp.o
+libnanofem.a: CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o
 libnanofem.a: CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o
 libnanofem.a: CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o
 libnanofem.a: CMakeFiles/nanofem.dir/src/linalg/conjugate_gradient.cpp.o
@@ -304,7 +320,7 @@ libnanofem.a: CMakeFiles/nanofem.dir/src/mesh/mesh_io.cpp.o
 libnanofem.a: CMakeFiles/nanofem.dir/src/mesh/mesh_bounds.cpp.o
 libnanofem.a: CMakeFiles/nanofem.dir/build.make
 libnanofem.a: CMakeFiles/nanofem.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_15) "Linking CXX static library libnanofem.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir="/Users/franciscaprile/Desktop/Mise en oeuvre de la méthode des elements finis/MU5MAM30_2025/CMakeFiles" --progress-num=$(CMAKE_PROGRESS_16) "Linking CXX static library libnanofem.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/nanofem.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/nanofem.dir/link.txt --verbose=$(VERBOSE)
 

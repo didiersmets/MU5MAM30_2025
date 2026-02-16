@@ -788,6 +788,6 @@ CMakeFiles/nanofem.dir/src/fem/P2.cpp.o: \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/cstdarg \
   /Users/franciscaprile/Desktop/Mise\ en\ oeuvre\ de\ la\ méthode\ des\ elements\ finis/MU5MAM30_2025/include/matrix/sparse_matrix.h \
   /Users/franciscaprile/Desktop/Mise\ en\ oeuvre\ de\ la\ méthode\ des\ elements\ finis/MU5MAM30_2025/include/mesh/adjacency.h \
-  /Users/franciscaprile/Desktop/Mise\ en\ oeuvre\ de\ la\ méthode\ des\ elements\ finis/MU5MAM30_2025/include/fem/mass_P2.h \
-  /Users/franciscaprile/Desktop/Mise\ en\ oeuvre\ de\ la\ méthode\ des\ elements\ finis/MU5MAM30_2025/include/fem/stiffness_P2.h \
+  /Users/franciscaprile/Desktop/Mise\ en\ oeuvre\ de\ la\ méthode\ des\ elements\ finis/MU5MAM30_2025/include/fem/mass_P2_custom.h \
+  /Users/franciscaprile/Desktop/Mise\ en\ oeuvre\ de\ la\ méthode\ des\ elements\ finis/MU5MAM30_2025/include/fem/stiffness_P2_custom.h \
   /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1/set

@@ -609,6 +609,30 @@ src/fem/P2.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/nanofem.dir/build.make CMakeFiles/nanofem.dir/src/fem/P2.cpp.s
 .PHONY : src/fem/P2.cpp.s
 
+src/fem/P2_custom.o: src/fem/P2_custom.cpp.o
+.PHONY : src/fem/P2_custom.o
+
+# target to build an object file
+src/fem/P2_custom.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/nanofem.dir/build.make CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o
+.PHONY : src/fem/P2_custom.cpp.o
+
+src/fem/P2_custom.i: src/fem/P2_custom.cpp.i
+.PHONY : src/fem/P2_custom.i
+
+# target to preprocess a source file
+src/fem/P2_custom.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/nanofem.dir/build.make CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.i
+.PHONY : src/fem/P2_custom.cpp.i
+
+src/fem/P2_custom.s: src/fem/P2_custom.cpp.s
+.PHONY : src/fem/P2_custom.s
+
+# target to generate assembly for a file
+src/fem/P2_custom.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/nanofem.dir/build.make CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.s
+.PHONY : src/fem/P2_custom.cpp.s
+
 src/fem/navier_stokes.o: src/fem/navier_stokes.cpp.o
 .PHONY : src/fem/navier_stokes.o
 
@@ -1126,6 +1150,9 @@ help:
 	@echo "... src/fem/P2.o"
 	@echo "... src/fem/P2.i"
 	@echo "... src/fem/P2.s"
+	@echo "... src/fem/P2_custom.o"
+	@echo "... src/fem/P2_custom.i"
+	@echo "... src/fem/P2_custom.s"
 	@echo "... src/fem/navier_stokes.o"
 	@echo "... src/fem/navier_stokes.i"
 	@echo "... src/fem/navier_stokes.s"

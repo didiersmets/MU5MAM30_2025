@@ -535,17 +535,46 @@ int main(int argc, char **argv)
 
             if (fem_type == FEMType::P1) {
 
-                // RHS P1 clásico: nodal sampling
+                // P1: f en vértices
                 for (size_t i = 0; i < vtx_count; ++i) {
                     double x = mesh.positions[i].x;
                     double y = mesh.positions[i].y;
                     solver.f[i] = exact_f(x, y);
                 }
 
-            } else {
-                // RHS P2 consistente
-                assemble_rhs_P2(mesh, solver.f);
+            } else { // P2
+
+                size_t vtx_count = mesh.vertex_count();
+
+                // 1) f en vértices
+                for (size_t i = 0; i < vtx_count; ++i) {
+                    double x = mesh.positions[i].x;
+                    double y = mesh.positions[i].y;
+                    solver.f[i] = exact_f(x, y);
+                }
+
+                // 2) f en dofs de arista: usar el punto medio de la arista
+                std::map<std::pair<uint32_t,uint32_t>, uint32_t> edge_id;
+                uint32_t edge_count = 0;
+                build_edge_numbering(mesh, edge_id, edge_count);
+
+                for (auto &e : edge_id) {
+                    uint32_t a = e.first.first;
+                    uint32_t b = e.first.second;
+                    uint32_t edge_dof = vtx_count + e.second;
+
+                    double xa = mesh.positions[a].x;
+                    double ya = mesh.positions[a].y;
+                    double xb = mesh.positions[b].x;
+                    double yb = mesh.positions[b].y;
+
+                    double xm = 0.5*(xa + xb);
+                    double ym = 0.5*(ya + yb);
+
+                    solver.f[edge_dof] = exact_f(xm, ym);
+                }
             }
+
 
 
 

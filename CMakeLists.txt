@@ -29,6 +29,7 @@ add_library(nanofem
 	#        before building the project.
 	src/fem/P1.cpp
 	src/fem/P2.cpp #added
+	src/fem/P2_custom.cpp #added
 	src/fem/poisson.cpp
 	src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp

@@ -130,29 +130,21 @@ void PoissonSolver::init_cg()
     double *P  = p.data;
     double *AP = Ap.data;
 
-    // 1) Construir RHS
-    if (fem_type == FEMType::P1) {
-        // P1: f = f(x_i), necesitamos M*f
-        M.mvp(F, R);          // R = b = M*f
-    } else {
-        // P2: f ya es b = ∫ f φ_i
-        blas_copy(F, R, N);   // R = b
-    }
+    // Siempre: RHS = M * f_nodal
+    M.mvp(F, R);          // R = b = M*f
 
-    // 2) r0 = b - A*u0
     A.mvp(U, AP);
     blas_axpy(-1.0, AP, R, N);   // R = R - A*u0
 
-    // 3) p0 = r0
     blas_copy(R, P, N);
 
-    // 4) normas
     r2 = blas_dot(R, R, N);
-    b2 = blas_dot(R, R, N);   // o similar
+    b2 = blas_dot(R, R, N);
     rel_error = sqrt(r2 / b2);
 
     inited = true;
 }
+
 
 
 

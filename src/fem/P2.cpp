@@ -1,10 +1,11 @@
 #include "P2.h"
 #include "adjacency.h"
 #include "fem_matrix.h"
-#include "mass_P2.h"
 #include "mesh.h"
 #include "sparse_matrix.h"
-#include "stiffness_P2.h"
+#include "mass_P2_custom.h"
+#include "stiffness_P2_custom.h"
+
 
 #include <set>
 #include <map>
@@ -129,7 +130,7 @@ void build_P2_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
         Vec3d AC = { double(C[0]-A[0]), double(C[1]-A[1]), double(C[2]-A[2]) };
 
         double Mloc[36];
-        mass_P2(AB, AC, Mloc);
+        mass_P2_custom(AB, AC, Mloc);
 
         uint32_t dof[6];
         dof[0] = a;
@@ -189,7 +190,7 @@ void build_P2_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
                      (double)C[2] - (double)A[2] };
 
         double Sloc[36];
-        stiffness_P2(AB, AC, Sloc);
+        stiffness_P2_custom(AB, AC, Sloc);
 
         uint32_t dof[6];
         dof[0] = a;

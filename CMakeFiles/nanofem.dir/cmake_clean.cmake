@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/nanofem.dir/src/fem/P1.cpp.o.d"
   "CMakeFiles/nanofem.dir/src/fem/P2.cpp.o"
   "CMakeFiles/nanofem.dir/src/fem/P2.cpp.o.d"
+  "CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o"
+  "CMakeFiles/nanofem.dir/src/fem/P2_custom.cpp.o.d"
   "CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o"
   "CMakeFiles/nanofem.dir/src/fem/navier_stokes.cpp.o.d"
   "CMakeFiles/nanofem.dir/src/fem/poisson.cpp.o"
