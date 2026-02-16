@@ -194,7 +194,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
   double tolerance = 1e-6;
   int    max_iterations = 1000;
 
-  size_t iterations = conjugate_gradient_solve(A, Momega.data, omega.data, r.data, p.data, Ap.data, &rel_error, tolerance, max_iterations, false);
+  [[maybe_unused]] size_t iterations = conjugate_gradient_solve(A, Momega.data, omega.data, r.data, p.data, Ap.data, &rel_error, tolerance, max_iterations, false);
 
   // Necessary to ensure that omega has zero mean at each time step
   set_zero_mean(omega.data);
@@ -257,7 +257,7 @@ void NavierStokesSolver::time_step_coriolis(double dt, double nu, double omega_e
   double tolerance = 1e-6;
   int    max_iterations = 1000;
 
-  size_t iterations = conjugate_gradient_solve(A, Momega.data, omega.data, r.data, p.data, Ap.data, &rel_error, tolerance, max_iterations, false);
+  [[maybe_unused]] size_t iterations = conjugate_gradient_solve(A, Momega.data, omega.data, r.data, p.data, Ap.data, &rel_error, tolerance, max_iterations, false);
 
   // Necessary to ensure that omega has zero mean at each time step
   set_zero_mean(omega.data);
