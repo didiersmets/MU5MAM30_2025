@@ -1,0 +1,2 @@
+/usr/bin/ar qc libtiny_expr.a CMakeFiles/tiny_expr.dir/extern/tiny_expr/tinyexpr.c.o
+/usr/bin/ranlib libtiny_expr.a

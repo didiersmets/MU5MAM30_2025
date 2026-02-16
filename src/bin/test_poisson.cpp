@@ -8,6 +8,7 @@
 
 #include "tiny_expr/tinyexpr.h"
 
+#include "fem_type.h" //New
 #include "cube.h"
 #include "logging.h"
 #include "mesh.h"
@@ -56,32 +57,44 @@ static void draw_gui(PoissonSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
-bool new_rhs(PoissonSolver &solver)
+bool new_rhs(PoissonSolver &solver) // modified
 {
-	srand((int)time(NULL));
-	te_expr *test = te_compile(rhs_expression, rhs_vars,
-				   sizeof(rhs_vars) / sizeof(rhs_vars[0]),
-				   NULL);
-	if (!test)
-		return false;
+    srand((int)time(NULL));
+    te_expr *test = te_compile(rhs_expression, rhs_vars,
+                               sizeof(rhs_vars) / sizeof(rhs_vars[0]),
+                               NULL);
+    if (!test)
+        return false;
 
-	te_free(te_rhs);
-	te_rhs = test;
-	for (size_t i = 0; i < solver.N; ++i) {
-		rhs_x = solver.m.positions[i].x;
-		rhs_y = solver.m.positions[i].y;
-		rhs_z = solver.m.positions[i].z;
-		rhs_p = atan2(rhs_y, rhs_x);
-		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
-		rhs_r = (double)rand() / RAND_MAX;
-		solver.f[i] = te_eval(te_rhs);
-	}
+    te_free(te_rhs);
+    te_rhs = test;
 
-	solver.init_cg();
-	solver.iterate = 0;
+    size_t vtx_count = solver.m.vertex_count();   // ✔️ solo vértices
+    size_t ndof      = solver.N;                  // dofs totales (vértices + aristas)
 
-	return true;
+    // 1. Rellenamos RHS solo en los vértices
+    for (size_t i = 0; i < vtx_count; ++i) {
+        rhs_x = solver.m.positions[i].x;
+        rhs_y = solver.m.positions[i].y;
+        rhs_z = solver.m.positions[i].z;
+        rhs_p = atan2(rhs_y, rhs_x);
+        rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
+        rhs_r = (double)rand() / RAND_MAX;
+
+        solver.f[i] = te_eval(te_rhs);
+    }
+
+    // 2. Los dofs de arista reciben RHS = 0
+    for (size_t i = vtx_count; i < ndof; ++i) {
+        solver.f[i] = 0.0;
+    }
+
+    solver.init_cg();
+    solver.iterate = 0;
+
+    return true;
 }
+
 
 void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 {
@@ -91,22 +104,45 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 	}
 }
 
+
 int main(int argc, char **argv)
 {
-	log_init(0);
+    log_init(0);
 
-	/* Load Mesh */
-	Mesh mesh;
-	if (load_mesh(mesh, argc, argv)) {
-		syntax(argv[0]);
-		exit(EXIT_FAILURE);
-	}
-	LOG_MSG("Loaded mesh.");
-	rescale_and_recenter_mesh(mesh);
-	LOG_MSG("Mesh rescaled and recentered.");
+    /* ------------------------------
+       1. Leer tipo de FEM (P1 o P2)
+       ------------------------------ */
+    FEMType fem = FEMType::P1; // por defecto
 
-	/* Prepare FEM data */
-	PoissonSolver solver(mesh);
+    if (argc > 1) {
+        if (strcmp(argv[1], "P2") == 0 || strcmp(argv[1], "p2") == 0)
+            fem = FEMType::P2;
+    }
+
+    /* -----------------------------------------
+       2. Ajustar argumentos para cargar la malla
+       ----------------------------------------- */
+    int mesh_argc = argc;
+    char** mesh_argv = argv;
+
+    if (argc > 1 && (strcmp(argv[1], "P1") == 0 || strcmp(argv[1], "P2") == 0)) {
+        mesh_argc -= 1;
+        mesh_argv += 1;
+    }
+
+    /* Load Mesh */
+    Mesh mesh;
+    if (load_mesh(mesh, mesh_argc, mesh_argv)) {
+        syntax(argv[0]);
+        exit(EXIT_FAILURE);
+    }
+    LOG_MSG("Loaded mesh.");
+    rescale_and_recenter_mesh(mesh);
+    LOG_MSG("Mesh rescaled and recentered.");
+
+    /* Prepare FEM data */
+    PoissonSolver solver(mesh, fem);   // <--- NUEVO
+
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);

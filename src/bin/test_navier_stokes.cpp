@@ -60,22 +60,30 @@ static void draw_gui(NavierStokesSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
-void reset_solver(NavierStokesSolver &solver)
+void reset_solver(NavierStokesSolver &solver) // cambiado para que funcione para P2 también
 {
-	for (size_t i = 0; i < solver.N; ++i) {
-		rhs_x = solver.m.positions[i].x;
-		rhs_y = solver.m.positions[i].y;
-		rhs_z = solver.m.positions[i].z;
-		rhs_p = atan2(rhs_y, rhs_x);
-		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
-		rhs_r = (double)rand() / RAND_MAX;
-		solver.omega[i] = te_eval(te_rhs);
-	}
+    size_t vtx_count = solver.m.vertex_count();
 
-	solver.set_zero_mean(solver.omega.data);
-	memset(solver.psi.data, 0, solver.N * sizeof(double));
-	solver.t = 0;
+    for (size_t i = 0; i < vtx_count; ++i) {
+        rhs_x = solver.m.positions[i].x;
+        rhs_y = solver.m.positions[i].y;
+        rhs_z = solver.m.positions[i].z;
+        rhs_p = atan2(rhs_y, rhs_x);
+        rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
+        rhs_r = (double)rand() / RAND_MAX;
+        solver.omega[i] = te_eval(te_rhs);
+    }
+
+    // Dofs de arista = 0
+    for (size_t i = vtx_count; i < solver.N; ++i) {
+        solver.omega[i] = 0.0;
+    }
+
+    solver.set_zero_mean(solver.omega.data);
+    memset(solver.psi.data, 0, solver.N * sizeof(double));
+    solver.t = 0;
 }
+
 
 bool new_rhs(NavierStokesSolver &solver)
 {
@@ -117,7 +125,26 @@ int main(int argc, char **argv)
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	NavierStokesSolver solver(mesh);
+	//Esto es nuevo, ahora le agregamos P1 o P2
+	// FEMType por defecto
+	FEMType fem_type = FEMType::P1;
+
+	// Si el usuario pasa un tercer argumento, lo interpretamos como P1 o P2
+	if (argc > 3) {
+		if (strcmp(argv[3], "P2") == 0 || strcmp(argv[3], "p2") == 0) {
+			fem_type = FEMType::P2;
+		} else if (strcmp(argv[3], "P1") == 0 || strcmp(argv[3], "p1") == 0) {
+			fem_type = FEMType::P1;
+		} else {
+			printf("Unknown FEM type '%s'. Use P1 or P2.\n", argv[3]);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	NavierStokesSolver solver(mesh, fem_type);
+
+
+
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
@@ -164,7 +191,8 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n]\n", prg_name);
+	printf("Syntax : %s (obj | cube | sphere) [n] [P1|P2]\n", prg_name);
+	printf(" Example: %s sphere 5 P2\n", prg_name);
 	printf("         Subdivision number n must be provided in case of "
 	       "cube or sphere mesh.\n");
 }

@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch x86_64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/test_poisson.dir/src/common/logging.cpp.o CMakeFiles/test_poisson.dir/src/bin/test_poisson.cpp.o -o test_poisson  libnanofem.a libnanoviewer.a libtiny_expr.a extern/glfw/src/libglfw3.a -framework Cocoa -framework IOKit -framework CoreFoundation libimgui_glfw_opengl3.a -framework OpenGL

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libimgui_glfw_opengl3.a CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui.cpp.o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_draw.cpp.o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_tables.cpp.o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_widgets.cpp.o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_impl_glfw.cpp.o CMakeFiles/imgui_glfw_opengl3.dir/extern/imgui/imgui_impl_opengl3.cpp.o
+/usr/bin/ranlib libimgui_glfw_opengl3.a

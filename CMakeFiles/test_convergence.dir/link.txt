@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch x86_64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/test_convergence.dir/src/common/logging.cpp.o CMakeFiles/test_convergence.dir/src/bin/test_convergence.cpp.o -o test_convergence  libnanofem.a libtiny_expr.a

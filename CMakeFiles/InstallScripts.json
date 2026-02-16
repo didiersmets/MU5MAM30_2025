@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/franciscaprile/Desktop/Mise en oeuvre de la me\u0301thode des elements finis/MU5MAM30_2025/cmake_install.cmake",
+		"/Users/franciscaprile/Desktop/Mise en oeuvre de la me\u0301thode des elements finis/MU5MAM30_2025/extern/glfw/cmake_install.cmake",
+		"/Users/franciscaprile/Desktop/Mise en oeuvre de la me\u0301thode des elements finis/MU5MAM30_2025/extern/glfw/src/cmake_install.cmake",
+		"/Users/franciscaprile/Desktop/Mise en oeuvre de la me\u0301thode des elements finis/MU5MAM30_2025/extern/glfw/docs/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

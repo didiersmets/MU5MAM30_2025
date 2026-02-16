@@ -28,6 +28,7 @@ add_library(nanofem
 	#        header files, you should complete (or copy them from solutions)
 	#        before building the project.
 	src/fem/P1.cpp
+	src/fem/P2.cpp #added
 	src/fem/poisson.cpp
 	src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
@@ -44,16 +45,19 @@ add_library(nanofem
 	src/mesh/mesh_bounds.cpp
 )
 target_include_directories(nanofem PUBLIC 
-	include/common 
-	include/fem
-	include/linalg
-	include/matrix 
-	include/mesh 
-	extern
+    ${PROJECT_SOURCE_DIR}/include   # ← permite include con rutas
+    include/common                  # ← permite include sin rutas
+    include/fem
+    include/linalg
+    include/matrix 
+    include/mesh 
+    extern
 )
+
+
 target_compile_options(nanofem PRIVATE 
-	-std=c++17 -Wall -Wextra -march=native -Wno-unknown-pragmas
-	-Wno-missing-field-initializers
+    -std=c++17 -O3 -Wall -Wextra -Wno-unknown-pragmas
+    -Wno-missing-field-initializers
 )
 if (USE_OPENMP AND OpenMP_CXX_FOUND)
 	target_compile_options(nanofem PRIVATE -DUSE_OPENMP)
@@ -107,6 +111,17 @@ target_compile_options(test_NS PRIVATE
 	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 )
 target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+###############################################################################
+
+###############################################################################
+add_executable(test_convergence
+    src/common/logging.cpp
+    src/bin/test_convergence.cpp
+)
+target_compile_options(test_convergence PRIVATE 
+    -std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_convergence PRIVATE nanofem tiny_expr)
 ###############################################################################
 
 ###############################################################################
