@@ -19,6 +19,16 @@
 #include "sphere.h"
 #include "viewer.h"
 
+/* Particle structure for velocity field visualization */
+struct Particle {
+    Vec3f position;           // Current position on sphere
+    std::vector<Vec3f> trail; // Historical positions for fading trail
+    int age;                  // Current age in time steps
+    int lifespan;             // Maximum lifespan in time steps
+};
+
+typedef std::vector<Particle> ParticleList;
+
 /* Viewer config */
 float bgcolor[4] = {0.3, 0.3, 0.3, 1.0};
 bool draw_surface = true;
@@ -28,11 +38,17 @@ bool show_psi = false;  // Toggle to show psi (stream function) instead of omega
 bool show_velocity_vectors = false;  // Toggle to show velocity vectors (meteorological style)
 bool show_contours = false;  // Toggle to show contour lines for underlying function
 bool show_omega_contours = false;  // Toggle to show omega contour lines
+bool show_particles = false;  // Toggle to show particle tracers
 float axis_length = 1.5f;  // NEW: Length of axes
 float velocity_scale = 0.1f;  // Scale factor for velocity arrow length
 float scale_min;
 float scale_max;
 float mesh_deform = 0;
+
+/* Particle parameters */
+ParticleList particles;
+int particle_lifespan = 300;  // Lifespan in time steps
+int particles_per_step = 2;   // Number of particles to generate per time step
 
 /* FEM interaction */
 bool autoscale = true;
@@ -67,6 +83,9 @@ static void draw_scene(const Viewer &viewer, int shader, const GPUMesh &gpu_mesh
 static void draw_gui(NavierStokesSolver &solver);
 static void draw_velocity_field(const Mesh &mesh, const NavierStokesSolver &solver, const Viewer &viewer, int shader);
 static void draw_contours(const Mesh &mesh, const TArray<double> &data, int shader);
+static void draw_particles(const ParticleList &particles, const Viewer &viewer, int shader);
+static void update_particles(ParticleList &particles, const NavierStokesSolver &solver, const Mesh &mesh, float dt);
+static void spawn_particles(ParticleList &particles, int count, int lifespan);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
@@ -538,6 +557,198 @@ static void cleanup_axes() {
     }
 }
 
+/* Spawn random particles on the sphere surface */
+static void spawn_particles(ParticleList &particles, int count, int lifespan) {
+    for (int i = 0; i < count; ++i) {
+        // Generate random point on unit sphere using Fibonacci sphere algorithm
+        float theta = 2.0f * M_PI * ((float)rand() / RAND_MAX);
+        float phi = acos(2.0f * ((float)rand() / RAND_MAX) - 1.0f);
+        
+        Particle p;
+        p.position.x = sin(phi) * cos(theta);
+        p.position.y = sin(phi) * sin(theta);
+        p.position.z = cos(phi);
+        p.age = 0;
+        p.lifespan = lifespan;
+        p.trail.push_back(p.position);  // Initialize trail with starting position
+        
+        particles.push_back(p);
+    }
+}
+
+/* Update particle positions using velocity field (forward Euler) */
+static void update_particles(ParticleList &particles, const NavierStokesSolver &solver, const Mesh &mesh, float dt) {
+    std::vector<Particle> living_particles;
+    
+    for (auto& particle : particles) {
+        particle.age++;
+        
+        if (particle.age < particle.lifespan) {
+            // Find velocity at particle position using barycentric interpolation
+            // For now, use nearest vertex for simplicity
+            float min_dist = 1e9;
+            size_t nearest_vertex = 0;
+            
+            for (size_t v = 0; v < mesh.vertex_count(); ++v) {
+                float dx = mesh.positions[v].x - particle.position.x;
+                float dy = mesh.positions[v].y - particle.position.y;
+                float dz = mesh.positions[v].z - particle.position.z;
+                float dist = sqrt(dx*dx + dy*dy + dz*dz);
+                
+                if (dist < min_dist) {
+                    min_dist = dist;
+                    nearest_vertex = v;
+                }
+            }
+            
+            // Get velocity at nearest vertex
+            Vec3f vel = solver.velocity[nearest_vertex];
+            
+            // Forward Euler integration
+            particle.position.x += vel.x * dt;
+            particle.position.y += vel.y * dt;
+            particle.position.z += vel.z * dt;
+            
+            // Renormalize to keep particle on unit sphere
+            float norm = sqrt(particle.position.x * particle.position.x + 
+                             particle.position.y * particle.position.y + 
+                             particle.position.z * particle.position.z);
+            if (norm > 1e-6) {
+                particle.position.x /= norm;
+                particle.position.y /= norm;
+                particle.position.z /= norm;
+            }
+            
+            // Add current position to trail (keep trail bounded to 50 points)
+            particle.trail.push_back(particle.position);
+            if (particle.trail.size() > 50) {
+                particle.trail.erase(particle.trail.begin());
+            }
+            
+            living_particles.push_back(particle);
+        }
+    }
+    
+    particles = living_particles;
+}
+
+/* Draw particles as small points with fading trails */
+static void draw_particles(const ParticleList &particles, const Viewer &viewer, int shader) {
+    if (!show_particles || particles.empty()) return;
+    
+    // Build vertex data for particles and trails
+    std::vector<float> vertex_data;
+    std::vector<float> color_data;
+    
+    // Draw trails first (so they appear behind particles)
+    for (const auto& particle : particles) {
+        if (particle.trail.size() < 2) continue;
+        
+        // Draw trail segments with fading brightness
+        for (size_t i = 0; i < particle.trail.size() - 1; ++i) {
+            // Brightness decreases from back (old) to front (new)
+            float trail_age_ratio = (float)i / (float)(particle.trail.size() - 1);
+            float brightness = 0.2f + 0.3f * (1.0f - trail_age_ratio);  // Fades from 0.2 to 0.5
+            
+            // Segment start
+            vertex_data.push_back(particle.trail[i].x);
+            vertex_data.push_back(particle.trail[i].y);
+            vertex_data.push_back(particle.trail[i].z);
+            color_data.push_back(brightness);
+            color_data.push_back(brightness);
+            color_data.push_back(brightness);
+            color_data.push_back(0.6f);
+            
+            // Segment end
+            vertex_data.push_back(particle.trail[i + 1].x);
+            vertex_data.push_back(particle.trail[i + 1].y);
+            vertex_data.push_back(particle.trail[i + 1].z);
+            color_data.push_back(brightness);
+            color_data.push_back(brightness);
+            color_data.push_back(brightness);
+            color_data.push_back(0.6f);
+        }
+    }
+    
+    // Add particles (white and bright)
+    for (const auto& particle : particles) {
+        vertex_data.push_back(particle.position.x);
+        vertex_data.push_back(particle.position.y);
+        vertex_data.push_back(particle.position.z);
+        color_data.push_back(1.0f);  // White
+        color_data.push_back(1.0f);
+        color_data.push_back(1.0f);
+        color_data.push_back(1.0f);
+    }
+    
+    if (vertex_data.empty()) return;
+    
+    // Create VAO and VBO
+    GLuint particle_vao, particle_vbo, particle_col_vbo;
+    glGenVertexArrays(1, &particle_vao);
+    glGenBuffers(1, &particle_vbo);
+    glGenBuffers(1, &particle_col_vbo);
+    
+    glBindVertexArray(particle_vao);
+    
+    // Position data
+    glBindBuffer(GL_ARRAY_BUFFER, particle_vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), vertex_data.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    
+    // Color data
+    glBindBuffer(GL_ARRAY_BUFFER, particle_col_vbo);
+    glBufferData(GL_ARRAY_BUFFER, color_data.size() * sizeof(float), color_data.data(), GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(1);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    
+    // Draw with shader
+    glUseProgram(shader);
+    glUniform1i(glGetUniformLocation(shader, "lighting"), false);
+    
+    const Camera &camera = viewer.camera;
+    Mat4 proj = camera.view_to_clip();
+    Mat4 vm = camera.world_to_view();
+    glUniformMatrix4fv(glGetUniformLocation(shader, "vm"), 1, 0, &vm(0, 0));
+    glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, 0, &proj(0, 0));
+    
+    // Count trail line segments
+    int trail_vertex_count = 0;
+    for (const auto& particle : particles) {
+        if (particle.trail.size() >= 2) {
+            trail_vertex_count += 2 * (particle.trail.size() - 1);
+        }
+    }
+    
+    // Draw trail lines
+    if (trail_vertex_count > 0) {
+        glLineWidth(1.0f);
+        glBindVertexArray(particle_vao);
+        glDrawArrays(GL_LINES, 0, trail_vertex_count);
+        glLineWidth(1.0f);
+    }
+    
+    // Draw particles as points
+    glPointSize(6.0f);
+    glBindVertexArray(particle_vao);
+    glDrawArrays(GL_POINTS, trail_vertex_count, particles.size());
+    glBindVertexArray(0);
+    glPointSize(1.0f);
+    
+    // Cleanup
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDeleteBuffers(1, &particle_vbo);
+    glDeleteBuffers(1, &particle_col_vbo);
+    glDeleteVertexArrays(1, &particle_vao);
+    glUseProgram(0);
+    while (glGetError() != GL_NO_ERROR);
+}
+
 int main(int argc, char **argv) {
     log_init(0);
 
@@ -608,6 +819,9 @@ int main(int argc, char **argv) {
         if (show_contours) {
             draw_contours(mesh, solver.psi, shader);
         }
+        
+        // Draw particles if enabled
+        draw_particles(particles, viewer, shader);
         
         // Draw axes on top
         draw_axes(viewer);
@@ -716,6 +930,12 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
             one_step = false;
         }
 
+        // Spawn particles if enabled
+        if (show_particles) {
+            spawn_particles(particles, particles_per_step, particle_lifespan);
+            update_particles(particles, solver, mesh, dt);
+        }
+
         // Transfer appropriate field to mesh for visualization
         if (show_psi) {
             transfer_to_mesh(solver.psi, mesh);
@@ -728,6 +948,7 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
         }
     } else if (reset) {
         reset_solver(solver);
+        particles.clear();  // Clear particles on reset
         if (show_psi) {
             transfer_to_mesh(solver.psi, mesh);
         } else {
@@ -873,7 +1094,10 @@ static void draw_gui(NavierStokesSolver &solver) {
     ImGui::Text("--------");
     ImGui::Checkbox("Show contour lines", &show_contours);
     ImGui::Checkbox("Show velocity vectors", &show_velocity_vectors);
+    ImGui::Checkbox("Show particles", &show_particles);
     ImGui::SliderFloat("Velocity scale", &velocity_scale, 0.01f, 0.5f);
+    ImGui::SliderInt("Particle lifespan", &particle_lifespan, 10, 500);
+    ImGui::SliderInt("Particles per step", &particles_per_step, 1, 20);
 
     ImGui::Text("Artificially deform mesh according to omega :");
     ImGui::Text("(may help visualize oscillations)");
