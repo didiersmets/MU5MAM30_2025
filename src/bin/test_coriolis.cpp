@@ -25,9 +25,8 @@ bool draw_surface = true;
 bool draw_edges = false;
 bool show_axes = false;  // NEW: Toggle for axis display (default off to avoid initial issues)
 bool show_psi = false;  // Toggle to show psi (stream function) instead of omega
-bool show_velocity_magnitude = false;  // Toggle to show |u| (speed) instead of omega
 bool show_velocity_vectors = false;  // Toggle to show velocity vectors (meteorological style)
-bool show_psi_contours = false;  // Toggle to show psi contour lines
+bool show_contours = false;  // Toggle to show contour lines for underlying function
 bool show_omega_contours = false;  // Toggle to show omega contour lines
 float axis_length = 1.5f;  // NEW: Length of axes
 float velocity_scale = 0.1f;  // Scale factor for velocity arrow length
@@ -42,9 +41,9 @@ bool one_step = false;
 bool reset = false;
 
 /* Parameters */
-float lognu = -4;
-float denominator = 1; // denominator for angular velocity
-float dt = 0.005;
+float lognu = -3;
+float omega = 0.2f; // angular velocity
+float dt = 0.0035;
 double tol = 1e-6;
 
 /* RHS expression of the PDE */
@@ -67,7 +66,7 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &mesh_gpu
 static void draw_scene(const Viewer &viewer, int shader, const GPUMesh &gpu_mesh);
 static void draw_gui(NavierStokesSolver &solver);
 static void draw_velocity_field(const Mesh &mesh, const NavierStokesSolver &solver, const Viewer &viewer, int shader);
-static void draw_psi_contours(const Mesh &mesh, const NavierStokesSolver &solver, int shader);
+static void draw_contours(const Mesh &mesh, const TArray<double> &data, int shader);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
@@ -306,22 +305,22 @@ static void draw_velocity_field(const Mesh &mesh, const NavierStokesSolver &solv
     while (glGetError() != GL_NO_ERROR);  // Clear any remaining errors
 }
 
-/* Draw psi contour lines */
-static void draw_psi_contours(const Mesh &mesh, const NavierStokesSolver &solver, int shader)
+/* Draw contour lines for any function */
+static void draw_contours(const Mesh &mesh, const TArray<double> &data, int shader)
 {
-    if (!show_psi_contours || solver.psi.size == 0) return;
+    if (!show_contours || data.size == 0) return;
     
     // Number of contour levels
     int num_contours = 12;
     
-    // Find psi min/max
-    double psi_min = solver.psi[0];
-    double psi_max = solver.psi[0];
-    for (size_t i = 0; i < solver.psi.size; ++i) {
-        psi_min = fmin(psi_min, solver.psi[i]);
-        psi_max = fmax(psi_max, solver.psi[i]);
+    // Find data min/max
+    double data_min = data[0];
+    double data_max = data[0];
+    for (size_t i = 0; i < data.size; ++i) {
+        data_min = fmin(data_min, data[i]);
+        data_max = fmax(data_max, data[i]);
     }
-    if (psi_max <= psi_min) psi_max = psi_min + 1e-6;
+    if (data_max <= data_min) data_max = data_min + 1e-6;
     
     // Build vertex data for contour lines
     std::vector<float> vertex_data;
@@ -333,9 +332,9 @@ static void draw_psi_contours(const Mesh &mesh, const NavierStokesSolver &solver
         uint32_t b = mesh.indices[3 * t + 1];
         uint32_t c = mesh.indices[3 * t + 2];
         
-        double psi_a = solver.psi[a];
-        double psi_b = solver.psi[b];
-        double psi_c = solver.psi[c];
+        double data_a = data[a];
+        double data_b = data[b];
+        double data_c = data[c];
         
         Vec3f va = mesh.positions[a];
         Vec3f vb = mesh.positions[b];
@@ -343,26 +342,26 @@ static void draw_psi_contours(const Mesh &mesh, const NavierStokesSolver &solver
         
         // For each contour level
         for (int level = 0; level < num_contours; ++level) {
-            double contour_value = psi_min + (level + 1.0) / (num_contours + 1.0) * (psi_max - psi_min);
+            double contour_value = data_min + (level + 1.0) / (num_contours + 1.0) * (data_max - data_min);
             
             // Find edges that cross this contour
             std::vector<Vec3f> segment_points;
             
             // Check edge AB
-            if ((psi_a - contour_value) * (psi_b - contour_value) < 0) {
-                double t_param = (contour_value - psi_a) / (psi_b - psi_a);
+            if ((data_a - contour_value) * (data_b - contour_value) < 0) {
+                double t_param = (contour_value - data_a) / (data_b - data_a);
                 Vec3f pt = va + (vb - va) * (float)t_param;
                 segment_points.push_back(pt);
             }
             // Check edge BC
-            if ((psi_b - contour_value) * (psi_c - contour_value) < 0) {
-                double t_param = (contour_value - psi_b) / (psi_c - psi_b);
+            if ((data_b - contour_value) * (data_c - contour_value) < 0) {
+                double t_param = (contour_value - data_b) / (data_c - data_b);
                 Vec3f pt = vb + (vc - vb) * (float)t_param;
                 segment_points.push_back(pt);
             }
             // Check edge CA
-            if ((psi_c - contour_value) * (psi_a - contour_value) < 0) {
-                double t_param = (contour_value - psi_c) / (psi_a - psi_c);
+            if ((data_c - contour_value) * (data_a - contour_value) < 0) {
+                double t_param = (contour_value - data_c) / (data_a - data_c);
                 Vec3f pt = vc + (va - vc) * (float)t_param;
                 segment_points.push_back(pt);
             }
@@ -605,8 +604,10 @@ int main(int argc, char **argv) {
         // Draw velocity vectors if enabled
         draw_velocity_field(mesh, solver, viewer, shader);
         
-        // Draw psi contour lines if enabled
-        draw_psi_contours(mesh, solver, shader);
+        // Draw contour lines if enabled (always shows psi contours)
+        if (show_contours) {
+            draw_contours(mesh, solver.psi, shader);
+        }
         
         // Draw axes on top
         draw_axes(viewer);
@@ -705,9 +706,7 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
     bool needs_upload = true;
 
     if (started || one_step) {
-        float omega = - 2 * M_PI / denominator;
-        // float omega = 0;
-        //solver.time_step(dt, pow(10, lognu));
+        // Compute Coriolis parameter with omega slider
         solver.time_step_coriolis(dt, pow(10, lognu), omega);
         
         // Compute velocity field from psi
@@ -720,32 +719,6 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
         // Transfer appropriate field to mesh for visualization
         if (show_psi) {
             transfer_to_mesh(solver.psi, mesh);
-        } else if (show_velocity_magnitude) {
-            // Compute velocity magnitude at vertices (average from adjacent triangles)
-            TArray<double> vel_mag(solver.N);
-            for (size_t i = 0; i < solver.N; ++i) {
-                vel_mag[i] = 0.0;
-            }
-            // Average velocity magnitude from adjacent triangles
-            std::vector<int> vertex_count(solver.N, 0);
-            for (size_t t = 0; t < mesh.triangle_count(); ++t) {
-                uint32_t a = mesh.indices[3*t];
-                uint32_t b = mesh.indices[3*t+1];
-                uint32_t c = mesh.indices[3*t+2];
-                double vel_mag_t = sqrt(solver.velocity[t][0]*solver.velocity[t][0] + 
-                                        solver.velocity[t][1]*solver.velocity[t][1]);
-                vel_mag[a] += vel_mag_t; vertex_count[a]++;
-                vel_mag[b] += vel_mag_t; vertex_count[b]++;
-                vel_mag[c] += vel_mag_t; vertex_count[c]++;
-            }
-            for (size_t i = 0; i < solver.N; ++i) {
-                if (vertex_count[i] > 0) {
-                    vel_mag[i] /= vertex_count[i];
-                }
-            }
-            transfer_to_mesh(vel_mag, mesh);
-        } else if (show_psi_contours || show_velocity_vectors) {
-            transfer_to_mesh(solver.psi, mesh);
         } else {
             transfer_to_mesh(solver.omega, mesh);
         }
@@ -756,12 +729,6 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
     } else if (reset) {
         reset_solver(solver);
         if (show_psi) {
-            transfer_to_mesh(solver.psi, mesh);
-        } else if (show_velocity_magnitude) {
-            TArray<double> vel_mag(solver.N);
-            for (size_t i = 0; i < solver.N; ++i) vel_mag[i] = 0.0;
-            transfer_to_mesh(vel_mag, mesh);
-        } else if (show_psi_contours || show_velocity_vectors) {
             transfer_to_mesh(solver.psi, mesh);
         } else {
             transfer_to_mesh(solver.omega, mesh);
@@ -881,9 +848,8 @@ static void draw_gui(NavierStokesSolver &solver) {
     ImGui::Text("Viscosity (negative power of 10):");
     ImGui::SliderFloat("nu", &lognu, -8, 0, "10^(%.1f)");
 
-    // Adding cursor for omega control
-    ImGui::Text("Angular velocity denominator (power of 10):");
-    ImGui::SliderFloat("omega", &denominator, 1, 10000, "(%.1f)");
+    ImGui::Text("Angular velocity:");
+    ImGui::SliderFloat("omega", &omega, 0.f, 1.f, "%.3f");
 
     ImGui::Text("Time step :");
     ImGui::SliderFloat("dt", &dt, 0.f, 0.01f, "%.4f");
@@ -892,22 +858,18 @@ static void draw_gui(NavierStokesSolver &solver) {
     ImGui::Checkbox("Show mesh edges", &draw_edges);
     ImGui::Checkbox("Show coordinate axes", &show_axes);
     
-    ImGui::Text("Visualization mode:");
-    if (ImGui::RadioButton("Vorticity (omega)", !show_psi && !show_velocity_magnitude && !show_velocity_vectors && !show_psi_contours)) {
-        show_psi = false; show_velocity_magnitude = false; show_velocity_vectors = false; show_psi_contours = false;
+    ImGui::Text("Underlying function:");
+    if (ImGui::RadioButton("Vorticity (omega)", !show_psi)) {
+        show_psi = false;
     }
-    if (ImGui::RadioButton("Stream function (psi)", show_psi && !show_velocity_vectors && !show_psi_contours)) {
-        show_psi = true; show_velocity_magnitude = false; show_velocity_vectors = false; show_psi_contours = false;
+    if (ImGui::RadioButton("Stream function (psi)", show_psi)) {
+        show_psi = true;
     }
-    if (ImGui::RadioButton("Velocity magnitude |u|", show_velocity_magnitude && !show_velocity_vectors && !show_psi_contours)) {
-        show_psi = false; show_velocity_magnitude = true; show_velocity_vectors = false; show_psi_contours = false;
-    }
-    if (ImGui::RadioButton("Velocity vectors (wind)", show_velocity_vectors && !show_psi_contours)) {
-        show_psi = false; show_velocity_magnitude = false; show_velocity_vectors = true; show_psi_contours = false;
-    }
-    if (ImGui::RadioButton("Psi contour lines", show_psi_contours)) {
-        show_psi = false; show_velocity_magnitude = false; show_velocity_vectors = false; show_psi_contours = true;
-    }
+    
+    ImGui::Text(" ");
+    ImGui::Text("Overlays (independent):");
+    ImGui::Checkbox("Show contour lines", &show_contours);
+    ImGui::Checkbox("Show velocity vectors", &show_velocity_vectors);
     ImGui::SliderFloat("Velocity scale", &velocity_scale, 0.01f, 0.5f);
 
     ImGui::Text("Artificially deform mesh according to omega :");
