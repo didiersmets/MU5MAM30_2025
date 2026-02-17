@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <iostream>
 
 #include "gl_utils.h"
 
@@ -102,15 +103,55 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 	}
 }
 
+static bool has_flag(int argc, char **argv, const char *flag)
+{
+	
+		for (int i = 1; i < argc; ++i) {
+		if (strcmp(argv[i], flag) == 0)
+			return true;
+	}
+	return false;
+}
+
+static int build_positional_args(int argc, char **argv, char **out)
+{
+	int count = 0;
+	for (int i = 1; i < argc; ++i) {
+		if (argv[i][0] != '-') {   // ignore flags
+			out[count++] = argv[i];
+		}
+	}
+	return count;
+}
+
+
+
 int main(int argc, char **argv)
 {
 	log_init(0);
+	
+	//check if we are in benchmark mode or not
+	bool benchmark_mode = has_flag(argc, argv, "-b");
+	
+	/* Build positional argument list */
+	char *positional[16];
+	int pos_argc = build_positional_args(argc, argv, positional);
+
 
 	/* Load Mesh */
 	Mesh mesh;
-	if (load_mesh(mesh, argc, argv)) {
+	if (pos_argc == 2 && strncmp(positional[0], "cube", 4) == 0) {
+		load_cube_nested_dissect(mesh, atoi(positional[1]));
+	}
+	else if (pos_argc == 2 && strncmp(positional[0], "sphere", 5) == 0) {
+		load_sphere(mesh, atoi(positional[1]));
+	}
+	else if (pos_argc >= 1) {
+		load_obj(positional[0], mesh);
+	}
+	else {
 		syntax(argv[0]);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 	LOG_MSG("Loaded mesh.");
 	rescale_and_recenter_mesh(mesh);
@@ -126,6 +167,18 @@ int main(int argc, char **argv)
 	get_attr_bounds(mesh, &scale_min, &scale_max);
 	LOG_MSG("Prepared FEM data.");
 
+	if (benchmark_mode) {
+	std::cout << " Running timestep benchmark" << std::endl;
+	auto t0 = std::chrono::high_resolution_clock::now();
+	solver.time_step(dt, pow(10, lognu));
+	auto t1 = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double> elapsed = t1 - t0;
+	std::cout << "Time elapsed: " << elapsed.count() << " s" << std::endl;
+
+	/* Reset simulation state so GUI starts clean */
+	reset_solver(solver); }
+
+	else{
 	/* Get an OpenGL context through a viewer app. */
 	Viewer viewer;
 	init_camera_for_mesh(mesh, viewer.camera);
@@ -157,7 +210,7 @@ int main(int argc, char **argv)
 	}
 
 	viewer.fini();
-	log_fini();
+	log_fini();}
 
 	return (EXIT_SUCCESS);
 }

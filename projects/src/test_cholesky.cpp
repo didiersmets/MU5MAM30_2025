@@ -168,8 +168,9 @@ int main(int argc, char* argv[]){
         construct_etree(P, parent);
         construct_L_sparsity_pattern(P, L_pattern, parent);
         cholesky_factorization(M, L_pattern, L);
-        solve_cholesky(L, f.data, x.data);
         auto t1 = std::chrono::high_resolution_clock::now();
+        solve_cholesky(L, f.data, x.data);
+       
         std::chrono::duration<double> elapsed = t1 - t0;
         std::cout << "chol_time: " << elapsed.count() << " seconds\n";
         Mesh mesh_disect;
@@ -186,10 +187,11 @@ int main(int argc, char* argv[]){
         construct_etree(P_D, parent_D);
         construct_L_sparsity_pattern(P_D, LD_pattern, parent_D);
         cholesky_factorization(M, LD_pattern, L);
+        std::cout << "chol_nested_time: " << elapsed.count() << " seconds\n";
         solve_cholesky(L, f.data, x.data);
          t1 = std::chrono::high_resolution_clock::now();
         elapsed = t1 - t0;
-        std::cout << "chol_nested_time: " << elapsed.count() << " seconds\n";
+       
     } 
 
     return 0;

@@ -42,9 +42,10 @@ NavierStokesSolverCholesky::NavierStokesSolverCholesky(const Mesh &m, double dt,
 	S_M.data.resize(M.nnz);
 	S_M.symmetric = true;
 	
-	for(size_t i = 0; i < P.nnz; i ++){		
-			S_M.data[i] = M.data[i] + nu*dt*S.data[i];
-	}
+	for(size_t i = 0; i < M.nnz; i ++){		
+			S_M.data[i] = M.data[i] + nu*dt*S.data[i];}
+
+	
 	cholesky_factorization(S_M, L_pattern, L_SM);
 
 	vol = M.sum();
@@ -86,7 +87,7 @@ void NavierStokesSolverCholesky::compute_stream_function()
 {
 	TArray<double> x(N);
 	for(size_t i = 0; i < N; i ++){
-		x[i] = -Momega[i];
+		x[i] = Momega[i];
 	}
 	solve_cholesky(L_S, x.data, psi.data);
 	
@@ -95,6 +96,8 @@ void NavierStokesSolverCholesky::compute_stream_function()
 
 void NavierStokesSolverCholesky::time_step()
 {
+	M.mvp(omega.data, Momega.data);
+
 	compute_stream_function();
 	
 

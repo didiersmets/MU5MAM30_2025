@@ -63,11 +63,13 @@ void NavierStokesSolver::compute_transport(double *T)
 
 size_t NavierStokesSolver::compute_stream_function()
 {
-	
+	//Make sure Momga is up to date
+	M.mvp(omega.data, Momega.data);
+
 	//before iterations
 	double b2 = blas_dot(Momega.data, Momega.data , N);
 	S.mvp(psi.data, r.data);
-	blas_axpby(1, psi.data, -1, r.data, N);
+	blas_axpby(1, Momega.data, -1, r.data, N);
 	/* p_0 = r_0 */
 	blas_copy(r.data, p.data, N);
 
@@ -86,12 +88,17 @@ size_t NavierStokesSolver::compute_stream_function()
 	 	double r2_new = blas_dot(r.data, r.data, N);
 	
 	 	double beta = r2_new/ r2;
-	 	blas_axpby(1, p.data, beta , r.data, N); //compute new p
+	 	blas_axpby(1, r.data, beta , p.data, N); //compute new p
 		r2 = r2_new;
 		rel_error = sqrt(r2 / b2);
 		iter++;
 
+		
+
+
 	}
+
+
 
 	return iter;
 }
@@ -137,14 +144,16 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 		float alpha = r2/blas_dot(p.data, Ap.data, N); //compute alpha
 		blas_axpy(alpha, p.data, omega.data, N); //Compute new x
-	 	blas_axpy(-alpha, Ap.data, r.data, N); // Compute new r
+	 	
+		blas_axpy(-alpha, Ap.data, r.data, N); // Compute new r
 	 	double r2_new = blas_dot(r.data, r.data, N);
 	
 	 	double beta = r2_new/ r2;
-	 	blas_axpby(1, p.data, beta , r.data, N); //compute new p
+	 	blas_axpby(1, r.data, beta , p.data, N); //compute new p
 		r2 = r2_new;
 		rel_error = sqrt(r2 / b2);
 		iter++;
+		M.mvp(omega.data, Momega.data); //Put Momega back
 	}
 	
 

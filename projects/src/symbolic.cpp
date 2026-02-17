@@ -1,7 +1,16 @@
 #include "symbolic.h"
 #include "sparse_matrix.h"
 #include "array.h"
-#include "P1.h"
+
+//Define this function here again to be able to switch between my P1 and the solution P1
+static bool find_2(const TArray<uint32_t> & arr, uint32_t target,  size_t start, size_t stop){
+	assert(start <= stop && stop <= arr.size);
+
+	for(size_t i = start; i < stop; i ++){
+		if(arr[i] == target){return true;}
+	}
+	return false;
+}
 
 
 void construct_etree(CSRPattern &P, TArray<uint32_t> &parent){
@@ -55,7 +64,7 @@ void construct_L_sparsity_pattern(CSRPattern &A, CSRPattern &L, TArray<uint32_t>
             while(mark[j] != i){
                 mark[j] = i;
                 //if we did not already add j, we add it
-                if(!find(L.col, j, L.row_start[i], nnz)){
+                if(!find_2(L.col, j, L.row_start[i], nnz)){
                     L.col[nnz++] = j;
                 }
                 j = parent[j];
