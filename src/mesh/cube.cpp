@@ -22,8 +22,8 @@ int load_cube(Mesh &m, size_t subdiv)
 	size_t n = subdiv + 1;
 
 	/* Reserve memory for vertices and indices */
-	m.positions.resize(6 * POW2(n));
-	m.indices.resize(36 * POW2(subdiv));
+	m.positions.resize(6 * n* n);
+	m.indices.resize(36 * subdiv*subdiv);
 
 	/* First build vertices as six unattached faces of n^2 vertices each */
 	/* See below for implementation */
@@ -49,21 +49,21 @@ static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 	TArray<float> coord_pos(n);
 
 	for(uint32_t i = 0; i < n; i ++){
-		coord_pos[i] = -1.0f + 2.0f * i / subdiv;
-	}
+		coord_pos[i] = (2 * (float)i - subdiv) / subdiv;
+	} //took the expression from solutions
 
 	
 	for(uint32_t i = 0; i < n; i ++){
 		for(uint32_t j = 0; j < n; j ++){
 
 		pos[n*i + j ] = {1.0, coord_pos[i], coord_pos[j] };
-		pos[POW2(n) + n*i + j ] ={-1.0, coord_pos[subdiv - i], coord_pos[j] };
+		pos[n*n + n*i + j ] ={-1.0, coord_pos[subdiv - i], coord_pos[j] };
 
-		pos[2*POW2(n) + n*i + j ] = {coord_pos[subdiv - i], 1.0, coord_pos[j] };
-		pos[3*POW2(n) + n*i + j ] = {coord_pos[i], -1.0, coord_pos[j]};
+		pos[2*n*n + n*i + j ] = {coord_pos[subdiv - i], 1.0, coord_pos[j] };
+		pos[3*n*n + n*i + j ] = {coord_pos[i], -1.0, coord_pos[j]};
 
-		pos[4*POW2(n) +n*i + j ] = {coord_pos[i], coord_pos[j], 1.0 };
-		pos[5*POW2(n) +n*i + j ] = {coord_pos[subdiv-i], coord_pos[j], -1.0 };
+		pos[4*n*n +n*i + j ] = {coord_pos[i], coord_pos[j], 1.0 };
+		pos[5*n*n +n*i + j ] = {coord_pos[subdiv-i], coord_pos[j], -1.0 };
 		}
 	}
 }
@@ -80,10 +80,10 @@ static void load_cube_indices(uint32_t *idx, size_t subdiv)
 			for(uint32_t j = 0; j < n-1; j ++){ // 'row' on face 
 
 			uint32_t v0, v1, v2, v3;
-			v0 = f*POW2(n) + i + n*j;
-			v1 = f*POW2(n) + i +1 +n*j;
-			v2 = f*POW2(n) + i + 1+ n*(j +1);
-			v3 = f*POW2(n) + i +  n*(j +1);
+			v0 = f*n*n + i + n*j;
+			v1 = f*n*n + i +1 +n*j;
+			v2 = f*n*n + i + 1+ n*(j +1);
+			v3 = f*n*n + i +  n*(j +1);
 
 			idx[idx_counter] = v0;
 			idx[idx_counter+1] = v1;

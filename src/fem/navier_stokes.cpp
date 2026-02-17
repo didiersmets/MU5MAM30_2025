@@ -7,7 +7,7 @@
 
 #include "P1.h"
 #include "tiny_blas.h"
-#include "conjugate_gradient.h"
+#include "symbolic.h"
 
 NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	: m(m)

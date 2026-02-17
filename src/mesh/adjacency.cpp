@@ -9,12 +9,20 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 	offset.resize(vtx_count);
 	vtri.resize(idx_count);
 
-
-	for (uint32_t i = 0; i <vtx_count; i ++){
+	//initialize everything to 0
+	for (size_t i = 0; i < vtx_count; ++i) {
+		degree[i] = 0;
+		offset[i] = 0;
+	}
+	
+	//add one everytime an index appears in a triangle
+	for (uint32_t i = 0; i <idx_count; i ++){
 		degree[m.indices[i]] += 1;
 	};
+
+	//offset is just the accumulation of the degrees
 	for (uint32_t i = 1; i < vtx_count; i ++){
-		offset[i] += (offset[i-1] + degree[i-1]);
+		offset[i] = (offset[i-1] + degree[i-1]);
 	};
 
 	// count how many of the incident triangles to a certain vertex we already saw
@@ -30,7 +38,9 @@ VTAdjacency::VTAdjacency(const Mesh &m)
             vtri[pos].next = b;
             vtri[pos].prev = c;
             tricount[a]++;	
-		};
-	};
+		}
+	}
+
+	assert(offset[vtx_count - 1] + degree[vtx_count - 1] == idx_count);
 
 }

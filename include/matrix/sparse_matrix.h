@@ -23,7 +23,7 @@ struct CSRPattern {
 };
 
 struct CSRMatrix : public Matrix {
-	bool symmetric = false;
+	bool symmetric = false; /*if matrix is symmetric, only add entries ABOVE the diagonal*/
 	size_t nnz; /* Number of (non zero) entries */
 	uint32_t *row_start; /* pointer to the corresponding data in pattern */
 	uint32_t *col; /* pointer to the corresponding data in pattern */
