@@ -20,6 +20,8 @@
 #include "sphere.h"
 #include "viewer.h"
 
+#include "tiny_blas.h"
+
 #include <iostream>
 using namespace std;
 
@@ -39,8 +41,10 @@ bool reset = false;
 int iter_per_frame = 1;
 
 /* RHS expression of the PDE */
-char rhs_expression[128] =
-	"cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
+// char rhs_expression[128] = "cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
+char rhs_expression[128] = "2 * x";
+// char rhs_expression[128] = "6 * (x^2 - y^2)";
+// char rhs_expression[128] = "6 * x * z";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x}, {"y", &rhs_y}, {"z", &rhs_z}, {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}};
@@ -56,6 +60,10 @@ static void draw_scene(const Viewer &viewer, int shader,
 static void draw_gui(PoissonSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
+
+static void compute_error_x(const PoissonSolver &solver, const bool &H1);
+static void compute_error_x2my2(const PoissonSolver &solver, const bool &H1);
+static void compute_error_xz(const PoissonSolver &solver, const bool &H1);
 
 bool new_rhs(PoissonSolver &solver)
 {
@@ -174,6 +182,9 @@ int main(int argc, char **argv)
 		draw_gui(solver);
 		viewer.end_frame();
 	}
+	compute_error_x(solver, true);
+	// compute_error_x2my2(solver, true);
+	// compute_error_xz(solver, true);
 
 	viewer.fini();
 	log_fini();
@@ -451,4 +462,154 @@ static void key_cb(int key, int action, int mods, void *args)
 		draw_edges = !draw_edges;
 		return;
 	}
+}
+
+static void compute_error_x(const PoissonSolver &solver, const bool &H1)
+{
+	TArray<double> theoretical_solution(solver.N);
+	size_t nv = solver.m.vertex_count();
+	for (size_t i = 0; i < nv; ++i)
+	{
+		rhs_x = solver.m.positions[i].x;
+		rhs_y = solver.m.positions[i].y;
+		rhs_z = solver.m.positions[i].z;
+
+		theoretical_solution[i] = rhs_x;
+	}
+	if (solver.use_fem_P2)
+	{
+		for (size_t i = 0; i < solver.m.edge_count(); ++i)
+		{
+			rhs_x = 0.5 * (solver.m.positions[solver.m.edges[i].v0].x + solver.m.positions[solver.m.edges[i].v1].x);
+			rhs_y = 0.5 * (solver.m.positions[solver.m.edges[i].v0].y + solver.m.positions[solver.m.edges[i].v1].y);
+			rhs_z = 0.5 * (solver.m.positions[solver.m.edges[i].v0].z + solver.m.positions[solver.m.edges[i].v1].z);
+
+			theoretical_solution[i + nv] = rhs_x;
+		}
+	}
+
+	/* Compute the error */
+	TArray<double> Mu(solver.N);
+	solver.M.mvp(solver.u.data, Mu.data);
+	double *utheo = theoretical_solution.data;
+	double L2_norm_utheo = blas_dot(Mu.data, utheo, solver.N);
+
+	TArray<double> Mu_the(solver.N);
+	blas_axpby(1, solver.u.data, -1, utheo, solver.N);
+	solver.M.mvp(utheo, Mu_the.data);
+	double L2_norm_u_the = blas_dot(Mu_the.data, utheo, solver.N);
+
+	double error2 = L2_norm_u_the / L2_norm_utheo;
+	std::cout << "The L2 error on the mesh is equal to : " << sqrt(error2) << std::endl;
+
+	TArray<double> Su(solver.N);
+	solver.A.mvp(solver.u.data, Su.data);
+	double L2_norm_grad_utheo = blas_dot(Su.data, utheo, solver.N);
+
+	TArray<double> Su_the(solver.N);
+	solver.A.mvp(utheo, Su_the.data);
+	double L2_norm_grad_u_the = blas_dot(Su_the.data, utheo, solver.N);
+
+	error2 = (L2_norm_u_the + L2_norm_grad_u_the) / (L2_norm_utheo + L2_norm_grad_utheo);
+	std::cout << "The H1 error on the mesh is equal to : " << sqrt(error2) << std::endl;
+}
+
+static void compute_error_x2my2(const PoissonSolver &solver, const bool &H1)
+{
+	TArray<double> theoretical_solution(solver.N);
+	size_t nv = solver.m.vertex_count();
+	for (size_t i = 0; i < nv; ++i)
+	{
+		rhs_x = solver.m.positions[i].x;
+		rhs_y = solver.m.positions[i].y;
+		rhs_z = solver.m.positions[i].z;
+
+		theoretical_solution[i] = pow(rhs_x, 2) - pow(rhs_y, 2);
+	}
+	if (solver.use_fem_P2)
+	{
+		for (size_t i = 0; i < solver.m.edge_count(); ++i)
+		{
+			rhs_x = 0.5 * (solver.m.positions[solver.m.edges[i].v0].x + solver.m.positions[solver.m.edges[i].v1].x);
+			rhs_y = 0.5 * (solver.m.positions[solver.m.edges[i].v0].y + solver.m.positions[solver.m.edges[i].v1].y);
+			rhs_z = 0.5 * (solver.m.positions[solver.m.edges[i].v0].z + solver.m.positions[solver.m.edges[i].v1].z);
+
+			theoretical_solution[i + nv] = pow(rhs_x, 2) - pow(rhs_y, 2);
+		}
+	}
+
+	/* Compute the error */
+	TArray<double> Mu(solver.N);
+	solver.M.mvp(solver.u.data, Mu.data);
+	double *utheo = theoretical_solution.data;
+	double L2_norm_utheo = blas_dot(Mu.data, utheo, solver.N);
+
+	TArray<double> Mu_the(solver.N);
+	blas_axpby(1, solver.u.data, -1, utheo, solver.N);
+	solver.M.mvp(utheo, Mu_the.data);
+	double L2_norm_u_the = blas_dot(Mu_the.data, utheo, solver.N);
+
+	double error2 = L2_norm_u_the / L2_norm_utheo;
+	std::cout << "The L2 error on the mesh is equal to : " << sqrt(error2) << std::endl;
+
+	TArray<double> Su(solver.N);
+	solver.A.mvp(solver.u.data, Su.data);
+	double L2_norm_grad_utheo = blas_dot(Su.data, utheo, solver.N);
+
+	TArray<double> Su_the(solver.N);
+	solver.A.mvp(utheo, Su_the.data);
+	double L2_norm_grad_u_the = blas_dot(Su_the.data, utheo, solver.N);
+
+	error2 = (L2_norm_u_the + L2_norm_grad_u_the) / (L2_norm_utheo + L2_norm_grad_utheo);
+	std::cout << "The H1 error on the mesh is equal to : " << sqrt(error2) << std::endl;
+}
+
+static void compute_error_xz(const PoissonSolver &solver, const bool &H1)
+{
+	TArray<double> theoretical_solution(solver.N);
+	size_t nv = solver.m.vertex_count();
+	for (size_t i = 0; i < nv; ++i)
+	{
+		rhs_x = solver.m.positions[i].x;
+		rhs_y = solver.m.positions[i].y;
+		rhs_z = solver.m.positions[i].z;
+
+		theoretical_solution[i] = rhs_x * rhs_z;
+	}
+	if (solver.use_fem_P2)
+	{
+		for (size_t i = 0; i < solver.m.edge_count(); ++i)
+		{
+			rhs_x = 0.5 * (solver.m.positions[solver.m.edges[i].v0].x + solver.m.positions[solver.m.edges[i].v1].x);
+			rhs_y = 0.5 * (solver.m.positions[solver.m.edges[i].v0].y + solver.m.positions[solver.m.edges[i].v1].y);
+			rhs_z = 0.5 * (solver.m.positions[solver.m.edges[i].v0].z + solver.m.positions[solver.m.edges[i].v1].z);
+
+			theoretical_solution[i + nv] = rhs_x * rhs_z;
+		}
+	}
+
+	/* Compute the error */
+	TArray<double> Mu(solver.N);
+	solver.M.mvp(solver.u.data, Mu.data);
+	double *utheo = theoretical_solution.data;
+	double L2_norm_utheo = blas_dot(Mu.data, utheo, solver.N);
+
+	TArray<double> Mu_the(solver.N);
+	blas_axpby(1, solver.u.data, -1, utheo, solver.N);
+	solver.M.mvp(utheo, Mu_the.data);
+	double L2_norm_u_the = blas_dot(Mu_the.data, utheo, solver.N);
+
+	double error2 = L2_norm_u_the / L2_norm_utheo;
+	std::cout << "The L2 error on the mesh is equal to : " << sqrt(error2) << std::endl;
+
+	TArray<double> Su(solver.N);
+	solver.A.mvp(solver.u.data, Su.data);
+	double L2_norm_grad_utheo = blas_dot(Su.data, utheo, solver.N);
+
+	TArray<double> Su_the(solver.N);
+	solver.A.mvp(utheo, Su_the.data);
+	double L2_norm_grad_u_the = blas_dot(Su_the.data, utheo, solver.N);
+
+	error2 = (L2_norm_u_the + L2_norm_grad_u_the) / (L2_norm_utheo + L2_norm_grad_utheo);
+	std::cout << "The H1 error on the mesh is equal to : " << sqrt(error2) << std::endl;
 }
