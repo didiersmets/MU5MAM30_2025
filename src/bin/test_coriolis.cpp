@@ -152,8 +152,8 @@ static void color_from_val(float u, float scale_min, float scale_max, float &r, 
 
 /* NEW: Draw color bar function */
 static void draw_colorbar(float min_val, float max_val, const char *label) {
-    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 220, 10), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(200, 700), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 220, 80), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(200, 500), ImGuiCond_FirstUseEver);
     ImGui::Begin("Color Bar", nullptr);
     
     ImDrawList *draw_list = ImGui::GetWindowDrawList();
