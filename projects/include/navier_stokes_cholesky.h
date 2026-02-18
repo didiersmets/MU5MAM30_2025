@@ -7,6 +7,9 @@
 #endif
 #include "mesh.h"
 
+/* This is basically identical to navier_stokes provided in class, with minor changes to adapt
+to Cholesky setting. */
+
 struct NavierStokesSolverCholesky {
 	NavierStokesSolverCholesky(const Mesh &m, double dt, double nu);
 	const Mesh &m;

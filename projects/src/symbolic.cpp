@@ -12,10 +12,10 @@ static bool find_2(const TArray<uint32_t> & arr, uint32_t target,  size_t start,
 	return false;
 }
 
-
 void construct_etree(CSRPattern &P, TArray<uint32_t> &parent){
     assert(P.cols == P.rows); //check that matrix is square
     assert(P.symmetric); //check that input is symmetric
+    
     parent.resize(P.cols);
 
     size_t n = P.cols;

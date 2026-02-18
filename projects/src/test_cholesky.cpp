@@ -89,11 +89,12 @@ int main(int argc, char* argv[]){
     size_t subdiv = 1;
 
     // Parse command line arguments
+    //Command line argument parsing from ChatGPT
     for(int i = 1; i < argc; i++){
         std::string arg = argv[i];
-        if(arg == "--check") {
+        if(arg == "--check" || arg == "-c") {
             do_checks = true;
-        } else if(arg == "--subdiv" && i + 1 < argc) {
+        } else if((arg == "--subdiv" || arg == "-s") && i + 1 < argc) {
             subdiv = static_cast<size_t>(std::atoi(argv[i+1]));
             i++; // skip next arg
         }

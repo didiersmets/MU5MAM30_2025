@@ -41,7 +41,7 @@ void printSparsityPattern(const CSRPattern& A, char filled='*', char empty=' ')
 
 int main(int argc, char** argv) {
     bool print_mode = false;
-    size_t subdiv = 1;
+    size_t subdiv = 2;
 
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "-p") == 0 ||

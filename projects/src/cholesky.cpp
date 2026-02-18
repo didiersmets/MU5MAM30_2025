@@ -4,10 +4,12 @@
 #include "array.h"
 
 void cholesky_factorization(CSRMatrix &A, CSRPattern &P, CSRMatrix &L){
+    //Check that A is SPD and that the sparsity patten is the same size as A.
     assert(A.symmetric);
     assert(A.cols == P.cols);
     assert(A.rows == P.rows);
 
+    //Initialize L
     size_t n = P.cols;
     L.cols = n;
     L.rows = n;
@@ -22,7 +24,7 @@ void cholesky_factorization(CSRMatrix &A, CSRPattern &P, CSRMatrix &L){
 		L.data[i] = 0.0;
 	}
 
-    //then fill
+    //Fille entries of L that are alreadu filled in A
     for(size_t i=0; i <n; i ++){
         for(size_t j = A.row_start[i]; j < A.row_start[i+1]; j++){
             L(i, A.col[j]) = A.data[j];
@@ -32,7 +34,7 @@ void cholesky_factorization(CSRMatrix &A, CSRPattern &P, CSRMatrix &L){
     for(size_t j = 0; j < n; j++){
         for(size_t k = P.row_start[j]; k < P.row_start[j+1]; k++){ //look at the jth row
             size_t kcol = P.col[k];
-            if(kcol >= j) break; //assume that the cols are ordered
+            if(kcol >= j) break; //We assume that the columns are ordered
             for(size_t i = j; i < n; i++){ //now we look at the kth column, indicies bigger than j
                 for(size_t l = P.row_start[i]; l < P.row_start[i+1]; l++){ 
                     //this is a bit slow but we go by row to see if (i, kcol) is in the pattern
