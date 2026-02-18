@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-def elimination_tree(A_csr, assume_symmetric=True,show_ancestor = False):
+def elimination_tree(A_csr, assume_symmetric=True,show_ancestor=False):
     """
     Fonction qui prend en entrée une matrice A symétrique et qui renvoie un vecteur de parent 
     issu de l'elimination tree.
@@ -32,28 +32,19 @@ def elimination_tree(A_csr, assume_symmetric=True,show_ancestor = False):
                 ancestor[jroot] = i
                 parent[jroot] = i
     if show_ancestor == True:
-        return parent, ancestor
+        print("Ancêtres associés à A : ", ancestor)
     return parent
 
 # test :
-A_dense = np.array([
-    [4, 1, 0, 0],
-    [1, 5, 2, 3],
-    [0, 2, 6, 0],
-    [0, 3, 0, 7]
-], dtype=float)
 
-A = csr_matrix(A_dense)
-print(elimination_tree(A))
+# A_dense2 = np.array([
+#     [6, 1, 0, 0, 0, 0],
+#     [1, 7, 2, 3, 0, 0],
+#     [0, 2, 5, 0, 0, 0],
+#     [0, 3, 0, 6, 4, 0],
+#     [0, 0, 0, 4, 8, 2],
+#     [0, 0, 0, 0, 2, 5]
+# ], dtype=float)
 
-A_dense2 = np.array([
-    [6, 1, 0, 0, 0, 0],
-    [1, 7, 2, 3, 0, 0],
-    [0, 2, 5, 0, 0, 0],
-    [0, 3, 0, 6, 4, 0],
-    [0, 0, 0, 4, 8, 2],
-    [0, 0, 0, 0, 2, 5]
-], dtype=float)
-
-A2 = csr_matrix(A_dense2)
-print(elimination_tree(A2))
+# A2 = csr_matrix(A_dense2)
+# print(elimination_tree(A2))
