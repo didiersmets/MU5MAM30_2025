@@ -99,6 +99,9 @@ static void draw_axes(const Viewer &viewer);
 static void draw_axis_labels(const Viewer &viewer);
 static void cleanup_axes();
 
+/* NEW: Color bar rendering function */
+static void draw_colorbar(float min_val, float max_val, const char *label);
+
 void reset_solver(NavierStokesSolver &solver) {
     for (size_t i = 0; i < solver.N; ++i) {
         rhs_x = solver.m.positions[i].x;
@@ -130,6 +133,89 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m) {
     for (size_t i = 0; i < m.vertex_count(); ++i) {
         m.attr[i] = V[i];
     }
+}
+
+/* NEW: Color mapping function matching the shader */
+static void color_from_val(float u, float scale_min, float scale_max, float &r, float &g, float &b) {
+    float l = (u - scale_min) / (scale_max - scale_min);
+    if (l < 0.5f) {
+        r = 1.0f - 2.0f * l;  // Goes from 1 to 0
+        g = 2.0f * l;           // Goes from 0 to 1
+        b = 0.0f;
+    } else {
+        l = 1.0f - l;           // Flip for second half
+        r = 0.0f;
+        g = 2.0f * l;           // Goes from 1 to 0
+        b = 1.0f - 2.0f * l;    // Goes from 0 to 1
+    }
+}
+
+/* NEW: Draw color bar function */
+static void draw_colorbar(float min_val, float max_val, const char *label) {
+    ImGui::SetNextWindowPos(ImVec2(ImGui::GetIO().DisplaySize.x - 220, 10), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(200, 700), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Color Bar", nullptr);
+    
+    ImDrawList *draw_list = ImGui::GetWindowDrawList();
+    ImVec2 canvas_pos = ImGui::GetCursorScreenPos();
+    
+    float bar_width = 40.0f;
+    float bar_height = 350.0f;
+    float bar_x = canvas_pos.x + 20.0f;
+    float bar_y = canvas_pos.y + 20.0f;
+    
+    // Draw color gradient bar from top (max) to bottom (min)
+    int num_segments = 100;
+    for (int i = 0; i < num_segments; ++i) {
+        // Interpolate from top (1.0) to bottom (0.0) to show max at top, min at bottom
+        float t = 1.0f - (float)i / num_segments;
+        
+        float val = min_val + t * (max_val - min_val);
+        
+        float r, g, b;
+        color_from_val(val, min_val, max_val, r, g, b);
+        
+        ImU32 col = ImGui::GetColorU32(ImVec4(r, g, b, 1.0f));
+        
+        float y1 = bar_y + (float)i / num_segments * bar_height;
+        float y2 = bar_y + (float)(i + 1) / num_segments * bar_height;
+        
+        // Draw rectangle for this segment
+        draw_list->AddRectFilled(
+            ImVec2(bar_x, y1 ),
+            ImVec2(bar_x + bar_width, y2),
+            col
+        );
+    }
+    
+    // Draw border
+    draw_list->AddRect(ImVec2(bar_x, bar_y), ImVec2(bar_x + bar_width, bar_y + bar_height), 
+                        ImGui::GetColorU32(ImVec4(1, 1, 1, 1)), 0.0f, ImDrawCornerFlags_All, 2.0f);
+    
+    // Format and display title
+    ImGui::Text("%s:", label);
+    ImGui::Spacing();
+    
+    // Draw max value at top
+    char max_text[32];
+    snprintf(max_text, sizeof(max_text), "%.3g", max_val);
+    ImGui::SetCursorScreenPos(ImVec2(bar_x + bar_width + 10, bar_y));
+    ImGui::Text("%s", max_text);
+    
+    // Draw mid value in the middle
+    char mid_text[32];
+    float mid_val = (min_val + max_val) * 0.5f;
+    snprintf(mid_text, sizeof(mid_text), "%.3g", mid_val);
+    ImGui::SetCursorScreenPos(ImVec2(bar_x + bar_width + 10, bar_y + bar_height * 0.5f - 8.0f));
+    ImGui::Text("%s", mid_text);
+    
+    // Draw min value at bottom
+    char min_text[32];
+    snprintf(min_text, sizeof(min_text), "%.3g", min_val);
+    ImGui::SetCursorScreenPos(ImVec2(bar_x + bar_width + 10, bar_y + bar_height - 16.0f));
+    ImGui::Text("%s", min_text);
+    
+    ImGui::End();
 }
 
 /* NEW: Initialize axis geometry */
@@ -833,6 +919,12 @@ int main(int argc, char **argv) {
         // Draw GUI
         draw_gui(solver);
         
+        // Draw color bar with values from solver
+        const char *label = show_psi ? "Psi" : "Omega";
+        float bar_min = show_psi ? solver.psi_min : solver.omega_min;
+        float bar_max = show_psi ? solver.psi_max : solver.omega_max;
+        draw_colorbar(bar_min, bar_max, label);
+        
         // Draw axis labels (after GUI so they appear on top)
         draw_axis_labels(viewer);
         
@@ -920,6 +1012,26 @@ static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max) {
     *attr_max = max;
 }
 
+/* Compute min/max values for a solver field */
+static void compute_field_bounds(const TArray<double> &field, double &min_val, double &max_val) {
+    if (field.size == 0) {
+        min_val = 0.0;
+        max_val = 0.0;
+        return;
+    }
+    
+    min_val = field[0];
+    max_val = field[0];
+    
+    for (size_t i = 1; i < field.size; ++i) {
+        if (field[i] < min_val) {
+            min_val = field[i];
+        } else if (field[i] > max_val) {
+            max_val = field[i];
+        }
+    }
+}
+
 static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh) {
     bool needs_upload = true;
 
@@ -945,6 +1057,10 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
             update_particles(particles, solver, mesh, dt);
         }
 
+        // Compute min/max for both fields
+        compute_field_bounds(solver.omega, solver.omega_min, solver.omega_max);
+        compute_field_bounds(solver.psi, solver.psi_min, solver.psi_max);
+        
         // Transfer appropriate field to mesh for visualization
         if (show_psi) {
             transfer_to_mesh(solver.psi, mesh);
@@ -958,6 +1074,11 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
     } else if (reset) {
         reset_solver(solver);
         particles.clear();  // Clear particles on reset
+        
+        // Compute min/max for both fields
+        compute_field_bounds(solver.omega, solver.omega_min, solver.omega_max);
+        compute_field_bounds(solver.psi, solver.psi_min, solver.psi_max);
+        
         if (show_psi) {
             transfer_to_mesh(solver.psi, mesh);
         } else {

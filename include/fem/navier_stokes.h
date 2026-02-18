@@ -16,6 +16,12 @@ struct NavierStokesSolver {
 	TArray<double> omega;
 	TArray<double> Momega;
 	TArray<double> psi;
+	
+	// Min/max values for colorbar display
+	double omega_min = 0.0;
+	double omega_max = 0.0;
+	double psi_min = 0.0;
+	double psi_max = 0.0;
 #if USE_FEM_MATRIX
 	FEMatrix S; // Stiffness matrix
 	FEMatrix M; // Mass matrix
