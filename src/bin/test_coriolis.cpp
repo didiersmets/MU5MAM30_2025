@@ -1086,7 +1086,7 @@ static void draw_gui(NavierStokesSolver &solver) {
     ImGui::SliderFloat("nu", &lognu, -8, 0, "10^(%.1f)");
 
     ImGui::Text("Angular velocity:");
-    ImGui::SliderFloat("omega", &omega, 0.f, 1.f, "%.3f");
+    ImGui::SliderFloat("omega", &omega, -1.f, 1.f, "%.3f");
 
     ImGui::Text("Time step :");
     ImGui::SliderFloat("dt", &dt, 0.f, 0.01f, "%.4f");
