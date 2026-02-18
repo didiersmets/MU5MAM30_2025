@@ -56,6 +56,10 @@ bool started = false;
 bool one_step = false;
 bool reset = false;
 
+/* Auto-stop */
+bool enable_autostop = false;
+float autostop_time = 1.0f;
+
 /* Parameters */
 float lognu = -3;
 float omega = 0.2f; // angular velocity
@@ -930,6 +934,11 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
             one_step = false;
         }
 
+        // Auto-stop simulation if elapsed time exceeds limit
+        if (enable_autostop && solver.t >= autostop_time) {
+            started = false;
+        }
+
         // Spawn particles if enabled
         if (show_particles) {
             spawn_particles(particles, particles_per_step, particle_lifespan);
@@ -1059,7 +1068,14 @@ static void draw_gui(NavierStokesSolver &solver) {
     if (ImGui::Button("Reset")) {
         reset = true;
     }
-
+    
+    ImGui::Text(" ");
+    ImGui::Checkbox("Auto-stop after time", &enable_autostop);
+    if (enable_autostop) {
+        ImGui::InputFloat("Stop time (s)", &autostop_time, 0.1f, 0.5f, "%.2f");
+    }
+    
+    ImGui::Text(" ");
     ImGui::Text("Time : %f", solver.t);
     ImGui::Text("Scale min %.2f Scale max %.2f (Span : %g)", scale_min, scale_max, scale_max - scale_min);
 
