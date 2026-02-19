@@ -22,6 +22,8 @@
 #include "sphere.h"
 #include "viewer.h"
 
+//Runs when doing bootstrap tests
+size_t runs = 5;
 
 /* Viewer config */
 float bgcolor[4] = {0.3, 0.3, 0.3, 1.0};
@@ -176,10 +178,11 @@ int main(int argc, char **argv)
 	if (benchmark_mode) {
 	std::cout << " Running timestep benchmark" << std::endl;
 	auto t0 = std::chrono::high_resolution_clock::now();
-	solver.time_step();
+	for(size_t i = 0; i < runs; i ++){
+	solver.time_step();}
 	auto t1 = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double> elapsed = t1 - t0;
-	std::cout << "Time elapsed: " << elapsed.count() << " s" << std::endl;
+	std::cout << "Time elapsed: " << elapsed.count()/runs << " s" << std::endl;
 
 	/* Reset simulation state so GUI starts clean */
 	reset_solver(solver); }

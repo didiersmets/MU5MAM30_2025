@@ -13,8 +13,6 @@ OUT_NS=NS_timings.csv
 START=2
 END=20
 
-RUNS=5  # number of repetitions for averaging
-
 echo "subdiv,n,P_nnz,L_nnz,L_D_nnz" > $OUT_SYMBOLIC
 echo "subdiv,n,chol_time_avg,chol_nested_time_avg" > $OUT_CHOLESKY
 echo "subdiv,ns_time_avg,cholesky_time_avg" > $OUT_NS
@@ -38,45 +36,31 @@ for ((s=$START; s<=$END; s++)); do
     ############################################################
     # CHOLESKY TIMING TEST
     ############################################################
-    sum_chol=0
-    sum_chol_nested=0
-    for ((i=1;i<=RUNS;i++)); do
-        chol_output=$($EXEC_CHOLESKY --subdiv $s)
 
-        t_chol=$(echo "$chol_output" | awk '/chol_time:/ {print $2}')
-        t_chol_nested=$(echo "$chol_output" | awk '/chol_nested_time:/ {print $2}')
+    chol_output=$($EXEC_CHOLESKY --subdiv $s)
 
-        sum_chol=$(echo "$sum_chol + $t_chol" | bc -l)
-        sum_chol_nested=$(echo "$sum_chol_nested + $t_chol_nested" | bc -l)
-    done
-    avg_chol=$(echo "$sum_chol / $RUNS" | bc -l)
-    avg_chol_nested=$(echo "$sum_chol_nested / $RUNS" | bc -l)
+    t_chol=$(echo "$chol_output" | awk '/chol_time:/ {print $2}')
+    t_chol_nested=$(echo "$chol_output" | awk '/chol_nested_time:/ {print $2}')
 
-    echo "$s,$n,$avg_chol,$avg_chol_nested" >> $OUT_CHOLESKY
+
+    echo "$s,$n,$t_chol,$t_chol_nested" >> $OUT_CHOLESKY
 
     ############################################################
     # NAVIER-STOKES TIMING TEST
     ############################################################
 
     # CG solver (test_NS) average
-    sum_ns=0
-    for ((i=1;i<=RUNS;i++)); do
-        ns_output=$($EXEC_NS cube $s -b )
-        t_ns=$(echo "$ns_output" | grep "Time elapsed" | awk '{print $3}')
-        sum_ns=$(echo "$sum_ns + $t_ns" | bc -l)
-    done
-    avg_ns=$(echo "$sum_ns / $RUNS" | bc -l)
+
+    ns_output=$($EXEC_NS cube $s -b )
+    t_ns=$(echo "$ns_output" | grep "Time elapsed" | awk '{print $3}')
+        
 
     # Cholesky NS solver (test_navier_stokes_cholesky) average
-    sum_chol_ns=0
-    for ((i=1;i<=RUNS;i++)); do
-        chol_ns_output=$($EXEC_NS_CHOL cube $s -b)
-        t_chol_ns=$(echo "$chol_ns_output" | grep "Time elapsed" | awk '{print $3}')
-        sum_chol_ns=$(echo "$sum_chol_ns + $t_chol_ns" | bc -l)
-    done
-    avg_chol_ns=$(echo "$sum_chol_ns / $RUNS" | bc -l)
+    
+    chol_ns_output=$($EXEC_NS_CHOL cube $s -b)
+    t_chol_ns=$(echo "$chol_ns_output" | grep "Time elapsed" | awk '{print $3}')
 
-    echo "$s,$avg_ns,$avg_chol_ns" >> $OUT_NS
+    echo "$s,$t_ns,$t_chol_ns" >> $OUT_NS
 
 done
 

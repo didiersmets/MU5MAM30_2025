@@ -68,16 +68,18 @@ void solve_cholesky(CSRMatrix &L,  const double *__restrict b, double *__restric
         x[i] /= L.data[L.row_start[i+1]-1];
     }
     
-    //Backward substitution
-    for(size_t i = n-1; i != (size_t)-1; --i){
-        double sum = 0.0;
-        for(size_t j = i+1; j < n; j++){ // scan all rows with higher index to find entries in column i
-            for(size_t l = L.row_start[j]; l < L.row_start[j+1]; l++){
-                if(L.col[l] == i){ //found an entry of the column in the row
-                    sum += L.data[l]*x[j];
-                }
-            }
+    //Backward subsitution
+    for (size_t i = n; i-- > 0; ) {
+
+        double xi = x[i] / L.data[L.row_start[i+1]-1]; //store x_i as to not modify
+
+        for (size_t k = L.row_start[i]; k < L.row_start[i+1]-1; k++) {
+            size_t j = L.col[k];   // j < i
+            x[j] -= L.data[k] * xi;
         }
-        x[i] = (x[i] - sum)/L.data[L.row_start[i+1]-1];
+
+        x[i] = xi;
     }
+
+
 }

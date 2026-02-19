@@ -144,7 +144,7 @@ int main(int argc, char* argv[]){
         }
     }
     err = sqrt(err);
-    std::cout << "Error " << err << std::endl;
+    std::cout << "Error of M - LL^t" << err << std::endl;
    
     new_rhs_chol(f.data, mesh);
     solve_cholesky(L, f.data, x.data);
@@ -156,7 +156,7 @@ int main(int argc, char* argv[]){
             err += d * d;
     }
 
-        std::cout << "Error " << err << std::endl;
+        std::cout << "Error f - f_res " << err << std::endl;
     }
 
     // Time solving if correctness checks are disabled
@@ -174,6 +174,7 @@ int main(int argc, char* argv[]){
        
         std::chrono::duration<double> elapsed = t1 - t0;
         std::cout << "chol_time: " << elapsed.count() << " seconds\n";
+        
         Mesh mesh_disect;
         load_cube_nested_dissect(mesh_disect, subdiv);
     
@@ -188,10 +189,10 @@ int main(int argc, char* argv[]){
         construct_etree(P_D, parent_D);
         construct_L_sparsity_pattern(P_D, LD_pattern, parent_D);
         cholesky_factorization(M, LD_pattern, L);
-        std::cout << "chol_nested_time: " << elapsed.count() << " seconds\n";
         solve_cholesky(L, f.data, x.data);
-         t1 = std::chrono::high_resolution_clock::now();
+        t1 = std::chrono::high_resolution_clock::now();
         elapsed = t1 - t0;
+        std::cout << "chol_nested_time: " << elapsed.count() << " seconds\n";
        
     } 
 

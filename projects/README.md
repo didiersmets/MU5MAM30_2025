@@ -37,11 +37,11 @@ Navier Stokes solver, using Cholesky factorization as solution method. Code adap
 
 ##### Options
 - cube / sphere + n (obligatory): if the mesh should be cube or sphere and the number of subdivisions
-- -b (optional): run code in benchmark mode, that is run and time one time step. If flag is not indicated code is run with GUI
+- -b (optional): run code in benchmark mode, that is run and time five time step and print the average time. If flag is not indicated code is run with GUI
 
 ##### Examples 
 - ./build/release/test_navier_stokes_cholesky cube 10 - run tests with GUI
-- t./build/release/test_navier_stokes_cholesky cube 10 -b - run benchmark tests
+- ./build/release/test_navier_stokes_cholesky cube 10 -b - run benchmark tests
 
 #### test_NS
  
@@ -49,7 +49,7 @@ Navier Stokes solver, using conjugate gradient as solution method. The code was 
 
 ##### Options
 - cube / sphere (obligatory): if the mesh should be cube or sphere
-- b (optional): run code in benchmark mode, that is run and time one time step. If flag is not indicated code is run with GUI
+- b (optional): un code in benchmark mode, that is run and time five time step and print the average time. If flag is not indicated code is run with GUI
 ##### Examples
 - ./build/release/test_NS cube 10 - run tests with GUI
 - ./build/release/test_NS cube 10 -b - run benchmark tests
