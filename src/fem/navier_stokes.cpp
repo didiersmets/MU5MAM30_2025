@@ -72,10 +72,13 @@ size_t NavierStokesSolver::compute_stream_function()
 	double Momega_norm = blas_dot(Momega.data,Momega.data,N);
 	LOG_MSG("compute_stream_function : ||Momega|| = %lf",Momega_norm);
 
+	TArray<double> b (N,0.0); // TODO : optmization possible
+	blas_axpy(-1.0,Momega.data,b.data,N);
+
 	double rel_error;
 	iter = conjugate_gradient_solve(
 			S,
-			Momega.data,
+			b.data,
 			psi.data,
 			r.data,
 			p.data,
@@ -83,7 +86,7 @@ size_t NavierStokesSolver::compute_stream_function()
 			&rel_error,
 			10e-6,
 			500,
-			inited);
+			true);
 	LOG_MSG("compute stream function : %d iter; %lf rel_error",iter,rel_error);
 	return iter;
 }
