@@ -75,6 +75,9 @@ void reset_solver(NavierStokesSolverCholesky &solver)
 		solver.omega[i] = te_eval(te_rhs);
 	}
 
+	solver.dt = dt;
+	solver.nu =  pow(10, lognu);
+
 	solver.set_zero_mean(solver.omega.data);
 	memset(solver.psi.data, 0, solver.N * sizeof(double));
 	solver.t = 0;

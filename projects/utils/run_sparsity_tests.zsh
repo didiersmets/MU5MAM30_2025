@@ -19,7 +19,7 @@ echo "subdiv,n,P_nnz,L_nnz,L_D_nnz" > $OUT_SYMBOLIC
 echo "subdiv,n,chol_time_avg,chol_nested_time_avg" > $OUT_CHOLESKY
 echo "subdiv,ns_time_avg,cholesky_time_avg" > $OUT_NS
 
-for s in {$START..$END}; do
+for ((s=$START; s<=$END; s++)); do
     echo "Running subdiv=$s"
 
     ############################################################
@@ -85,4 +85,4 @@ echo "Symbolic results -> $OUT_SYMBOLIC"
 echo "Cholesky timings -> $OUT_CHOLESKY"
 echo "NS timings -> $OUT_NS"
 
-python -m plots
+python projects/utils/plots.py
