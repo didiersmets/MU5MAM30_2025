@@ -86,7 +86,7 @@ void print_dense_matrix(const TArray<double> &M, size_t n, int precision = 4) {
 
 int main(int argc, char* argv[]){
     bool do_checks = false;
-    size_t subdiv = 1;
+    size_t subdiv = 2;
 
     // Parse command line arguments
     //Command line argument parsing from ChatGPT
