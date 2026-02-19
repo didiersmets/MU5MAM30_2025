@@ -29,9 +29,9 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	build_P1_mass_matrix(m, M);
 	build_P1_stiffness_matrix(m, S);
 	LOG_MSG("M :");
-	M.print();
+	// M.print();
 	LOG_MSG("S :");
-	S.print();
+	// S.print();
 #endif
 	vol = M.sum();
 	inited = true;
@@ -93,10 +93,10 @@ double NavierStokesSolver::cg_iterate_once(
 		double *__restrict Ap, double r2){
 	// Ap = (M + nu dt S)p
 	S.mvp(p,Ap);
-	blas_scal(dt * nu,x,N);
+	blas_scal(dt * nu,Ap,N);
 	M.add_mvp(p,Ap);
 	double alpha = r2/blas_dot(p,Ap,N); //alpha = r2/p2_A
-	blas_axpy(alpha,p,omega.data,N); // x = x + alpha*p
+	blas_axpy(alpha,p,x,N); // x = x + alpha*p
 	blas_axpy(-alpha,Ap,r,N); // r = r -alpha*A*p
 	double new_r2 = blas_dot(r,r,N); //r2_{n+1}
 	double beta = new_r2/r2; // beta = r2_{n+1}/r2_n
@@ -106,34 +106,42 @@ double NavierStokesSolver::cg_iterate_once(
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
-	compute_stream_function();
-	compute_transport(Momega.data,dt);
-	// at this stage Momega = b = M * omega(t) + dt * T(Omega,Psi)(t)
 	/**********************************************************************
 	 * Solve the system :
 	 *
 	 *  (M + \nu * dt * S)omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
 	 *
 	 *********************************************************************/
+	compute_stream_function(); // Momega computed here
+	// compute_transport(Momega.data,dt); // TODO : possible optimization
+	TArray<double> T(N,0.0);
+	compute_transport(T.data,dt);
+
+	TArray<double> b (N,0.0);
+	blas_copy(Momega.data,b.data,N);
+	blas_axpy(1.0,T.data,b.data,N);
+	// at this stage b = M * omega(t) + dt * T(Omega,Psi)(t)
 	// initialization
-	// r0 = b - Ax0 = Momega - (M + dt * nu * S) Omega
+	// r0 = b - Ax0 = b - (M + dt * nu * S) Omega
 	S.mvp(omega.data,r.data);
-	blas_scal(dt * nu, omega.data, N);
-	M.add_mvp(p.data,r.data);
-	blas_axpby(1,Momega.data,-1,r.data,N);
+	blas_scal(dt * nu, r.data, N);
+	blas_axpy(1.0,Momega.data,r.data,N);
+	blas_axpby(1.0,b.data,-1.0,r.data,N);
 	blas_copy(r.data,p.data,N);
 	// code bellow copied from conjugate_gradient.cpp
-	double b2 = blas_dot(Momega.data,Momega.data,N);
+	double b2 = blas_dot(b.data,b.data,N);
 	LOG_MSG("time step : b2 = %lf",b2);
 	double r2 = blas_dot(r.data,r.data,N);
 	double rel_error = r2/b2;
 	size_t iter = 0;
 	size_t max_iter = 500;
+	TArray<double> x (N,0.0); // TODO : possible optimization solve directly in omega
 	while(iter<max_iter && rel_error>tol){
-		r2 = cg_iterate_once(dt, nu,omega.data, r.data, p.data, Ap.data, r2);
+		r2 = cg_iterate_once(dt, nu,x.data, r.data, p.data, Ap.data, r2);
 		rel_error = r2/b2;
 		iter++;
 	}
+	blas_copy(x.data,omega.data,N);
 
 	LOG_MSG("time step : %d iterations; %f relative error",iter,rel_error);
 	set_zero_mean(omega.data);
