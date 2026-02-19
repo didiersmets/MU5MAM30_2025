@@ -722,121 +722,236 @@ static void update_particles(ParticleList &particles, const NavierStokesSolver &
     particles = living_particles;
 }
 
-/* Draw particles as small points with fading trails */
-static void draw_particles(const ParticleList &particles, const Viewer &viewer, int shader) {
+/* Draw particles as round sprites: trail spheres (fading) + small black core */
+static void draw_particles(const ParticleList &particles, const Viewer &viewer, int /*shader*/) {
     if (!show_particles || particles.empty()) return;
-    
-    // Build vertex data for particles and trails
-    std::vector<float> vertex_data;
-    std::vector<float> color_data;
-    
-    // Draw trails first (so they appear behind particles)
-    for (const auto& particle : particles) {
-        if (particle.trail.size() < 2) continue;
-        
-        // Draw trail segments with fading brightness
-        for (size_t i = 0; i < particle.trail.size() - 1; ++i) {
-            // Brightness decreases from back (old) to front (new)
-            float trail_age_ratio = (float)i / (float)(particle.trail.size() - 1);
-            float brightness = 0.2f + 0.3f * (1.0f - trail_age_ratio);  // Fades from 0.2 to 0.5
-            
-            // Segment start
-            vertex_data.push_back(particle.trail[i].x);
-            vertex_data.push_back(particle.trail[i].y);
-            vertex_data.push_back(particle.trail[i].z);
-            color_data.push_back(brightness);
-            color_data.push_back(brightness);
-            color_data.push_back(brightness);
-            color_data.push_back(0.6f);
-            
-            // Segment end
-            vertex_data.push_back(particle.trail[i + 1].x);
-            vertex_data.push_back(particle.trail[i + 1].y);
-            vertex_data.push_back(particle.trail[i + 1].z);
-            color_data.push_back(brightness);
-            color_data.push_back(brightness);
-            color_data.push_back(brightness);
-            color_data.push_back(0.6f);
+
+    // Build separate buffers for trail points and particle cores
+    std::vector<float> trail_pos;
+    std::vector<float> trail_col;
+    std::vector<float> core_pos;
+    std::vector<float> core_col;
+
+    for (const auto &p : particles) {
+        // Trail samples as individual round sprites
+        for (size_t i = 0; i < p.trail.size(); ++i) {
+            // trail[0] is oldest, trail.back() is newest
+            // age_ratio: 0.0 = oldest, 1.0 = newest
+            float age_ratio = (float)i / (float)std::max<size_t>(1, p.trail.size() - 1);
+            // brightness increases with recency
+            float brightness = 0.2f + 0.8f * age_ratio;
+
+            trail_pos.push_back(p.trail[i].x);
+            trail_pos.push_back(p.trail[i].y);
+            trail_pos.push_back(p.trail[i].z);
+
+            // grayscale trail color with alpha fade (newer = more opaque)
+            trail_col.push_back(brightness);
+            trail_col.push_back(brightness);
+            trail_col.push_back(brightness);
+            trail_col.push_back(0.6f * age_ratio);
         }
+
+        // Core (black) rendered on top
+        core_pos.push_back(p.position.x);
+        core_pos.push_back(p.position.y);
+        core_pos.push_back(p.position.z);
+        core_col.push_back(0.0f);
+        core_col.push_back(0.0f);
+        core_col.push_back(0.0f);
+        core_col.push_back(1.0f);
     }
-    
-    // Add particles (white and bright)
-    for (const auto& particle : particles) {
-        vertex_data.push_back(particle.position.x);
-        vertex_data.push_back(particle.position.y);
-        vertex_data.push_back(particle.position.z);
-        color_data.push_back(1.0f);  // White
-        color_data.push_back(1.0f);
-        color_data.push_back(1.0f);
-        color_data.push_back(1.0f);
-    }
-    
-    if (vertex_data.empty()) return;
-    
-    // Create VAO and VBO
-    GLuint particle_vao, particle_vbo, particle_col_vbo;
-    glGenVertexArrays(1, &particle_vao);
-    glGenBuffers(1, &particle_vbo);
-    glGenBuffers(1, &particle_col_vbo);
-    
-    glBindVertexArray(particle_vao);
-    
-    // Position data
-    glBindBuffer(GL_ARRAY_BUFFER, particle_vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertex_data.size() * sizeof(float), vertex_data.data(), GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    
-    // Color data
-    glBindBuffer(GL_ARRAY_BUFFER, particle_col_vbo);
-    glBufferData(GL_ARRAY_BUFFER, color_data.size() * sizeof(float), color_data.data(), GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
-    
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-    
-    // Draw with shader
-    glUseProgram(shader);
-    glUniform1i(glGetUniformLocation(shader, "lighting"), false);
-    
+
     const Camera &camera = viewer.camera;
     Mat4 proj = camera.view_to_clip();
     Mat4 vm = camera.world_to_view();
-    glUniformMatrix4fv(glGetUniformLocation(shader, "vm"), 1, 0, &vm(0, 0));
-    glUniformMatrix4fv(glGetUniformLocation(shader, "proj"), 1, 0, &proj(0, 0));
-    
-    // Count trail line segments
-    int trail_vertex_count = 0;
-    for (const auto& particle : particles) {
-        if (particle.trail.size() >= 2) {
-            trail_vertex_count += 2 * (particle.trail.size() - 1);
+
+    // Simple point-sprite shader (cached)
+    static GLuint point_prog = 0;
+    if (!point_prog) {
+        const char *vs_src = "#version 330 core\n"
+            "layout(location=0) in vec3 position;\n"
+            "layout(location=1) in vec4 color;\n"
+            "uniform mat4 vm;\n"
+            "uniform mat4 proj;\n"
+            "out vec4 vColor;\n"
+            "void main() {\n"
+            "  gl_Position = proj * vm * vec4(position, 1.0);\n"
+            "  vColor = color;\n"
+            "}\n";
+
+        const char *fs_src = "#version 330 core\n"
+            "in vec4 vColor;\n"
+            "out vec4 FragColor;\n"
+            "void main() {\n"
+            "  vec2 c = gl_PointCoord - vec2(0.5);\n"
+            "  float d = length(c);\n"
+            "  if (d > 0.5) discard;\n"
+            "  float edge = smoothstep(0.5, 0.45, d);\n"
+            "  FragColor = vec4(vColor.rgb, vColor.a * edge);\n"
+            "}\n";
+
+        GLuint vs = glCreateShader(GL_VERTEX_SHADER);
+        glShaderSource(vs, 1, &vs_src, NULL);
+        glCompileShader(vs);
+
+        GLint vs_ok = GL_FALSE;
+        glGetShaderiv(vs, GL_COMPILE_STATUS, &vs_ok);
+        if (!vs_ok) {
+            char buf[1024];
+            glGetShaderInfoLog(vs, sizeof(buf), NULL, buf);
+            LOG_MSG("Particle VS compile error: %s", buf);
+            glDeleteShader(vs);
+            // don't attempt to create program
+        } else {
+            GLuint fs = glCreateShader(GL_FRAGMENT_SHADER);
+            glShaderSource(fs, 1, &fs_src, NULL);
+            glCompileShader(fs);
+
+            GLint fs_ok = GL_FALSE;
+            glGetShaderiv(fs, GL_COMPILE_STATUS, &fs_ok);
+            if (!fs_ok) {
+                char buf[1024];
+                glGetShaderInfoLog(fs, sizeof(buf), NULL, buf);
+                LOG_MSG("Particle FS compile error: %s", buf);
+                glDeleteShader(fs);
+                glDeleteShader(vs);
+            } else {
+                point_prog = glCreateProgram();
+                glAttachShader(point_prog, vs);
+                glAttachShader(point_prog, fs);
+                glLinkProgram(point_prog);
+
+                GLint link_ok = GL_FALSE;
+                glGetProgramiv(point_prog, GL_LINK_STATUS, &link_ok);
+                if (!link_ok) {
+                    char buf[1024];
+                    glGetProgramInfoLog(point_prog, sizeof(buf), NULL, buf);
+                    LOG_MSG("Particle shader link error: %s", buf);
+                    glDeleteProgram(point_prog);
+                    point_prog = 0;
+                }
+
+                glDetachShader(point_prog, vs);
+                glDetachShader(point_prog, fs);
+                glDeleteShader(vs);
+                glDeleteShader(fs);
+            }
         }
     }
-    
-    // Draw trail lines
-    if (trail_vertex_count > 0) {
-        glLineWidth(1.0f);
-        glBindVertexArray(particle_vao);
-        glDrawArrays(GL_LINES, 0, trail_vertex_count);
-        glLineWidth(1.0f);
+
+    // If shader failed to compile/link, skip particle rendering
+    if (!point_prog) return;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // -------- Draw trails (fading spheres) --------
+    if (!trail_pos.empty()) {
+        GLuint trail_vao = 0, trail_vbo = 0, trail_col_vbo = 0;
+        glGenVertexArrays(1, &trail_vao);
+        glGenBuffers(1, &trail_vbo);
+        glGenBuffers(1, &trail_col_vbo);
+
+        glBindVertexArray(trail_vao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, trail_vbo);
+        glBufferData(GL_ARRAY_BUFFER, trail_pos.size() * sizeof(float), trail_pos.data(), GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, trail_col_vbo);
+        glBufferData(GL_ARRAY_BUFFER, trail_col.size() * sizeof(float), trail_col.data(), GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glUseProgram(point_prog);
+        if (glGetError() != GL_NO_ERROR) {
+            LOG_MSG("glUseProgram failed for particle shader");
+            glUseProgram(0);
+            // cleanup generated buffers/vaos
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDeleteBuffers(1, &trail_vbo);
+            glDeleteBuffers(1, &trail_col_vbo);
+            glDeleteVertexArrays(1, &trail_vao);
+            glDisable(GL_BLEND);
+            return;
+        }
+        glUniformMatrix4fv(glGetUniformLocation(point_prog, "vm"), 1, 0, &vm(0, 0));
+        glUniformMatrix4fv(glGetUniformLocation(point_prog, "proj"), 1, 0, &proj(0, 0));
+
+        // Trail points slightly larger
+        glPointSize(8.0f);
+        glBindVertexArray(trail_vao);
+        glDrawArrays(GL_POINTS, 0, (GLsizei)(trail_pos.size() / 3));
+        glBindVertexArray(0);
+
+        glPointSize(1.0f);
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDeleteBuffers(1, &trail_vbo);
+        glDeleteBuffers(1, &trail_col_vbo);
+        glDeleteVertexArrays(1, &trail_vao);
     }
-    
-    // Draw particles as points
-    glPointSize(6.0f);
-    glBindVertexArray(particle_vao);
-    glDrawArrays(GL_POINTS, trail_vertex_count, particles.size());
-    glBindVertexArray(0);
-    glPointSize(1.0f);
-    
-    // Cleanup
-    glDisableVertexAttribArray(0);
-    glDisableVertexAttribArray(1);
-    glDeleteBuffers(1, &particle_vbo);
-    glDeleteBuffers(1, &particle_col_vbo);
-    glDeleteVertexArrays(1, &particle_vao);
-    glUseProgram(0);
+
+    // -------- Draw cores (small black spheres) --------
+    if (!core_pos.empty()) {
+        GLuint core_vao = 0, core_vbo = 0, core_col_vbo = 0;
+        glGenVertexArrays(1, &core_vao);
+        glGenBuffers(1, &core_vbo);
+        glGenBuffers(1, &core_col_vbo);
+
+        glBindVertexArray(core_vao);
+
+        glBindBuffer(GL_ARRAY_BUFFER, core_vbo);
+        glBufferData(GL_ARRAY_BUFFER, core_pos.size() * sizeof(float), core_pos.data(), GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, core_col_vbo);
+        glBufferData(GL_ARRAY_BUFFER, core_col.size() * sizeof(float), core_col.data(), GL_DYNAMIC_DRAW);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glUseProgram(point_prog);
+        if (glGetError() != GL_NO_ERROR) {
+            LOG_MSG("glUseProgram failed for particle shader (cores)");
+            glUseProgram(0);
+            glDisableVertexAttribArray(0);
+            glDisableVertexAttribArray(1);
+            glDeleteBuffers(1, &core_vbo);
+            glDeleteBuffers(1, &core_col_vbo);
+            glDeleteVertexArrays(1, &core_vao);
+            glDisable(GL_BLEND);
+            return;
+        }
+        glUniformMatrix4fv(glGetUniformLocation(point_prog, "vm"), 1, 0, &vm(0, 0));
+        glUniformMatrix4fv(glGetUniformLocation(point_prog, "proj"), 1, 0, &proj(0, 0));
+
+        // Core points smaller so they appear as inner black dots
+        glPointSize(4.0f);
+        glBindVertexArray(core_vao);
+        glDrawArrays(GL_POINTS, 0, (GLsizei)(core_pos.size() / 3));
+        glBindVertexArray(0);
+        glPointSize(1.0f);
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+        glDeleteBuffers(1, &core_vbo);
+        glDeleteBuffers(1, &core_col_vbo);
+        glDeleteVertexArrays(1, &core_vao);
+    }
+
+    // clear any GL errors produced here so they don't affect later draws
     while (glGetError() != GL_NO_ERROR);
+    glUseProgram(0);
+    glDisable(GL_BLEND);
 }
 
 int main(int argc, char **argv) {
