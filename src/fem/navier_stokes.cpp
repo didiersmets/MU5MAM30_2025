@@ -110,7 +110,7 @@ void NavierStokesSolver::compute_transport_coriolis(double* T , double omega_ear
 
     assert(a < N && b < N && c < N);
     double omega_sum = (OMEGA[a] + OMEGA[b] + OMEGA[c]) / 6.0;      // here we have the integral over the reference triangle of phi_i which is 1/6
-    omega_sum += (coriolis[a] + coriolis[b] + coriolis[c]) / 2.0;   // here we have the integral over the reference triangle of 1 which is 1/2
+    omega_sum += (coriolis[a] + coriolis[b] + coriolis[c]) / 6.0;   // here we have the integral over the reference triangle of 1 which is 1/2
     T[a] += (omega_sum * (PSI[b] - PSI[c]));
     T[b] += (omega_sum * (PSI[c] - PSI[a]));
     T[c] += (omega_sum * (PSI[a] - PSI[b]));
