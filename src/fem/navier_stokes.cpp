@@ -24,8 +24,8 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	build_P1_stiffness_matrix(m, S);
 #else
 	build_P1_CSRPattern(m, P);
-	M = std::move(CSRMatrix(P,0));
-	S = std::move(CSRMatrix(P,0));
+	M = std::move(CSRMatrix(P,0.0));
+	S = std::move(CSRMatrix(P,0.0));
 	build_P1_mass_matrix(m, M);
 	build_P1_stiffness_matrix(m, S);
 	LOG_MSG("M :");
@@ -58,7 +58,7 @@ void NavierStokesSolver::compute_transport(double *T,double dt)
 		uint32_t points[3] = {Ai,Bi,Ci};
 		double sum = omega[Ai] + omega[Bi] + omega[Ci];
 		for (uint32_t k =0;k<3;k++)
-			T[points[k]]+= dt * sum * (psi[points[(k-1)%3]] - psi[points[(k+1)%3]]);
+			T[points[k]]+= dt * sum * (psi[points[(k-1)%3]] - psi[points[(k+1)%3]]) / 0.6;
 		}
 }
 
@@ -127,15 +127,14 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	// initialization
 	// r0 = b - Ax0 = b - (M + dt * nu * S) Omega
 	S.mvp(omega.data,r.data);
-	blas_scal(dt * nu, r.data, N);
-	blas_axpy(1.0,Momega.data,r.data,N);
+	blas_axpby(1.0,Momega.data,dt*nu,r.data,N);
 	blas_axpby(1.0,b.data,-1.0,r.data,N);
 	blas_copy(r.data,p.data,N);
 	// code bellow copied from conjugate_gradient.cpp
 	double b2 = blas_dot(b.data,b.data,N);
 	LOG_MSG("time step : b2 = %lf",b2);
 	double r2 = blas_dot(r.data,r.data,N);
-	double rel_error = r2/b2;
+	double rel_error = sqrt(r2/b2);
 	size_t iter = 0;
 	size_t max_iter = 500;
 	TArray<double> x (N,0.0); // TODO : possible optimization solve directly in omega
