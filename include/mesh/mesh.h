@@ -8,7 +8,7 @@
 using namespace std;
 
 struct Mesh {
-	TArray<Vec3> positions;
+	TArray<Vec3f> positions;
 	TArray<uint32_t> indices;
 	TArray<float> attr;
 	size_t vertex_count() const { return positions.size; }

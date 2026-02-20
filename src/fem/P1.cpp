@@ -84,11 +84,15 @@ void build_P1_mass_matrix(const Mesh &m, CSRMatrix &M){
 		uint32_t Ai = m.indices[t];
 		uint32_t Bi = m.indices[t+1];
 		uint32_t Ci = m.indices[t+2];
-		Vec3 A = m.positions[Ai];
-		Vec3 B = m.positions[Bi];
-		Vec3 C = m.positions[Ci];
-		Vec3 AB = B-A;
-		Vec3 AC = C-A;
+		Vec3f A = m.positions[Ai];
+		Vec3f B = m.positions[Bi];
+		Vec3f C = m.positions[Ci];
+		Vec3d AB = { (double)B[0] - (double)A[0],
+			     (double)B[1] - (double)A[1],
+			     (double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0],
+			     (double)C[1] - (double)A[1],
+			     (double)C[2] - (double)A[2] };
 		MassCoef coef = mass(AB,AC);
 		M(Ai,Ai)+=coef.diag;
 		M(Bi,Bi)+=coef.diag;
@@ -106,11 +110,15 @@ void build_P1_stiffness_matrix(const Mesh &m, CSRMatrix &S){
 		uint32_t Ai = m.indices[t];
 		uint32_t Bi = m.indices[t+1];
 		uint32_t Ci = m.indices[t+2];
-		Vec3 A = m.positions[Ai];
-		Vec3 B = m.positions[Bi];
-		Vec3 C = m.positions[Ci];
-		Vec3 AB = B-A;
-		Vec3 AC = C-A;
+		Vec3f A = m.positions[Ai];
+		Vec3f B = m.positions[Bi];
+		Vec3f C = m.positions[Ci];
+		Vec3d AB = { (double)B[0] - (double)A[0],
+			     (double)B[1] - (double)A[1],
+			     (double)B[2] - (double)A[2] };
+		Vec3d AC = { (double)C[0] - (double)A[0],
+			     (double)C[1] - (double)A[1],
+			     (double)C[2] - (double)A[2] };
 		StiffnessCoef coef = stiffness(AB,AC);
 		S(Ai,Ai)+=coef.S00;
 		S(Bi,Bi)+=coef.S11;
@@ -122,4 +130,12 @@ void build_P1_stiffness_matrix(const Mesh &m, CSRMatrix &S){
 		S(Ci,Bi)+=coef.S12;
 		S(Ai,Ci)+=coef.S20;
 	}
+}
+void build_P1_mass_matrix(const Mesh &m, CSRPattern &P, CSRMatrix &M){
+	M = std::move(CSRMatrix(P,0.0));
+	build_P1_mass_matrix(m, M);
+}
+void build_P1_stiffness_matrix(const Mesh &m, CSRPattern &P, CSRMatrix &S){
+	S = std::move(CSRMatrix(P,0.0));
+	build_P1_stiffness_matrix(m, S);
 }

@@ -21,4 +21,4 @@ struct MassCoef{
 	double offdiag;
 };
 
-MassCoef mass(const Vec3 &AB, const Vec3 &AC);
+MassCoef mass(const Vec3d &AB, const Vec3d &AC);

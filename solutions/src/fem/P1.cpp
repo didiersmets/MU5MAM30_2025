@@ -112,14 +112,13 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 		Vec3d AC = { (double)C[0] - (double)A[0],
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
-		double Mloc[2];
-		mass(AB, AC, Mloc);
-		M(a, a) += Mloc[0];
-		M(b, b) += Mloc[0];
-		M(c, c) += Mloc[0];
-		M(a > b ? a : b, a > b ? b : a) += Mloc[1];
-		M(b > c ? b : c, b > c ? c : b) += Mloc[1];
-		M(c > a ? c : a, c > a ? a : c) += Mloc[1];
+		MassCoef coef = mass(AB, AC);
+		M(a, a) += coef.diag;
+		M(b, b) += coef.diag;
+		M(c, c) += coef.diag;
+		M(a > b ? a : b, a > b ? b : a) += coef.offdiag;
+		M(b > c ? b : c, b > c ? c : b) += coef.offdiag;
+		M(c > a ? c : a, c > a ? a : c) += coef.offdiag;
 	}
 }
 
@@ -153,14 +152,14 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 		Vec3d AC = { (double)C[0] - (double)A[0],
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
-		double Sloc[6];
-		stiffness(AB, AC, Sloc);
-		S(a, a) += Sloc[0];
-		S(b, b) += Sloc[1];
-		S(c, c) += Sloc[2];
-		S(a > b ? a : b, a > b ? b : a) += Sloc[3];
-		S(b > c ? b : c, b > c ? c : b) += Sloc[4];
-		S(c > a ? c : a, c > a ? a : c) += Sloc[5];
+		StiffnessCoef coef = stiffness(AB,AC);
+		// stiffness(AB, AC, Sloc);
+		S(a, a) += coef.S00;
+		S(b, b) += coef.S11;
+		S(c, c) += coef.S22;
+		S(a > b ? a : b, a > b ? b : a) += coef.S01;
+		S(b > c ? b : c, b > c ? c : b) += coef.S12;
+		S(c > a ? c : a, c > a ? a : c) += coef.S20;
 	}
 }
 
@@ -193,12 +192,13 @@ void build_P1_mass_matrix(const Mesh &m, FEMatrix &M)
 		Vec3d AC = { (double)C[0] - (double)A[0],
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
-		double Mloc[2];
-		mass(AB, AC, Mloc);
-		M.diag[a] += Mloc[0];
-		M.diag[b] += Mloc[0];
-		M.diag[c] += Mloc[0];
-		M.off_diag[t] = Mloc[1];
+		// double Mloc[2];
+		// mass(AB, AC, Mloc);
+		MassCoef coef = mass(AB, AC);
+		M.diag[a] += coef.diag;
+		M.diag[b] += coef.diag;
+		M.diag[c] += coef.diag;
+		M.off_diag[t] = coef.offdiag;
 	}
 }
 
@@ -229,13 +229,12 @@ void build_P1_stiffness_matrix(const Mesh &m, FEMatrix &S)
 		Vec3d AC = { (double)C[0] - (double)A[0],
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
-		double Sloc[6];
-		stiffness(AB, AC, Sloc);
-		S.diag[a] += Sloc[0];
-		S.diag[b] += Sloc[1];
-		S.diag[c] += Sloc[2];
-		S.off_diag[3 * t + 0] = Sloc[3];
-		S.off_diag[3 * t + 1] = Sloc[4];
-		S.off_diag[3 * t + 2] = Sloc[5];
+		StiffnessCoef coef = stiffness(AB,AC);
+		S.diag[a] += coef.S00;
+		S.diag[b] += coef.S11;
+		S.diag[c] += coef.S22;
+		S.off_diag[3 * t + 0] = coef.S01;
+		S.off_diag[3 * t + 1] = coef.S12;
+		S.off_diag[3 * t + 2] = coef.S20;
 	}
 }

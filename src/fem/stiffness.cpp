@@ -1,7 +1,7 @@
 #include "stiffness.h"
 #include "mesh_utils.h"
 
-StiffnessCoef stiffness(const Vec3 &AB, const Vec3 &AC)
+StiffnessCoef stiffness(const Vec3d &AB, const Vec3d &AC)
 {
 	double area = area_triangle(AB,AC);
 	double AB2 = norm2(AB);

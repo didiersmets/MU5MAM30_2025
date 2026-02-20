@@ -31,4 +31,4 @@ struct StiffnessCoef {
 	double S20;
 };
 
-StiffnessCoef stiffness(const Vec3 &AB, const Vec3 &AC);
+StiffnessCoef stiffness(const Vec3d &AB, const Vec3d &AC);

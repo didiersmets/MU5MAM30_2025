@@ -41,6 +41,7 @@ struct NavierStokesSolver {
 		double dt, double nu, double *__restrict x,
 		double *__restrict r, double *__restrict p,
 		double *__restrict Ap, double r2);
+	void compute_transport(double *T);
 	void compute_transport(double *T,double dt);
 	void time_step(double dt, double nu);
 };

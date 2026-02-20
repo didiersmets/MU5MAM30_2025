@@ -58,7 +58,7 @@ void NavierStokesSolver::compute_transport(double *T,double dt)
 		uint32_t points[3] = {Ai,Bi,Ci};
 		double sum = omega[Ai] + omega[Bi] + omega[Ci];
 		for (uint32_t k =0;k<3;k++)
-			T[points[k]]+= dt * sum * (psi[points[(k-1)%3]] - psi[points[(k+1)%3]]) / 0.6;
+			T[points[k]]+= dt * sum * (psi[points[(k+1)%3]] - psi[points[(k-1)%3]]) / 0.6;
 		}
 }
 

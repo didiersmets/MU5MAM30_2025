@@ -29,7 +29,7 @@ float scale_max;
 float mesh_deform = 0;
 
 /* FEM interaction */
-bool autoscale = true;
+bool autoscale = false;
 bool started = false;
 bool one_step = false;
 bool reset = false;
@@ -41,7 +41,7 @@ double tol = 1e-6;
 
 /* RHS expression of the PDE */
 char rhs_expression[128] =
-    "100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))";
+    "100 * (z+x) * exp(-50*(z+x)^2) * (1 + 0.5 * cos(20 * theta))";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x},   {"y", &rhs_y},     {"z", &rhs_z},
