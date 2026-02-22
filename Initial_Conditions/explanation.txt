@@ -1,0 +1,16 @@
+========================================
+HOW TO SET THE INITIAL CONDITION
+(Test Coriolis simulation)
+========================================
+
+1) Open the file:
+   test_coriolis.cpp
+
+
+2) Search for the section where the initial vorticity condition is defined.
+   You should find something like:
+      "char rhs_expression[128] = "100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))""
+
+3) Replace the existing expression with the one below.
+
+4) Save, recompile, and run the simulation.

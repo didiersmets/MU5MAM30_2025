@@ -1,0 +1,78 @@
+========================================
+INITIAL CONDITION
+(Double jet interaction → large vortices and banded flow)
+========================================
+
+1.2*(tanh(8*(y-0.35)) - tanh(8*(y+0.1))) + 0.7*cos(6*atan2(z,x))*exp(-12*(y-0.1)^2)
+
+
+========================================
+THEORETICAL DESCRIPTION
+========================================
+
+This initial condition represents a simplified atmospheric circulation
+with two jet streams interacting and a planetary-scale perturbation.
+
+1) Double jet structure
+   The difference of two tanh profiles creates two strong shear layers.
+   These resemble multiple jet systems commonly found in planetary
+   atmospheres such as Earth and Jupiter. These shear zones are
+   dynamically unstable and act as waveguides for Rossby waves.
+
+2) Planetary wave perturbation
+   The cosine term introduces a large-scale Rossby wave with zonal
+   wavenumber 6. The Gaussian envelope localizes the perturbation in
+   latitude, so the wave interacts strongly with the jets.
+
+As the simulation evolves, the wave grows and interacts with the jets.
+This leads to deformation of the flow and the formation of coherent
+vortices.
+
+Over time, nonlinear effects generate:
+   - vortex formation,
+   - filamentation,
+   - vortex merging,
+   - emergence of large-scale structures.
+
+This behavior is characteristic of barotropic geophysical turbulence.
+
+
+========================================
+WHY THIS INITIAL CONDITION IS INTERESTING
+========================================
+
+• It produces rich and visually striking dynamics.
+
+• It demonstrates key physical mechanisms:
+   - barotropic instability,
+   - Rossby wave growth,
+   - nonlinear wave–mean flow interaction,
+   - inverse energy cascade,
+   - formation of persistent large-scale vortices.
+
+• It resembles phenomena observed in real atmospheres:
+   - jet stream variability,
+   - large planetary vortices,
+   - banded atmospheric structures.
+
+• In vorticity (w), you will observe:
+   - strong vortices,
+   - thin filaments,
+   - vortex interactions.
+
+• In the stream function (ψ), you will see:
+   - banded flows,
+   - closed circulation regions,
+   - large-scale transport structures.
+
+• Streamfunction contour lines highlight transport barriers and
+  recirculation zones, which are essential in atmospheric dynamics.
+
+
+========================================
+SUGGESTED PARAMETERS
+========================================
+
+For best results:
+   viscosity (nu) ~ 3e-4 to 1e-3
+   angular velocity ~ 0.1 to 0.3

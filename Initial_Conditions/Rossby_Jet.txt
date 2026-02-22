@@ -1,0 +1,77 @@
+========================================
+INITIAL CONDITION
+(Highly visual Rossby–jet interaction pattern)
+========================================
+
+1.1*tanh(7*y) + 1.4*cos(4*atan2(z,x) + 2.2*sin(3*y))*exp(-10*y^2) + 0.9*cos(9*atan2(z,x) + 1.6*sin(6*y))*exp(-18*(y-0.35)^2)
+
+
+========================================
+THEORETICAL DESCRIPTION
+========================================
+
+This initial condition is designed to generate a visually rich and 
+physically meaningful flow resembling large-scale atmospheric dynamics.
+It combines a zonal jet, planetary-scale Rossby waves, and smaller-scale
+localized disturbances.
+
+1) Background jet (first term)
+   The hyperbolic tangent creates a large-scale shear flow similar to a 
+   mid-latitude jet stream. This provides a waveguide for Rossby waves 
+   and supports barotropic instability.
+
+2) Large-scale Rossby wave (second term)
+   The wavenumber-4 cosine introduces a planetary-scale meander of the 
+   jet. The nonlinear phase modulation produces smooth, realistic wave 
+   shapes and large coherent structures.
+
+3) Localized wave packet (third term)
+   The higher-wavenumber component is confined in latitude. It promotes
+   wave breaking, filament formation, and the generation of coherent 
+   vortices as the flow evolves.
+
+Together, these mechanisms reproduce the transition from smooth 
+planetary waves to nonlinear turbulence.
+
+
+========================================
+WHY THIS INITIAL CONDITION IS INTERESTING
+========================================
+
+• It produces striking visual patterns:
+    - large meandering jets,
+    - coherent vortices,
+    - thin filaments,
+    - mixing regions.
+
+• It clearly demonstrates:
+    - Rossby wave propagation,
+    - nonlinear wave–mean flow interaction,
+    - wave breaking,
+    - vortex formation,
+    - transport and mixing.
+
+• It is excellent for comparing:
+    - vorticity (local structures and filaments),
+    - stream function (global circulation),
+    - contour plots (flow speed and transport barriers).
+
+• The evolution naturally leads to inverse cascade behavior and the 
+  emergence of large-scale coherent structures.
+
+
+========================================
+SUGGESTED PARAMETERS
+========================================
+
+For best visual results:
+   viscosity (nu) ~ 3e-4 to 7e-4
+   angular velocity ~ 0.15 to 0.25
+
+Lower viscosity enhances filament formation and small-scale vortices.
+Higher viscosity produces smoother and more stable large-scale patterns.
+
+If the simulation becomes unstable:
+   - slightly increase viscosity,
+   - or reduce the amplitude of the cosine terms.
+

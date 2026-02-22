@@ -1,0 +1,65 @@
+========================================
+INITIAL CONDITION (Atmospheric-like Rossby waves)
+========================================
+
+3 * cos(16*y + 4*sin(3*atan2(z,x) + 2*y) + 5 *sin(7*atan2(z,x)))
+
+
+========================================
+THEORETICAL DESCRIPTION
+========================================
+
+This initial condition is designed to reproduce large-scale atmospheric 
+Rossby wave patterns on a rotating sphere.
+
+The structure is composed of three main elements:
+
+1) Zonal structure (cos(16*y))
+   This term generates smooth, large-scale bands similar to atmospheric 
+   jet streams. These bands represent latitudinal variations in vorticity 
+   that are typical of mid-latitude atmospheric circulation.
+
+2) Longitudinal modulation (sin and atan2 terms)
+   The functions involving atan2(z,x) introduce a dependence on longitude.
+   This produces meanders and wave-like distortions of the zonal jets.
+   These are analogous to planetary Rossby waves in the real atmosphere.
+
+3) Nonlinear phase coupling
+   The combination of multiple sinusoidal terms creates realistic 
+   large-scale wave patterns without introducing high-frequency noise.
+   This allows the simulation to remain numerically stable while still 
+   generating dynamically rich structures.
+
+========================================
+WHY THIS INITIAL CONDITION IS INTERESTING
+========================================
+
+• It mimics the large-scale circulation of the Earth's atmosphere, 
+  including jet streams and planetary waves.
+
+• It allows the visualization of Rossby wave propagation, deformation,
+  and interaction.
+
+• It is smooth and well-behaved, which reduces the risk of numerical 
+  instability while still producing meaningful nonlinear dynamics.
+
+• It provides a good test case to study:
+    - Rossby wave propagation
+    - Wave breaking and mixing
+    - Jet instability
+    - Large-scale atmospheric variability
+
+• The pattern evolves into vortices and filament structures when the 
+  viscosity is sufficiently small, making it useful for studying 
+  geophysical turbulence.
+
+========================================
+SUGGESTED PARAMETERS
+========================================
+
+For best results:
+   viscosity (nu) ~ 1e-3 to 1e-2
+   angular velocity ~ 0.1 to 0.3
+
+These values typically produce a good balance between stability and 
+rich atmospheric-like dynamics.

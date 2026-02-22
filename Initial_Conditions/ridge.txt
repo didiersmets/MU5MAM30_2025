@@ -1,0 +1,64 @@
+========================================
+INITIAL CONDITION (Blocking event: ridge + split-jet deformation)
+========================================
+
+0.9*cos(3*atan2(z,x) + sin(2*y))*exp(-12*(y-0.25)^2) + 0.7*exp(-25*((x+0.3)^2 + (y-0.3)^2 + z^2))
+
+========================================
+THEORETICAL DESCRIPTION
+========================================
+
+This initial condition is a simplified model of an atmospheric blocking
+configuration: a persistent large-scale ridge that disrupts the usual
+zonal flow and forces the jet stream to meander strongly.
+
+It is built from three components:
+
+1) Large-scale ridge / planetary wave (first term)
+   A smooth zonal wavenumber-3 disturbance is localized in latitude by a
+   Gaussian envelope. This produces a strong, coherent meander that can
+   behave like a blocking ridge.
+
+2) High-pressure-like anomaly (second term)
+   A localized positive vorticity anomaly acts as a coherent feature that
+   can anchor or reinforce the ridge pattern.
+
+3) Competing anomaly (third term)
+   A nearby negative anomaly creates asymmetry and encourages deformation
+   and reorganization of the flow, making the evolution more dynamic.
+
+Together, these terms create a flow that can develop long-lived, slowly
+evolving large-scale structures, while still allowing filament formation
+and eddy shedding for sufficiently low viscosity.
+
+
+========================================
+WHY THIS INITIAL CONDITION IS INTERESTING
+========================================
+
+• Blocking is one of the most important large-scale atmospheric regimes:
+  it can persist and strongly alter transport and mixing.
+
+• In vorticity (ζ), you will see coherent anomalies interacting and
+  shedding filaments.
+
+• In stream function (ψ), you will see large closed contours and strong
+  meanders: an intuitive signature of a blocked flow.
+
+• The streamfunction contour lines clearly show transport barriers and
+  recirculation regions (closed loops), which is exactly what makes
+  blocking “persistent” and meteorologically impactful.
+
+• This setup is excellent for comparing parameter effects:
+    - lower viscosity → more filamentation and eddy shedding
+    - higher viscosity → smoother, longer-lived, more laminar blocking
+    - higher angular velocity → stronger advection/phase drift of the pattern
+
+
+========================================
+SUGGESTED PARAMETERS
+========================================
+
+For best results:
+   viscosity (nu) ~ 1e-3 to 1e-2
+   angular velocity ~ 0.05 to 0.2

@@ -1,0 +1,68 @@
+========================================
+SIMULATION GOAL
+Many small vortices (eddy field) generation
+========================================
+
+----------------------------------------
+INITIAL VORTICITY (copy & paste)
+----------------------------------------
+
+3.0*(cos(18*atan2(z,x)) + 0.7*cos(24*atan2(z,x) + 1.3) + 0.5*cos(30*atan2(z,x) - 0.7)) * exp(-18*(y-0.15)^2)
+
+
+----------------------------------------
+SHORT THEORETICAL EXPLANATION
+----------------------------------------
+
+This initial condition injects energy at relatively small spatial scales
+(high zonal wavenumbers). The many cosine terms create strong vorticity
+gradients inside a narrow mid-latitude band.
+
+In a 2D rotating fluid, nonlinear advection stretches and rolls these
+gradients, rapidly generating many small coherent vortices. This is a
+classical mechanism in geophysical turbulence.
+
+Because the flow is nearly two-dimensional, energy tends to move toward
+larger scales (inverse energy cascade), while enstrophy moves toward
+smaller scales. As a result:
+
+• Initially: many small vortices appear.
+• Later: vortices interact and merge.
+• Eventually: fewer but larger coherent structures remain.
+
+The narrow Gaussian band represents a storm-track region, where strong
+shear and vorticity gradients favor the growth of small-scale eddies,
+similar to what happens in the real atmosphere and oceans.
+
+
+----------------------------------------
+WHY THIS IS INTERESTING
+----------------------------------------
+
+• It clearly demonstrates the formation of many small vortices.
+• It shows the transition from fine-scale turbulence to larger
+  coherent structures.
+• It is useful to study:
+    - geophysical turbulence,
+    - inverse cascade,
+    - vortex interaction and merging,
+    - mixing and transport.
+
+In vorticity (ζ), you will see many intense small vortices and filaments.
+In the stream function (ψ), you will observe many small closed contours
+that later merge into larger circulation cells.
+
+
+----------------------------------------
+SUGGESTED PARAMETERS
+----------------------------------------
+
+Start with:
+  viscosity (nu) = 2e-4 to 3e-4
+  angular velocity = 0.2
+
+If vortices are too weak:
+  increase amplitude slightly.
+
+If the simulation becomes unstable:
+  increase viscosity.
