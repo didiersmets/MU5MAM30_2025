@@ -47,18 +47,18 @@ void NavierStokesSolver::set_zero_mean(double *V)
 	}
 }
 
-void NavierStokesSolver::compute_transport(double *T,double dt)
+void NavierStokesSolver::compute_transport(double *T)
 {
-	// computes T(omega,psi) and adds it to T
-	// memset(T, 0, N * sizeof(double));
+	// computes T(omega,psi)
+	memset(T, 0, N * sizeof(double));
 	for (size_t t=0;t<m.index_count();t+=3){
 		uint32_t Ai = m.indices[t];
 		uint32_t Bi = m.indices[t+1];
 		uint32_t Ci = m.indices[t+2];
 		uint32_t points[3] = {Ai,Bi,Ci};
 		double sum = omega[Ai] + omega[Bi] + omega[Ci];
-		for (uint32_t k =0;k<3;k++)
-			T[points[k]]+= dt * sum * (psi[points[(k+1)%3]] - psi[points[(k-1)%3]]) / 0.6;
+		for (int32_t k =0;k<3;k++)
+			T[points[k]]+= sum * (psi[points[(3+k+1)%3]] - psi[points[(3+k-1)%3]]) / 6;
 		}
 }
 
@@ -73,7 +73,7 @@ size_t NavierStokesSolver::compute_stream_function()
 	LOG_MSG("compute_stream_function : ||Momega|| = %lf",Momega_norm);
 
 	TArray<double> b (N,0.0); // TODO : optmization possible
-	blas_axpy(-1.0,Momega.data,b.data,N);
+	blas_copy(Momega.data,b.data,N);
 
 	double rel_error;
 	iter = conjugate_gradient_solve(
@@ -109,41 +109,28 @@ double NavierStokesSolver::cg_iterate_once(
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
-	/**********************************************************************
-	 * Solve the system :
-	 *
-	 *  (M + \nu * dt * S)omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
-	 *
-	 *********************************************************************/
 	compute_stream_function(); // Momega computed here
-	// compute_transport(Momega.data,dt); // TODO : possible optimization
-	TArray<double> T(N,0.0);
-	compute_transport(T.data,dt);
+	compute_transport(p.data);
 
-	TArray<double> b (N,0.0);
-	blas_copy(Momega.data,b.data,N);
-	blas_axpy(1.0,T.data,b.data,N);
-	// at this stage b = M * omega(t) + dt * T(Omega,Psi)(t)
-	// initialization
+	blas_axpby(1,Momega.data,dt,p.data,N);
+	// at this stage p = b = M * omega(t) + dt * T(Omega,Psi)(t)
+	double b2 = blas_dot(p.data,p.data,N);
+	// initialization x0 = Omega
 	// r0 = b - Ax0 = b - (M + dt * nu * S) Omega
 	S.mvp(omega.data,r.data);
 	blas_axpby(1.0,Momega.data,dt*nu,r.data,N);
-	blas_axpby(1.0,b.data,-1.0,r.data,N);
+	blas_axpby(1.0,p.data,-1.0,r.data,N);
 	blas_copy(r.data,p.data,N);
 	// code bellow copied from conjugate_gradient.cpp
-	double b2 = blas_dot(b.data,b.data,N);
 	LOG_MSG("time step : b2 = %lf",b2);
 	double r2 = blas_dot(r.data,r.data,N);
 	double rel_error = sqrt(r2/b2);
 	size_t iter = 0;
-	size_t max_iter = 500;
-	TArray<double> x (N,0.0); // TODO : possible optimization solve directly in omega
-	while(iter<max_iter && rel_error>tol){
-		r2 = cg_iterate_once(dt, nu,x.data, r.data, p.data, Ap.data, r2);
-		rel_error = r2/b2;
+	while(iter<=iter_max && rel_error>tol){
+		r2 = cg_iterate_once(dt, nu, omega.data, r.data, p.data, Ap.data, r2);
+		rel_error = sqrt(r2/b2);
 		iter++;
 	}
-	blas_copy(x.data,omega.data,N);
 
 	LOG_MSG("time step : %d iterations; %f relative error",iter,rel_error);
 	set_zero_mean(omega.data);
