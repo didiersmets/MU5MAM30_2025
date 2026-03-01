@@ -27,6 +27,8 @@ struct NavierStokesSolver {
 	TArray<double> r;  // current residue r = Mf - Su
 	TArray<double> p;  // internal for cg
 	TArray<double> Ap; // internal for cg
+        TArray<double> RHS; // internal for cg
+        TArray<double> other; // internal for cg
 
 	bool inited; // Initialization computes first residue and error
 
