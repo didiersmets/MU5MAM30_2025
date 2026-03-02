@@ -31,10 +31,10 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	double beta = r2_new / r2;
 
 	/* p_{n+1} = r_{n+1} + beta*p_n */
-	blas_axpby(1, r, beta, p);
+	blas_axpby(1, r, beta, p, N);
 
 	/* Ap = A*p */
-	*A.mvp(p, Ap);
+	A.mvp(p, Ap);
 
 	return(r2_new);
 
