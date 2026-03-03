@@ -8,10 +8,10 @@
 #include "P1.h"
 #include "adjacency.h"
 #include "fem_matrix.h"
-#include "mass.h"
+#include "mass_P1.h"
 #include "mesh.h"
 #include "sparse_matrix.h"
-#include "stiffness.h"
+#include "stiffness_P1.h"
 
 /* CSRMatrix variants */
 
@@ -113,7 +113,7 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
 		double Mloc[2];
-		mass(AB, AC, Mloc);
+		mass_P1(AB, AC, Mloc);
 		M(a, a) += Mloc[0];
 		M(b, b) += Mloc[0];
 		M(c, c) += Mloc[0];
@@ -154,7 +154,7 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
 		double Sloc[6];
-		stiffness(AB, AC, Sloc);
+		stiffness_P1(AB, AC, Sloc);
 		S(a, a) += Sloc[0];
 		S(b, b) += Sloc[1];
 		S(c, c) += Sloc[2];
@@ -194,7 +194,7 @@ void build_P1_mass_matrix(const Mesh &m, FEMatrix &M)
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
 		double Mloc[2];
-		mass(AB, AC, Mloc);
+		mass_P1(AB, AC, Mloc);
 		M.diag[a] += Mloc[0];
 		M.diag[b] += Mloc[0];
 		M.diag[c] += Mloc[0];
@@ -230,7 +230,7 @@ void build_P1_stiffness_matrix(const Mesh &m, FEMatrix &S)
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
 		double Sloc[6];
-		stiffness(AB, AC, Sloc);
+		stiffness_P1(AB, AC, Sloc);
 		S.diag[a] += Sloc[0];
 		S.diag[b] += Sloc[1];
 		S.diag[c] += Sloc[2];

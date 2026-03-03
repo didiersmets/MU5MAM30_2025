@@ -15,7 +15,7 @@
  *
  * Hiden for now.
  */
-void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
+void inline mass_P1(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 // Attention il faut entrer une Matrice M de type P1_cst
 	// Aire du triangle ABC

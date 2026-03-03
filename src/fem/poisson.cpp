@@ -1,6 +1,10 @@
 #include "poisson.h"
 
-#include "P1.h"
+#if USE_P2
+  #include "P2.h"
+#else
+  #include "P1.h"
+#endif
 #include "array.h"
 #include "conjugate_gradient.h"
 #if USE_FEM_MATRIX
@@ -11,21 +15,51 @@
 #include "mesh.h"
 #include "tiny_blas.h"
 
+static size_t inline dof_count(const Mesh &m) {
+#if USE_P2
+  return  m.vertex_count() + m.index_count() / 2;
+#else
+  return  m.vertex_count();
+ #endif
+}
+
+static inline void unpack(uint64_t p, uint32_t &a, uint32_t &b) noexcept {
+    a = uint32_t(p >> 32);
+    b = uint32_t(p & 0xFFFFFFFFu);
+}
+
 PoissonSolver::PoissonSolver(const Mesh &m)
-    : m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
+  : m(m), N(dof_count(m)), f(N), u(N, 0.0), r(N), p(N), Ap(N)
 {
 #if USE_FEM_MATRIX
-	build_P1_mass_matrix(m, M);
-	build_P1_stiffness_matrix(m, A);
+  build_P1_mass_matrix(m, M);
+  build_P1_stiffness_matrix(m, A);
+#elif USE_P2
+  std::unordered_map<uint64_t, uint32_t> edge2dof;
+  build_P2_CSRPattern(m, P, edge2dof);
+  build_P2_mass_matrix(m, P, M, edge2dof);
+  build_P2_stiffness_matrix(m, P, A, edge2dof);
+
+  uint32_t n_vtx = m.vertex_count();
+  uint32_t n_edges =  m.index_count() / 2;
+  e2vtx.resize(2 * n_edges);
+  for (const auto &elt : edge2dof) {
+    uint32_t v0, v1;
+    unpack(elt.first, v0, v1);
+    uint32_t e = elt.second - n_vtx;
+    e2vtx[2*e] = v0;
+    e2vtx[2*e+1] = v1;
+  }
 #else
-	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, A);
+  N = m.vertex_count();
+  build_P1_CSRPattern(m, P);
+  build_P1_mass_matrix(m, P, M);
+  build_P1_stiffness_matrix(m, P, A);
 #endif
-	vol = M.sum();
-	inited = false;
-	iterate = 0;
-	converged = false;
+  vol = M.sum();
+  inited = false;
+  iterate = 0;
+  converged = false;
 }
 
 void PoissonSolver::clear_solution()

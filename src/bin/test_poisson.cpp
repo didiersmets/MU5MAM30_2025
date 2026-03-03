@@ -67,7 +67,9 @@ bool new_rhs(PoissonSolver &solver)
 
 	te_free(te_rhs);
 	te_rhs = test;
-	for (size_t i = 0; i < solver.N; ++i) {
+
+	uint32_t n_vtx = solver.m.vertex_count();
+	for (size_t i = 0; i < n_vtx; ++i) {
 		rhs_x = solver.m.positions[i].x;
 		rhs_y = solver.m.positions[i].y;
 		rhs_z = solver.m.positions[i].z;
@@ -76,6 +78,22 @@ bool new_rhs(PoissonSolver &solver)
 		rhs_r = (double)rand() / RAND_MAX;
 		solver.f[i] = te_eval(te_rhs);
 	}
+
+	#if USE_P2
+	uint32_t n_edges =  solver.m.index_count() / 2;
+	for (size_t e = 0; e < n_edges; ++e) {
+	  uint32_t v0 = solver.e2vtx[2*e];
+	  uint32_t v1 = solver.e2vtx[2*e+1];
+
+	  rhs_x = (solver.m.positions[v0].x + solver.m.positions[v1].x) / 2;
+	  rhs_y = (solver.m.positions[v0].y + solver.m.positions[v1].y) / 2;
+	  rhs_z = (solver.m.positions[v0].z + solver.m.positions[v1].z) / 2;
+	  rhs_p = atan2(rhs_y, rhs_x);
+	  rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
+	  rhs_r = (double)rand() / RAND_MAX;
+	  solver.f[e + n_vtx] = te_eval(te_rhs);
+	}
+	#endif
 
 	solver.init_cg();
 	solver.iterate = 0;
@@ -384,4 +402,3 @@ static void key_cb(int key, int action, int mods, void *args)
 		return;
 	}
 }
-

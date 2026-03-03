@@ -49,7 +49,7 @@
  * Taking into account that BC = AC - AB, we simplify the above expressions
  * into the following.
  */
-void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
+void inline stiffness_P1(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
 	double ABAB = norm2(AB);
 	double ACAC = norm2(AC);

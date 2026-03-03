@@ -8,10 +8,10 @@
 #include "P1.h"
 #include "adjacency.h"
 #include "fem_matrix.h"
-#include "mass.h"
+#include "mass_P1.h"
 #include "mesh.h"
 #include "sparse_matrix.h"
-#include "stiffness.h"
+#include "stiffness_P1.h"
 
 #include <unordered_set>
 #include <algorithm>
@@ -53,7 +53,7 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
     for (const uint32_t &j : big_neighbs)
 	P.col[col_pos++] = j;
 
-    /* Put the i index at then end (needed for CSRMatrix::sum) */
+    /* Put the i index at the end (needed for CSRMatrix::sum) */
     P.col[col_pos++] = i;
 
     P.row_start[i+1] = col_pos;
@@ -99,7 +99,7 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 		 (double)(C[2] - A[2])};
 
     double M_tri[2];
-    mass(AB, AC, M_tri);
+    mass_P1(AB, AC, M_tri);
 
     M(va, va) += M_tri[0];
     M(vb, vb) += M_tri[0];
@@ -149,7 +149,7 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 		 (double)(C[2] - A[2])};
 
     double S_tri[6];
-    stiffness(AB, AC, S_tri);
+    stiffness_P1(AB, AC, S_tri);
 
     S(va, va) += S_tri[0];
     S(vb, vb) += S_tri[1];
@@ -190,7 +190,7 @@ void build_P1_mass_matrix(const Mesh &m, FEMatrix &M)
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
 		double Mloc[2];
-		mass(AB, AC, Mloc);
+		mass_P1(AB, AC, Mloc);
 		M.diag[a] += Mloc[0];
 		M.diag[b] += Mloc[0];
 		M.diag[c] += Mloc[0];
@@ -226,7 +226,7 @@ void build_P1_stiffness_matrix(const Mesh &m, FEMatrix &S)
 			     (double)C[1] - (double)A[1],
 			     (double)C[2] - (double)A[2] };
 		double Sloc[6];
-		stiffness(AB, AC, Sloc);
+		stiffness_P1(AB, AC, Sloc);
 		S.diag[a] += Sloc[0];
 		S.diag[b] += Sloc[1];
 		S.diag[c] += Sloc[2];
