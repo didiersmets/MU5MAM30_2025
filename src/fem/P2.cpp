@@ -5,7 +5,6 @@
 #include <omp.h>
 #endif
 
-#include "P2.h"
 #include "adjacency.h"
 #include "mass_P2.h"
 #include "mesh.h"
@@ -15,16 +14,12 @@
 #include <set>
 #include <algorithm>
 #include <map>
-
-static inline uint64_t pack(uint32_t a, uint32_t b) noexcept {
-  return (uint64_t(a) << 32) | uint64_t(b);
-}
+#include <unordered_map>
 
 /* CSRMatrix variants */
 
-void build_P2_CSRPattern(const Mesh &m,
-			 CSRPattern &P,
-			 std::unordered_map<uint64_t, uint32_t> &edge2dof)
+void build_P2_CSRPattern(Mesh &m,
+			 CSRPattern &P)
 {
   /*
     Global dofs numbering strategy:
@@ -39,6 +34,12 @@ void build_P2_CSRPattern(const Mesh &m,
 
     Symetric matrix storage : dofs (k,l) such that k >= l
   */
+
+#if USE_P2
+  auto &edge2dof = m.edge2dof;
+#else
+  std::unordered_map<uint64_t, uint32_t> edge2dof;
+#endif
 
   size_t n_vtx = m.vertex_count();
   size_t n_tri = m.triangle_count();
@@ -114,9 +115,9 @@ void build_P2_CSRPattern(const Mesh &m,
     uint32_t vb = v_ids[1];
     uint32_t vc = v_ids[2];
 
-    uint32_t eab = edge2dof[pack(va, vb)];
-    uint32_t eac = edge2dof[pack(va, vc)];
-    uint32_t ebc = edge2dof[pack(vb, vc)];
+    uint32_t eab = edge2dof.find(pack(va, vb))->second;
+    uint32_t eac = edge2dof.find(pack(va, vc))->second;
+    uint32_t ebc = edge2dof.find(pack(vb, vc))->second;
 
     /* This is ordered in increasing dof id */
     uint32_t dof_ids[6] = {va, vb, vc, eab, eac, ebc};
@@ -151,9 +152,14 @@ void build_P2_CSRPattern(const Mesh &m,
 
 void build_P2_mass_matrix(const Mesh &m,
 			  const CSRPattern &P,
-			  CSRMatrix &M,
-			  std::unordered_map<uint64_t, uint32_t> &edge2dof)
+			  CSRMatrix &M)
 {
+#if USE_P2
+  auto &edge2dof = m.edge2dof;
+#else
+  std::unordered_map<uint64_t, uint32_t> edge2dof;
+#endif
+
   size_t vtx_count = m.vertex_count();
   size_t tri_count = m.triangle_count();
   size_t n_edges = 3 * tri_count / 2;
@@ -179,9 +185,9 @@ void build_P2_mass_matrix(const Mesh &m,
     uint32_t vb = v_ids[1];
     uint32_t vc = v_ids[2];
 
-    uint32_t eab = edge2dof[pack(va, vb)];
-    uint32_t eac = edge2dof[pack(va, vc)];
-    uint32_t ebc = edge2dof[pack(vb, vc)];
+    uint32_t eab = edge2dof.find(pack(va, vb))->second;
+    uint32_t eac = edge2dof.find(pack(va, vc))->second;
+    uint32_t ebc = edge2dof.find(pack(vb, vc))->second;
 
     uint32_t dof_ids[6] = {va, vb, vc, eab, eac, ebc};
 
@@ -208,9 +214,14 @@ void build_P2_mass_matrix(const Mesh &m,
 
 void build_P2_stiffness_matrix(const Mesh &m,
 			       const CSRPattern &P,
-			       CSRMatrix &S,
-			       std::unordered_map<uint64_t, uint32_t> &edge2dof)
+			       CSRMatrix &S)
 {
+#if USE_P2
+  auto &edge2dof = m.edge2dof;
+#else
+  std::unordered_map<uint64_t, uint32_t> edge2dof;
+#endif
+
   size_t vtx_count = m.vertex_count();
   size_t tri_count = m.triangle_count();
   size_t n_edges = 3 * tri_count / 2;
@@ -236,9 +247,9 @@ void build_P2_stiffness_matrix(const Mesh &m,
     uint32_t vb = v_ids[1];
     uint32_t vc = v_ids[2];
 
-    uint32_t eab = edge2dof[pack(va, vb)];
-    uint32_t eac = edge2dof[pack(va, vc)];
-    uint32_t ebc = edge2dof[pack(vb, vc)];
+    uint32_t eab = edge2dof.find(pack(va, vb))->second;
+    uint32_t eac = edge2dof.find(pack(va, vc))->second;
+    uint32_t ebc = edge2dof.find(pack(vb, vc))->second;
 
     uint32_t dof_ids[6] = {va, vb, vc, eab, eac, ebc};
 

@@ -9,10 +9,6 @@ namespace {
   };
 }
 
-static inline uint64_t pack(uint32_t a, uint32_t b) noexcept {
-    return (uint64_t(a) << 32) | uint64_t(b);
-}
-
 static void load_face_vertices(face_mesh &m,
 			       size_t N,
 			       const Vec3 &nx,

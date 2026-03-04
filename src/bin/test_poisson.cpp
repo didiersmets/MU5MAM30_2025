@@ -82,8 +82,8 @@ bool new_rhs(PoissonSolver &solver)
 	#if USE_P2
 	uint32_t n_edges =  solver.m.index_count() / 2;
 	for (size_t e = 0; e < n_edges; ++e) {
-	  uint32_t v0 = solver.e2vtx[2*e];
-	  uint32_t v1 = solver.e2vtx[2*e+1];
+	  uint32_t v0 = solver.m.e2vtx[2*e];
+	  uint32_t v1 = solver.m.e2vtx[2*e+1];
 
 	  rhs_x = (solver.m.positions[v0].x + solver.m.positions[v1].x) / 2;
 	  rhs_y = (solver.m.positions[v0].y + solver.m.positions[v1].y) / 2;

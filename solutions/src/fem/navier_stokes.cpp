@@ -8,7 +8,7 @@
 #include "P1.h"
 #include "tiny_blas.h"
 
-NavierStokesSolver::NavierStokesSolver(const Mesh &m)
+NavierStokesSolver::NavierStokesSolver(Mesh &m)
     : m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
 {
 	build_P1_CSRPattern(m, P);

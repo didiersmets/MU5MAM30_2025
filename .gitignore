@@ -6,3 +6,5 @@
 CMakeCache.txt
 CMakeFiles
 compile_commands.json
+imgui.ini
+src/bin/test_mesher.cpp

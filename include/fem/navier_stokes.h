@@ -8,7 +8,7 @@
 #include "mesh.h"
 
 struct NavierStokesSolver {
-	NavierStokesSolver(const Mesh &m);
+	NavierStokesSolver(Mesh &m);
 	const Mesh &m;
 	size_t N;   // DoF
 	double vol; // Surface(m), used for insuring zero mean to omega and psi

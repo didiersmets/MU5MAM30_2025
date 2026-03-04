@@ -8,35 +8,38 @@
 
 template <typename T>
 struct TVec3 {
-	/* Members */
-	T x;
-	T y;
-	T z;
+  /* Members */
+  T x;
+  T y;
+  T z;
 
-	/* Constructors */
-	constexpr TVec3() = default;
-	constexpr TVec3(T x, T y, T z);
-	explicit TVec3(const T *t);
+  /* Constructors */
+  constexpr TVec3() = default;
+  constexpr TVec3(T x, T y, T z);
+  explicit TVec3(const T *t);
 
-	/* Index Accessor */
-	T &operator[](int n);
-	const T &operator[](int n) const;
+  /* Index Accessor */
+  T &operator[](int n);
+  const T &operator[](int n) const;
 
-	/* Equality */
-	bool operator==(const TVec3 &a) const;
+  /* Equality */
+  bool operator==(const TVec3 &a) const;
 
-	/* Vector space structure */
-	TVec3 operator-() const;
-	TVec3 &operator+=(const TVec3 &a);
-	TVec3 &operator-=(const TVec3 &a);
-	TVec3 &operator*=(const T &t);
-	TVec3 &operator/=(const T &t);
+  /* Vector space structure */
+  TVec3 operator-() const;
+  TVec3 &operator+=(const TVec3 &a);
+  TVec3 &operator-=(const TVec3 &a);
+  TVec3 &operator*=(const T &t);
+  TVec3 &operator/=(const T &t);
 
-	/* Static members */
-	static inline TVec3<T> Zero = {0, 0, 0};
-	static inline TVec3<T> XAxis = {1, 0, 0};
-	static inline TVec3<T> YAxis = {0, 1, 0};
-	static inline TVec3<T> ZAxis = {0, 0, 1};
+  /* Deep copy */
+  void dcopy(const TVec3& a);
+
+  /* Static members */
+  static inline TVec3<T> Zero = {0, 0, 0};
+  static inline TVec3<T> XAxis = {1, 0, 0};
+  static inline TVec3<T> YAxis = {0, 1, 0};
+  static inline TVec3<T> ZAxis = {0, 0, 1};
 };
 
 typedef TVec3<float> Vec3f;
@@ -56,6 +59,9 @@ inline TVec3<T> operator*(const TVec3<T> &a, const T &t);
 
 template <typename T>
 inline TVec3<T> operator*(const T &t, const TVec3<T> &a);
+
+template <typename T>
+inline TVec3<T> operator/(const TVec3<T> &a, const T &t);
 
 template <typename T>
 inline T dot(const TVec3<T> &a, const TVec3<T> &b);
@@ -105,6 +111,12 @@ inline T &TVec3<T>::operator[](int n)
 {
 	assert(n >= 0 && n <= 2);
 	return (&x)[n];
+}
+
+template <typename T>
+inline void TVec3<T>::dcopy(const TVec3<T> &a)
+{
+  x = a.x; y = a.y; z = a.z;
 }
 
 template <typename T>
@@ -177,6 +189,12 @@ template <typename T>
 inline TVec3<T> operator*(const T &t, const TVec3<T> &a)
 {
 	return a * t;
+}
+
+template <typename T>
+inline TVec3<T> operator/(const TVec3<T> &a, const T &t)
+{
+	return {a.x / t, a.y / t, a.z / t};
 }
 
 template <typename T>

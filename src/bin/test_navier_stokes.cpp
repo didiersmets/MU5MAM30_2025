@@ -62,19 +62,36 @@ static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
 void reset_solver(NavierStokesSolver &solver)
 {
-	for (size_t i = 0; i < solver.N; ++i) {
-		rhs_x = solver.m.positions[i].x;
-		rhs_y = solver.m.positions[i].y;
-		rhs_z = solver.m.positions[i].z;
-		rhs_p = atan2(rhs_y, rhs_x);
-		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
-		rhs_r = (double)rand() / RAND_MAX;
-		solver.omega[i] = te_eval(te_rhs);
-	}
+  uint32_t n_vtx = solver.m.vertex_count();
+  for (size_t i = 0; i < n_vtx; ++i) {
+    rhs_x = solver.m.positions[i].x;
+    rhs_y = solver.m.positions[i].y;
+    rhs_z = solver.m.positions[i].z;
+    rhs_p = atan2(rhs_y, rhs_x);
+    rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
+    rhs_r = (double)rand() / RAND_MAX;
+    solver.omega[i] = te_eval(te_rhs);
+  }
 
-	solver.set_zero_mean(solver.omega.data);
-	memset(solver.psi.data, 0, solver.N * sizeof(double));
-	solver.t = 0;
+#if USE_P2
+  uint32_t n_edges =  solver.m.index_count() / 2;
+  for (size_t e = 0; e < n_edges; ++e) {
+    uint32_t v0 = solver.m.e2vtx[2*e];
+    uint32_t v1 = solver.m.e2vtx[2*e+1];
+
+    rhs_x = (solver.m.positions[v0].x + solver.m.positions[v1].x) / 2;
+    rhs_y = (solver.m.positions[v0].y + solver.m.positions[v1].y) / 2;
+    rhs_z = (solver.m.positions[v0].z + solver.m.positions[v1].z) / 2;
+    rhs_p = atan2(rhs_y, rhs_x);
+    rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
+    rhs_r = (double)rand() / RAND_MAX;
+    solver.omega[e+n_vtx] = te_eval(te_rhs);
+  }
+#endif
+
+  solver.set_zero_mean(solver.omega.data);
+  memset(solver.psi.data, 0, solver.N * sizeof(double));
+  solver.t = 0;
 }
 
 bool new_rhs(NavierStokesSolver &solver)
@@ -390,4 +407,3 @@ static void key_cb(int key, int action, int mods, void *args)
 		return;
 	}
 }
-
