@@ -17,13 +17,56 @@
 
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 {
-	/* Your implementation goes here.
-	 * Use a VTAdjacency structure (see include/matrix/adjacency.h)
-	 */
+	VTAdjacency vta(m);
+	P.nnz = m.triangle_count() * 3;
+	P.row_start.resize(m.vertex_count() + 1)
+	P.col.resize(P.nnz);
+	P.rows = m.vertices_count();
+	P.cols = m.vertices_count();
+
+	// Setting up row_start
+	P.row_start[0] = 0;
+	for ( int i = 0; i < P.rows; i++ ) {
+		P.row_start[i] = vta.offset[i];  // + 1 if I count also the diagonal
+	}
+	P.row_start[m.vertex_count()] = P.row_start[m.vertex_count()-1] + vta.degrees[m.vertex_count()-1];
+	
+	// SHOULD I ADD ALSO THE DIAGONAL?
+
+	// Setting up cols
+	for ( int i = 0; i < P.rows; i++ ) {
+		// Scrolling through each neighbour
+		for ( int j = 0; j < vta.degree[index]; j++ ) {
+			P.cols[P.row_start[i]+j] = vta.vtri[j].next;
+		}
+		// Reordering neighbourhood
+		int idx;
+		uint32_t tmp;
+		for ( int j = 0; j < vta.degree[index]; j++ ) {
+			idx = j;
+			for (int k = j+1; k < vta.degree[index]; k++ ):
+				if (P.cols[P.row_start[i]+idx] > P.cols[P.row_start[i]+k]) {
+					idx = j;
+				}
+
+			if (idx != j) {
+				tmp = P.cols[P.row_start[i]+idx];
+				P.cols[P.row_start[i]+idx] = P.cols[P.row_start[i]+i];
+				P.cols[P.row_start[i]+i] = tmp;
+			}
+		}
+	}
 }
 
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 {
+	// A "relationship" between two vertices is an edge, which means it
+	// belongs to 2 triangles. It means that if I iterate over all the 
+	// triangles and update the matrix, I would add twice each time the relationship
+	// Then I have to half it.
+	// The only time I wouldn't add twice an edge is if it is a border edge,
+	// which cannot happen on a sphere
+
 	size_t vtx_count = m.vertex_count();
 	size_t tri_count = m.triangle_count();
 	assert(P.row_start.size == vtx_count + 1);
@@ -34,6 +77,7 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 	M.row_start = P.row_start.data;
 	M.col = P.col.data;
 	M.data.resize(M.nnz);
+
 	for (size_t i = 0; i < M.nnz; ++i) {
 		M.data[i] = 0.0;
 	}
