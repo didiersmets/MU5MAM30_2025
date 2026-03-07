@@ -8,6 +8,10 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P);
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M);
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S);
 
+void build_P1_CSRPattern_per(const Mesh &m, CSRPattern &P);
+void build_P1_mass_matrix_per(const Mesh &m, const CSRPattern &P, CSRMatrix &M);
+void build_P1_stiffness_matrix_per(const Mesh &m, const CSRPattern &P, CSRMatrix &S);
+
 /* FEM matrix variants */
 void build_P1_mass_matrix(const Mesh &m, FEMatrix &M);
 void build_P1_stiffness_matrix(const Mesh &m, FEMatrix &S);

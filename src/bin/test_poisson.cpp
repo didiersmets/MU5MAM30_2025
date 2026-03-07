@@ -9,6 +9,7 @@
 #include "tiny_expr/tinyexpr.h"
 
 #include "cube.h"
+#include "torus.h"
 #include "logging.h"
 #include "mesh.h"
 #include "mesh_bounds.h"
@@ -42,9 +43,10 @@ int iter_per_frame = 1;
 
 /* RHS expression of the PDE */
 // char rhs_expression[128] = "cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
-char rhs_expression[128] = "2 * x";
+// char rhs_expression[128] = "sin( 2 * 3.141492 * x) * sin( 2 * 3.141492 * y)";
+// char rhs_expression[128] = "2 * x";
 // char rhs_expression[128] = "6 * (x^2 - y^2)";
-// char rhs_expression[128] = "6 * x * z";
+char rhs_expression[128] = "6 * x * z";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x}, {"y", &rhs_y}, {"z", &rhs_z}, {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}};
@@ -61,9 +63,9 @@ static void draw_gui(PoissonSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
-static void compute_error_x(const PoissonSolver &solver, const bool &H1);
-static void compute_error_x2my2(const PoissonSolver &solver, const bool &H1);
-static void compute_error_xz(const PoissonSolver &solver, const bool &H1);
+static void compute_error_x(const PoissonSolver &solver);
+static void compute_error_x2my2(const PoissonSolver &solver);
+static void compute_error_xz(const PoissonSolver &solver);
 
 bool new_rhs(PoissonSolver &solver)
 {
@@ -86,7 +88,10 @@ bool new_rhs(PoissonSolver &solver)
 		rhs_p = atan2(rhs_y, rhs_x);
 		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
 		rhs_r = (double)rand() / RAND_MAX;
-		solver.f[i] = te_eval(te_rhs);
+		if (solver.m.is_periodic && solver.use_fem_P2)
+			throw std::runtime_error("Can't use P2 and periodic framework for now.");
+		size_t dof = solver.m.is_periodic ? solver.m.dof_map[i] : i;
+		solver.f[dof] = te_eval(te_rhs);
 	}
 	if (solver.use_fem_P2)
 	{
@@ -114,7 +119,8 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 	m.attr.resize(m.vertex_count());
 	for (size_t i = 0; i < m.vertex_count(); ++i)
 	{
-		m.attr[i] = V[i];
+		size_t dof = m.is_periodic ? m.dof_map[i] : i;
+		m.attr[i] = V[dof];
 	}
 }
 
@@ -182,9 +188,9 @@ int main(int argc, char **argv)
 		draw_gui(solver);
 		viewer.end_frame();
 	}
-	compute_error_x(solver, true);
-	// compute_error_x2my2(solver, true);
-	// compute_error_xz(solver, true);
+	// compute_error_x(solver);
+	// compute_error_x2my2(solver);
+	compute_error_xz(solver);
 
 	viewer.fini();
 	log_fini();
@@ -194,10 +200,10 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n] [P2]\n", prg_name);
+	printf("Syntax : %s ($(obj_filename)| cube | sphere | torus) [n] [P2]\n", prg_name);
 	printf("         Optional argument P2 enables quadratic FEM.\n");
 	printf("         Subdivision number n must be provided in case of "
-		   "cube or sphere mesh.\n");
+		   "cube, sphere or torus mesh.\n");
 }
 
 static int load_mesh(Mesh &mesh, int argc, char **argv)
@@ -214,6 +220,10 @@ static int load_mesh(Mesh &mesh, int argc, char **argv)
 	else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0)
 	{
 		res = load_sphere(mesh, atoi(argv[2]));
+	}
+	else if (argc > 2 && strncmp(argv[1], "torus", 5) == 0)
+	{
+		res = load_torus(mesh, atoi(argv[2]));
 	}
 	else if (argc > 1)
 	{
@@ -464,7 +474,7 @@ static void key_cb(int key, int action, int mods, void *args)
 	}
 }
 
-static void compute_error_x(const PoissonSolver &solver, const bool &H1)
+static void compute_error_x(const PoissonSolver &solver)
 {
 	TArray<double> theoretical_solution(solver.N);
 	size_t nv = solver.m.vertex_count();
@@ -514,7 +524,7 @@ static void compute_error_x(const PoissonSolver &solver, const bool &H1)
 	std::cout << "The H1 error on the mesh is equal to : " << sqrt(error2) << std::endl;
 }
 
-static void compute_error_x2my2(const PoissonSolver &solver, const bool &H1)
+static void compute_error_x2my2(const PoissonSolver &solver)
 {
 	TArray<double> theoretical_solution(solver.N);
 	size_t nv = solver.m.vertex_count();
@@ -564,7 +574,7 @@ static void compute_error_x2my2(const PoissonSolver &solver, const bool &H1)
 	std::cout << "The H1 error on the mesh is equal to : " << sqrt(error2) << std::endl;
 }
 
-static void compute_error_xz(const PoissonSolver &solver, const bool &H1)
+static void compute_error_xz(const PoissonSolver &solver)
 {
 	TArray<double> theoretical_solution(solver.N);
 	size_t nv = solver.m.vertex_count();

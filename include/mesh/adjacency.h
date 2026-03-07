@@ -54,4 +54,8 @@ struct VTAdjacency
 	void set_degree(uint32_t *idx, size_t nt);
 	void set_offset(size_t nt);
 	void set_vtri(uint32_t *idx, size_t nt);
+
+	void set_degree_per(const Mesh &m);
+	void set_offset_per(const Mesh &m);
+	void set_vtri_per(const Mesh &m);
 };

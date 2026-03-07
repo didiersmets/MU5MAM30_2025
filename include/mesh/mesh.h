@@ -58,6 +58,12 @@ struct Mesh
 	TArray<Edge> edges;
 	HashTable<Edge, uint32_t, EdgeHasher> edge_idx;
 
+	/* Periodic mappings */
+	TArray<uint32_t> periodic_map;
+	TArray<uint32_t> dof_map;
+	size_t periodic_dofs_count;
+	bool is_periodic = false;
+
 	TArray<float> attr;
 	size_t vertex_count() const { return positions.size; }
 	size_t index_count() const { return indices.size; }
@@ -71,8 +77,6 @@ inline void Mesh::build_edges()
 {
 	size_t nt = triangle_count();
 
-	// EdgeHasher hasher{};
-	// edge_idx = HashTable<Edge, uint32_t, EdgeHasher>(3 * nt * 5, hasher);
 	edge_idx.clear();
 	edge_idx.reserve(3 * nt * 5);
 	uint32_t *current_key;

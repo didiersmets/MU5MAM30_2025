@@ -6,22 +6,44 @@ using namespace std;
 
 VTAdjacency::VTAdjacency(const Mesh &m)
 {
-	size_t nv = m.vertex_count();
-	size_t nt = m.triangle_count();
+	if (!m.is_periodic)
+	{
+		size_t nv = m.vertex_count();
+		size_t nt = m.triangle_count();
 
-	/* Reserve memory */
-	degree.resize(nv);
-	offset.resize(nv);
-	vtri.resize(3 * nt);
+		/* Reserve memory */
+		degree.resize(nv);
+		offset.resize(nv);
+		vtri.resize(3 * nt);
 
-	/* Build degree */
-	set_degree(m.indices.data, nt);
+		/* Build degree */
+		set_degree(m.indices.data, nt);
 
-	/* Build offset */
-	set_offset(nv);
+		/* Build offset */
+		set_offset(nv);
 
-	/* Build vtri */
-	set_vtri(m.indices.data, nt);
+		/* Build vtri */
+		set_vtri(m.indices.data, nt);
+	}
+	else
+	{
+		size_t nb_dofs = m.periodic_dofs_count;
+		size_t nt = m.triangle_count();
+
+		/* Reserve memory */
+		degree.resize(nb_dofs);
+		offset.resize(nb_dofs);
+		vtri.resize(3 * nt);
+
+		/* Build degree */
+		set_degree_per(m);
+
+		/* Build offset */
+		set_offset_per(m);
+
+		/* Build vtri */
+		set_vtri_per(m);
+	}
 }
 
 /* Auxiliary functions */
@@ -33,11 +55,27 @@ void VTAdjacency::set_degree(uint32_t *idx, size_t nt)
 		for (size_t l = 0; l < 3; l++)
 			degree[idx[3 * tri + l]] += 1;
 }
+void VTAdjacency::set_degree_per(const Mesh &m)
+{
+	degree.set(0);
+	size_t nt = m.triangle_count();
+	for (size_t tri = 0; tri < nt; tri++)
+		for (size_t l = 0; l < 3; l++)
+			degree[m.dof_map[m.indices.data[3 * tri + l]]] += 1;
+}
 
 void VTAdjacency::set_offset(size_t nv)
 {
 	offset[0] = 0;
 	for (size_t k = 1; k < nv; k++)
+		offset[k] = offset[k - 1] + degree[k - 1];
+}
+
+void VTAdjacency::set_offset_per(const Mesh &m)
+{
+	offset[0] = 0;
+	size_t nb_dofs = m.periodic_dofs_count;
+	for (size_t k = 1; k < nb_dofs; k++)
 		offset[k] = offset[k - 1] + degree[k - 1];
 }
 
@@ -52,40 +90,61 @@ void VTAdjacency::set_vtri(uint32_t *idx, size_t nt)
 	size_t k;
 	for (size_t tri = 0; tri < nt; tri++)
 	{
-		/* Triplet (a, b, c) */
-		k = offset[idx[3 * tri]];
-		while (k < offset[idx[3 * tri]] + degree[idx[3 * tri]] && vtri[k].next != UINT32_MAX)
-			k++;
+		uint32_t tri_verts[3] = {idx[3 * tri + 0], idx[3 * tri + 1], idx[3 * tri + 2]};
 
-		if (k < offset[idx[3 * tri]] + degree[idx[3 * tri]])
+		for (size_t t = 0; t < 3; t++)
 		{
-			current_pair.next = idx[3 * tri + 1];
-			current_pair.prev = idx[3 * tri + 2];
-			vtri[k] = current_pair;
+			uint32_t a = tri_verts[t];
+			uint32_t b = tri_verts[(t + 1) % 3];
+			uint32_t c = tri_verts[(t + 2) % 3];
+
+			k = offset[a];
+			while (k < offset[a] + degree[a] && vtri[k].next != UINT32_MAX)
+				k++;
+
+			if (k < offset[a] + degree[a])
+			{
+				current_pair.next = b;
+				current_pair.prev = c;
+				vtri[k] = current_pair;
+			}
 		}
+	}
+}
 
-		/* Triplet (b, c, a) */
-		k = offset[idx[3 * tri + 1]];
-		while (k < offset[idx[3 * tri + 1]] + degree[idx[3 * tri + 1]] && vtri[k].next != UINT32_MAX)
-			k++;
+void VTAdjacency::set_vtri_per(const Mesh &m)
+{
+	size_t nt = m.triangle_count();
 
-		if (k < offset[idx[3 * tri + 1]] + degree[idx[3 * tri + 1]])
+	VTri zero;
+	zero.next = UINT32_MAX;
+	zero.prev = UINT32_MAX;
+	vtri.set(zero);
+
+	VTri current_pair;
+	size_t k;
+	for (size_t tri = 0; tri < nt; tri++)
+	{
+		uint32_t tri_verts[3] = {m.dof_map[m.indices.data[3 * tri + 0]],
+								 m.dof_map[m.indices.data[3 * tri + 1]],
+								 m.dof_map[m.indices.data[3 * tri + 2]]};
+
+		for (size_t t = 0; t < 3; t++)
 		{
-			current_pair.next = idx[3 * tri + 2];
-			current_pair.prev = idx[3 * tri];
-			vtri[k] = current_pair;
-		}
+			uint32_t a = tri_verts[t];
+			uint32_t b = tri_verts[(t + 1) % 3];
+			uint32_t c = tri_verts[(t + 2) % 3];
 
-		/* Triplet (c, a, b) */
-		k = offset[idx[3 * tri + 2]];
-		while (k < offset[idx[3 * tri + 2]] + degree[idx[3 * tri + 2]] && vtri[k].next != UINT32_MAX)
-			k++;
+			k = offset[a];
+			while (k < offset[a] + degree[a] && vtri[k].next != UINT32_MAX)
+				k++;
 
-		if (k < offset[idx[3 * tri + 2]] + degree[idx[3 * tri + 2]])
-		{
-			current_pair.next = idx[3 * tri];
-			current_pair.prev = idx[3 * tri + 1];
-			vtri[k] = current_pair;
+			if (k < offset[a] + degree[a])
+			{
+				current_pair.next = b;
+				current_pair.prev = c;
+				vtri[k] = current_pair;
+			}
 		}
 	}
 }

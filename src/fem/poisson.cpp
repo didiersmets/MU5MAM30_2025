@@ -25,9 +25,18 @@ PoissonSolver::PoissonSolver(Mesh &m, const bool &use_fem_P2)
 #else
 	if (!use_fem_P2)
 	{
-		build_P1_CSRPattern(m, P);
-		build_P1_mass_matrix(m, P, M);
-		build_P1_stiffness_matrix(m, P, A);
+		if (!m.is_periodic)
+		{
+			build_P1_CSRPattern(m, P);
+			build_P1_mass_matrix(m, P, M);
+			build_P1_stiffness_matrix(m, P, A);
+		}
+		else
+		{
+			build_P1_CSRPattern_per(m, P);
+			build_P1_mass_matrix_per(m, P, M);
+			build_P1_stiffness_matrix_per(m, P, A);
+		}
 	}
 	else
 	{
