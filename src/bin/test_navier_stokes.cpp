@@ -35,13 +35,12 @@ bool one_step = false;
 bool reset = false;
 
 /* Parameters */
-float lognu = -3.7;
+float lognu = -1.0;
 float dt = 0.002;
 double tol = 1e-6;
 
 /* RHS expression of the PDE */
-char rhs_expression[128] =
-	"100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))";
+char rhs_expression[128] = "z * exp(-5 * z^2)";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x}, {"y", &rhs_y}, {"z", &rhs_z}, {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}};
@@ -61,17 +60,6 @@ static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
 void reset_solver(NavierStokesSolver &solver)
 {
-	// for (size_t i = 0; i < solver.N; ++i)
-	// {
-	// 	rhs_x = solver.m.positions[i].x;
-	// 	rhs_y = solver.m.positions[i].y;
-	// 	rhs_z = solver.m.positions[i].z;
-	// 	rhs_p = atan2(rhs_y, rhs_x);
-	// 	rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
-	// 	rhs_r = (double)rand() / RAND_MAX;
-	// 	solver.omega[i] = te_eval(te_rhs);
-	// }
-
 	size_t nv = solver.m.vertex_count();
 	for (size_t i = 0; i < nv; ++i)
 	{

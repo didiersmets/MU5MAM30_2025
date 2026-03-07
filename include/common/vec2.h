@@ -38,6 +38,7 @@ template <typename T> struct TVec2 {
 };
 
 typedef TVec2<float> Vec2;
+typedef TVec2<double> Vec2d;
 
 /* Free functions declarations */
 

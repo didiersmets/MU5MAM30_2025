@@ -8,22 +8,49 @@
 #include "P1.h"
 #include "tiny_blas.h"
 
-NavierStokesSolver::NavierStokesSolver(const Mesh &m)
-    : m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
+NavierStokesSolver::NavierStokesSolver(Mesh &m, const bool &use_fem_P2)
+	: m(m), omega(0), Momega(0), psi(0), r(0), p(0), Ap(0), use_fem_P2(use_fem_P2)
 {
-	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, S);
+#if USE_FEM_MATRIX
+	if (use_fem_P2)
+		throw std::runtime_error("P2 Lagrange elements are not available for FEM matrix framework");
+	else
+	{
+		build_P1_mass_matrix(m, M);
+		build_P1_stiffness_matrix(m, S);
+	}
+#else
+	if (!use_fem_P2)
+	{
+		build_P1_CSRPattern(m, P);
+		build_P1_mass_matrix(m, P, M);
+		build_P1_stiffness_matrix(m, P, S);
+	}
+	else
+	{
+		throw std::runtime_error("P2 Lagrange elements are not available for solutions framework");
+	}
+#endif
+	rel_error = (double *)malloc(sizeof(double));
+	t = 0;
 	vol = M.sum();
 	inited = false;
-	t = 0;
+
+	N = M.cols;
+	omega.resize(N);
+	Momega.resize(N);
+	psi.resize(N);
+	r.resize(N);
+	p.resize(N);
+	Ap.resize(N);
 }
 
 void NavierStokesSolver::set_zero_mean(double *V)
 {
 	M.mvp(V, Ap.data);
 	double s = blas_sum_in_place(Ap.data, N);
-	for (size_t i = 0; i < N; ++i) {
+	for (size_t i = 0; i < N; ++i)
+	{
 		V[i] -= s / vol;
 	}
 }
@@ -32,7 +59,8 @@ void NavierStokesSolver::compute_transport(double *T)
 {
 	memset(T, 0, N * sizeof(double));
 
-	for (size_t t = 0; t < m.triangle_count(); t++) {
+	for (size_t t = 0; t < m.triangle_count(); t++)
+	{
 		uint32_t a = m.indices[3 * t + 0];
 		uint32_t b = m.indices[3 * t + 1];
 		uint32_t c = m.indices[3 * t + 2];
@@ -42,7 +70,8 @@ void NavierStokesSolver::compute_transport(double *T)
 		T[b] += sum * (psi[c] - psi[a]);
 		T[c] += sum * (psi[a] - psi[b]);
 	}
-	for (size_t v = 0; v < N; v++) {
+	for (size_t v = 0; v < N; v++)
+	{
 		T[v] *= 1.0 / 6;
 	}
 }
@@ -73,7 +102,8 @@ size_t NavierStokesSolver::compute_stream_function()
 
 	/* Iterate until convergence */
 	iter = 0;
-	while ((rel_error > tol) && (iter++ < iter_max)) {
+	while ((rel_error > tol) && (iter++ < iter_max))
+	{
 
 		/* Compute AP */
 		S.mvp(P, AP);
@@ -132,7 +162,8 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 	/* Iterate until convergence (and at least once) */
 	iter2 = 0;
-	do {
+	do
+	{
 
 		/* Compute AP (invalidates Mom) */
 		S.mvp(P, AP);
@@ -164,5 +195,5 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	t += dt;
 
 	(void)iter1;
-	//printf("Iter 1 : %zu, Iter2 : %zu\n", iter1, iter2);
+	// printf("Iter 1 : %zu, Iter2 : %zu\n", iter1, iter2);
 }

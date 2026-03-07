@@ -6,6 +6,7 @@
 #include "sparse_matrix.h"
 #endif
 #include "mesh.h"
+#include "vec2.h"
 
 struct NavierStokesSolver
 {
@@ -41,8 +42,19 @@ struct NavierStokesSolver
 
 	bool use_fem_P2;
 
+	double phi_at_quad[7][6];
+	Vec2d grad_phi_at_quad[7][6];
+
 	void set_zero_mean(double *V);
 	size_t compute_stream_function();
 	void compute_transport(double *T);
+	void compute_transport_P1(double *T);
+	void compute_transport_P2(double *T);
+
+	void precompute_phi_at_quad_points(double (&phi_at_quad)[7][6]);
+	void precompute_grad_phi_at_quad_points(Vec2d (&grad_phi_at_quad)[7][6]);
+
+	void compute_A_T_j(size_t tri);
+
 	void time_step(double dt, double nu);
 };

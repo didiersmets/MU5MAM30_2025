@@ -10,6 +10,8 @@
 #include "P2.h"
 #include "tiny_blas.h"
 
+#include "quadrature.h"
+
 NavierStokesSolver::NavierStokesSolver(Mesh &m, const bool &use_fem_P2)
 	: m(m), omega(0), Momega(0), psi(0), r(0), p(0), Ap(0), use_fem_P2(use_fem_P2)
 {
@@ -22,18 +24,22 @@ NavierStokesSolver::NavierStokesSolver(Mesh &m, const bool &use_fem_P2)
 		build_P1_stiffness_matrix(m, S);
 	}
 #else
-	if (!use_fem_P2)
+	if (use_fem_P2)
 	{
-		build_P1_CSRPattern(m, P);
-		build_P1_mass_matrix(m, P, M);
-		build_P1_stiffness_matrix(m, P, S);
-	}
-	else
-	{
+
 		m.build_edges();
 		build_P2_CSRPattern(m, P);
 		build_P2_mass_matrix(m, P, M);
 		build_P2_stiffness_matrix(m, P, S);
+
+		precompute_phi_at_quad_points(phi_at_quad);
+		precompute_grad_phi_at_quad_points(grad_phi_at_quad);
+	}
+	else
+	{
+		build_P1_CSRPattern(m, P);
+		build_P1_mass_matrix(m, P, M);
+		build_P1_stiffness_matrix(m, P, S);
 	}
 #endif
 	rel_error = (double *)malloc(sizeof(double));
@@ -63,6 +69,11 @@ void NavierStokesSolver::set_zero_mean(double *V)
 
 void NavierStokesSolver::compute_transport(double *T)
 {
+	throw std::runtime_error("This function should not be called.");
+}
+
+void NavierStokesSolver::compute_transport_P1(double *T)
+{
 	/* We use the formula :
 	\forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k . \nabla \phi_j) */
 	memset(T, 0, N * sizeof(double));
@@ -77,20 +88,129 @@ void NavierStokesSolver::compute_transport(double *T)
 		uint32_t b = m.indices[3 * tri + 1];
 		uint32_t c = m.indices[3 * tri + 2];
 
-		/* Compute T[a] contribution */
-		T[a] += (OMEGA[a] * (PSI[c] - PSI[b])) / 6;
-		T[a] += (OMEGA[b] * (PSI[c] - PSI[b])) / 6;
-		T[a] += (OMEGA[c] * (PSI[c] - PSI[b])) / 6;
+		double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
 
-		/* Compute T[b] contribution */
-		T[b] += (OMEGA[a] * (PSI[a] - PSI[c])) / 6;
-		T[b] += (OMEGA[b] * (PSI[a] - PSI[c])) / 6;
-		T[b] += (OMEGA[c] * (PSI[a] - PSI[c])) / 6;
+		/* Compute Vertex_Vertex-Vertex contribution */
+		T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6;
+		T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6;
+		T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6;
+	}
+}
 
-		/* Compute T[c] contribution */
-		T[c] += (OMEGA[a] * (PSI[b] - PSI[a])) / 6;
-		T[c] += (OMEGA[b] * (PSI[b] - PSI[a])) / 6;
-		T[c] += (OMEGA[c] * (PSI[b] - PSI[a])) / 6;
+void NavierStokesSolver::precompute_phi_at_quad_points(double (&phi_at_quad)[7][6])
+{
+	for (int q = 0; q < 7; ++q)
+	{
+		double L1 = Quadrature::lambda1[q];
+		double L2 = Quadrature::lambda2[q];
+		double L3 = Quadrature::lambda3[q];
+
+		// Vertices
+		phi_at_quad[q][0] = L1 * (2.0 * L1 - 1.0);
+		phi_at_quad[q][1] = L2 * (2.0 * L2 - 1.0);
+		phi_at_quad[q][2] = L3 * (2.0 * L3 - 1.0);
+
+		// Edges
+		phi_at_quad[q][3] = 4.0 * L1 * L2;
+		phi_at_quad[q][4] = 4.0 * L2 * L3;
+		phi_at_quad[q][5] = 4.0 * L3 * L1;
+	}
+}
+
+void NavierStokesSolver::precompute_grad_phi_at_quad_points(Vec2d (&grad_phi_at_quad)[7][6])
+{
+	for (int q = 0; q < 7; ++q)
+	{
+		double L1 = Quadrature::lambda1[q];
+		double L2 = Quadrature::lambda2[q];
+		double L3 = Quadrature::lambda3[q];
+
+		// Vertices
+		grad_phi_at_quad[q][0] = {4.0 * L1 - 1, 0};
+		grad_phi_at_quad[q][1] = {0, 4.0 * L2 - 1};
+		grad_phi_at_quad[q][2] = {-(4.0 * L3 - 1.0), -(4.0 * L3 - 1.0)};
+
+		// Edges
+		grad_phi_at_quad[q][3] = {4.0 * L2, 4.0 * L1};
+		grad_phi_at_quad[q][4] = {-4.0 * L2, 4 * (L3 - L2)};
+		grad_phi_at_quad[q][5] = {4 * (L3 - L1), -4.0 * L1};
+	}
+}
+
+void NavierStokesSolver::compute_transport_P2(double *T)
+{
+	/* We use the formula :
+	\forall j \in I, T[j] = \sum_{i, k} \Omega_i * \Psi_k \int_{\Omega} \phi_i * (\nabla^T \phi_k . \nabla \phi_j) */
+
+	memset(T, 0, N * sizeof(double));
+
+	double *OMEGA = omega.data;
+	double *PSI = psi.data;
+
+	double w[7];
+	for (size_t q = 0; q < 7; q++)
+		w[q] = Quadrature::weights[q];
+
+	size_t nt = m.triangle_count();
+	size_t nv = m.vertex_count();
+	for (size_t tri = 0; tri < nt; tri++)
+	{
+		/* Storage of the six DOFs of the current triangle */
+		uint32_t nodes[6];
+		nodes[0] = m.indices[3 * tri];
+		nodes[1] = m.indices[3 * tri + 1];
+		nodes[2] = m.indices[3 * tri + 2];
+		nodes[3] = nv + *m.edge_idx.get(Edge(nodes[0], nodes[1]));
+		nodes[4] = nv + *m.edge_idx.get(Edge(nodes[1], nodes[2]));
+		nodes[5] = nv + *m.edge_idx.get(Edge(nodes[2], nodes[0]));
+
+		Vec3 x1 = m.positions[nodes[0]];
+		Vec3 x2 = m.positions[nodes[1]];
+		Vec3 x3 = m.positions[nodes[2]];
+
+		/* Computation of the geometry of the triangle */
+		Vec3d e1 = {(double)x1[0] - (double)x3[0],
+					(double)x1[1] - (double)x3[1],
+					(double)x1[2] - (double)x3[2]};
+		Vec3d e2 = {(double)x2[0] - (double)x3[0],
+					(double)x2[1] - (double)x3[1],
+					(double)x2[2] - (double)x3[2]};
+
+		double G11 = norm2(e1);
+		double G12 = dot(e1, e2);
+		double G22 = norm2(e2);
+
+		Vec3d n = cross(e1, e2);
+		double detG = norm2(n);
+		double sqrt_detG = norm(n);
+		normalized(n);
+
+		for (size_t q = 0; q < 7; q++)
+		{
+			double A_K_at_q = 0.0;
+			Vec3d B_K_at_q = {0.0, 0.0, 0.0};
+			Vec3d grad_phi_real_at_quad[6];
+			for (size_t i = 0; i < 6; i++)
+			{
+				/* Computation of A_T(x_q) */
+				A_K_at_q += OMEGA[nodes[i]] * phi_at_quad[q][i];
+
+				/* Computation of B_T(x_q) */
+				double ux = (1 / detG) * (G22 * grad_phi_at_quad[q][i].x - G12 * grad_phi_at_quad[q][i].y);
+				double uy = (1 / detG) * (-G12 * grad_phi_at_quad[q][i].x + G11 * grad_phi_at_quad[q][i].y);
+
+				grad_phi_real_at_quad[i] = ux * e1 + uy * e2;
+
+				B_K_at_q += PSI[nodes[i]] * grad_phi_real_at_quad[i];
+			}
+
+			Vec3d n_cross_B_T = cross(n, B_K_at_q);
+
+			for (size_t i = 0; i < 6; i++)
+			{
+				T[nodes[i]] += w[q] * A_K_at_q * dot(n_cross_B_T, grad_phi_real_at_quad[i]) * sqrt_detG;
+			}
+		}
 	}
 }
 
@@ -117,6 +237,8 @@ size_t NavierStokesSolver::compute_stream_function()
 	/* Solve using CG */
 	iter = conjugate_gradient_solve(S, MOMEGA, PSI, R, P, AP, rel_error, tol, iter_max, false);
 
+	set_zero_mean(PSI);
+
 	return iter;
 }
 
@@ -124,7 +246,10 @@ void NavierStokesSolver::time_step(double dt, double nu)
 {
 	double *T = (double *)malloc(N * sizeof(double));
 	compute_stream_function();
-	compute_transport(T);
+	if (use_fem_P2)
+		compute_transport_P2(T);
+	else
+		compute_transport_P1(T);
 
 	/**********************************************************************
 	 * Solve the system :
