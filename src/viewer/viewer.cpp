@@ -41,7 +41,7 @@ void Viewer::init(const char *name)
 	}
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE);
 	glfwWindowHint(GLFW_DEPTH_BITS, 32);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -55,6 +55,14 @@ void Viewer::init(const char *name)
 	camera.set_aspect((float)width / height);
 	glfwSetWindowUserPointer(window, this);
 	glfwMakeContextCurrent(window);
+	// --- Code rajouté par Aurélien pour windows ---
+#ifdef _WIN32
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		printf("Failed to initialize GLAD\n");
+		exit(EXIT_FAILURE);
+	}
+#endif
+	// -----------------------------------------------
 	glfwSetKeyCallback(window, key_cb);
 	glfwSetFramebufferSizeCallback(window, resize_window_cb);
 	glfwSetCursorPosCallback(window, cursor_pos_cb);

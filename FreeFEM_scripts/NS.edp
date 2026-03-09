@@ -1,0 +1,76 @@
+
+bool debug = true;
+
+real R = 1.0;
+int nx = 100;
+int ny = 200;
+
+// x = Longitude : 0 à 2*pi (Tour complet)
+// y = Latitude : 0 à pi (Nord vers Sud uniquement)
+mesh Th = square(nx, ny, [x*2*pi, y*pi]);
+
+// Paramétrisation de la sphère
+func fx = R * sin(y) * cos(x);
+func fy = R * sin(y) * sin(x);
+func fz = R * cos(y);
+
+func per = [[2, x], [4, x]]; 
+
+// Projection
+meshS ThS = movemesh23(Th, transfo=[fx, fy, fz]);
+
+plot(ThS, wait=1);
+
+//Space discretization and functions
+fespace Vh(ThS, P1);
+Vh omega, omegaOld;
+Vh psi, psiOld;
+Vh phi;
+
+//omegaOld = exp(-10*((x-R)^2 + y^2 + z^2)); 
+//omegaOld = x*y;
+//omegaOld = cos(x*y);
+omegaOld = 100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * cos(x*y)));
+psiOld = 0.0;
+
+real eps = 1e-6;
+real nu = 0.1;
+real T = 1.0;
+real dt = 0.05;
+
+macro grad(u) [dx(u), dy(u), dz(u)] //
+macro gradOrtho(u) [(y*dz(u) - z*dy(u))/R, (z*dx(u) - x*dz(u))/R, (x*dy(u) - y*dx(u))/R] //
+
+problem Poisson(psi, phi, solver=CG) = 
+      int2d(ThS)(grad(psi)' * grad(phi)) 
+    + int2d(ThS)(eps * psi * phi) 
+    + int2d(ThS)(omegaOld * phi);
+
+problem NSvorticity(omega, phi, solver=CG) = 
+      int2d(ThS)(omega * phi) 
+    + int2d(ThS)(nu * dt * (grad(omega)' * grad(phi))) 
+    - int2d(ThS)(omegaOld * phi) 
+    - int2d(ThS)(dt * omegaOld * (gradOrtho(psiOld)' * grad(phi)));
+
+for(int n = 0; n < T/dt; n++){
+    Poisson;
+    NSvorticity;
+
+    omegaOld = omega;
+    psiOld = psi;
+}
+
+real mean = int2d(ThS)(omega) / int2d(ThS)(1.0);
+omega[] -= mean;
+
+plot(omega, fill=1, value=1, wait=1);
+
+//On définis l'espace pour un champ de vecteurs
+fespace VVh(ThS, [P1, P1, P1]); 
+VVh [ux, uy, uz];
+
+//Calculer la vitesse à partir de psi
+[ux, uy, uz] = gradOrtho(psi);
+Vh vitesse = sqrt(ux^2+uy^2+uz^2);
+//Visualiser le champ de vecteurs
+plot(vitesse,fill=1,value=1, wait=1);

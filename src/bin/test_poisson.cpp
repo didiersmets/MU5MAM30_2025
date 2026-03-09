@@ -1,7 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <vector>
 
+#include "adjacency_P2.h"
 #include "gl_utils.h"
 
 #include "imgui/imgui.h"
@@ -67,10 +69,43 @@ bool new_rhs(PoissonSolver &solver)
 
 	te_free(te_rhs);
 	te_rhs = test;
+
+	// si on est en P2 on crée un tableau qui pour un indice d'arête renvoie les 2 sommets liés.
+	//c'est en quelque sorte l'inverse du tableau edge_adj
+	std::vector<std::pair<uint32_t, uint32_t>> edge_nodes; //tableau de tuples
+	if (solver.degre == 2) {
+		EdgeAdjacency edge_adj(solver.m);
+		edge_nodes.resize(edge_adj.num_edges); //ce tableau est de taille le nombre d'arêtes
+		for (size_t a = 0; a < solver.m.vertex_count(); ++a) {
+			size_t start = edge_adj.offset[a];
+			size_t end = start + edge_adj.degree[a];
+			for (size_t k = start; k < end; ++k) {
+				uint32_t b = edge_adj.edges[k].neighbor;
+				if (a < b) { //compte qu'une fois
+					edge_nodes[edge_adj.edges[k].edge_id] = {a, b};
+				} //permet de l'indicer au bon endroit
+			}
+		}
+	}
+	//avec ce tableau on peut avoir la position de l'arête pour évaluer f (second membre) dessus
 	for (size_t i = 0; i < solver.N; ++i) {
-		rhs_x = solver.m.positions[i].x;
-		rhs_y = solver.m.positions[i].y;
-		rhs_z = solver.m.positions[i].z;
+		// Si c'est un sommet régulier
+		if (i < solver.m.vertex_count()) {
+			rhs_x = solver.m.positions[i].x;
+			rhs_y = solver.m.positions[i].y;
+			rhs_z = solver.m.positions[i].z;
+		}
+		// Si i dépasse vertex_count alors c'est une arête
+		else {
+			size_t edge_idx = i - solver.m.vertex_count(); //edge_nodes ne référence que les arêtes donc il faut réindexer
+			uint32_t a = edge_nodes[edge_idx].first;
+			uint32_t b = edge_nodes[edge_idx].second;
+
+			// on calcul la valeur du milieu dans l'espace avec m.positions
+			rhs_x = (solver.m.positions[a].x + solver.m.positions[b].x) / 2.0;
+			rhs_y = (solver.m.positions[a].y + solver.m.positions[b].y) / 2.0;
+			rhs_z = (solver.m.positions[a].z + solver.m.positions[b].z) / 2.0;
+		}
 		rhs_p = atan2(rhs_y, rhs_x);
 		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
 		rhs_r = (double)rand() / RAND_MAX;
@@ -96,6 +131,19 @@ int main(int argc, char **argv)
 	log_init(0);
 
 	/* Load Mesh */
+	// changement pour intégrer P2
+	int degre = 1; // P1 par défaut
+	if (argc > 1) {
+		// On regarde si le tout dernier argument est -p2 ou P2
+		if (strcmp(argv[argc - 1], "-p2") == 0 || strcmp(argv[argc - 1], "P2") == 0) {
+			degre = 2;
+			argc--;
+		}
+		else if (strcmp(argv[argc - 1], "-p1") == 0 || strcmp(argv[argc - 1], "P1") == 0) {
+			degre = 1;
+			argc--;
+		}
+	}
 	Mesh mesh;
 	if (load_mesh(mesh, argc, argv)) {
 		syntax(argv[0]);
@@ -106,7 +154,7 @@ int main(int argc, char **argv)
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	PoissonSolver solver(mesh);
+	PoissonSolver solver(mesh, degre);
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);

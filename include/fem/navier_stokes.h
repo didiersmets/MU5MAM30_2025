@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "array.h"
 #define USE_FEM_MATRIX false
 #if USE_FEM_MATRIX
@@ -8,9 +10,11 @@
 #include "mesh.h"
 
 struct NavierStokesSolver {
-	NavierStokesSolver(const Mesh &m);
+	NavierStokesSolver(const Mesh &m, int degre = 1);/*ajout du degre pour P2*/
 	const Mesh &m;
 	size_t N;   // DoF
+	int degre;
+	std::vector<uint32_t> edge_ddls; //ajout d'un mesh mais sur les arêtes (3 à la suite forment un triangle)
 	double vol; // Surface(m), used for insuring zero mean to omega and psi
 
 	TArray<double> omega;

@@ -32,7 +32,7 @@
  *            lists 3 vertices so the total sum of the degrees is 3 times as
  *            much as the number of vertices]. The VTri structs (as explained 
  *            above) related to vertex k are found in the vtri array at
- *            positions j such that offset[k] <= j < offser[k] + degree[k].
+ *            positions j such that offset[k] <= j < offset[k] + degree[k].
  *
  *****************************************************************************/
 

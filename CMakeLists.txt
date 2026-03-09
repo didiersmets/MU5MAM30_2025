@@ -28,6 +28,7 @@ add_library(nanofem
 	#        header files, you should complete (or copy them from solutions)
 	#        before building the project.
 	src/fem/P1.cpp
+		src/fem/P2.cpp #ajoute de P2 Aurélien
 	src/fem/poisson.cpp
 	src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
@@ -42,6 +43,8 @@ add_library(nanofem
 	src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
+        src/mesh/adjacency_P2.cpp
+		include/mesh/adjacency_P2.h
 )
 target_include_directories(nanofem PUBLIC 
 	include/common 
@@ -70,6 +73,8 @@ add_library(nanoviewer
 	src/viewer/mouse.cpp
 	src/viewer/trackball.cpp
 	src/viewer/shaders.cpp
+		src/viewer/glad.c #rajouté pour windows par Aurélien
+
 )
 target_include_directories(nanoviewer PUBLIC 
 	include/common 
