@@ -19,13 +19,22 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	 * (instruction sets, parallelism, cache efficiency etc). 
 	 */
 	 /*look at CG5 from notes*/
+	A.mvp(p, Ap); /*Ap = A*p*/
 
-	alpha=r2/blas_dot(p, Ap, A.rows); /*A.rows = N */
-	x=x + alpha*p; /*update x*/
-	r=r - alpha*Ap; /*update r*/
-	double new_r2=blas_dot(r,r,A.rows);
-	beta=new_r2/r2; /*compute new r2*/
-	p=r + beta*p; /*update p*/
+	const double pAp = blas_dot(p, Ap, A.rows);
+	if (!(pAp > 0.0) || !isfinite(pAp)) {
+    printf("[CG] pAp bad: %g\n", pAp);
+    return r2;
+	}
+	const double alpha=r2/pAp; /*A.rows = N */
+	 blas_axpy(alpha, p, x, A.rows); // x = x + alpha * p
+	blas_axpy(-alpha, Ap, r, A.rows); 
+
+	const double new_r2=blas_dot(r,r,A.rows);
+	const double beta=new_r2/r2; //compute new r2
+	// p = r + beta * p
+    // p *= beta
+     blas_axpby(1.0, r, beta, p, A.rows);
 	return new_r2;	
 }
 

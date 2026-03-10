@@ -20,14 +20,26 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 {
 	/* da rivedere assolutamente, la strada penso sia giusta, guardare ipad con esempio*/
-    for(size_t i=0; i<rows; ++i){
-        double sum=0.0; 
-        size_t current_row=row_start[i]; 
-	for (size_t j=row_start[i]; j<row_start[i+1];j++){
-            sum=sum+x[col[j]]*data[j];
-        }
-        y[i]=sum;
-    }
+    for (size_t i = 0; i < rows; ++i) {
+		y[i] = 0;
+		size_t start = row_start[i];
+		size_t stop = row_start[i + 1];
+		for (size_t k = start; k < stop; ++k) {
+			assert(k < nnz);
+			assert(col[k] < cols);
+			y[i] += data[k] * x[col[k]];
+		}
+	}
+	if (symmetric) {
+		for (size_t i = 0; i < rows; ++i) {
+			size_t start = row_start[i];
+			/* stop before the diagonal */
+			size_t stop = row_start[i + 1] - 1;
+			for (size_t k = start; k < stop; ++k) {
+				y[col[k]] += data[k] * x[i];
+			}
+		}
+	}
 
 }
 
