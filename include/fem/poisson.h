@@ -1,6 +1,6 @@
 #include "array.h"
 
-#define USE_FEM_MATRIX true
+#define USE_FEM_MATRIX false
 #if USE_FEM_MATRIX
 #include "fem_matrix.h"
 #else
@@ -32,8 +32,12 @@ struct PoissonSolver {
 	double b2; // ||Mf||^2
 	double r2; // current ||r||^2
 	bool converged; //
+	bool lifted ;
+	TArray<double> ug;
 	double rel_error; // sqrt(r2 / b2)
-
+	TArray<uint8_t> is_bnd; // is_bnd[i] = 1 if vertex i is on boundary
+	TArray<double> g; // boundary condition values at vertices
+	TArray<double> b; // right-hand side values at vertices (including boundary conditions)
 	void clear_solution();
 	void init_cg();
 	void set_zero_mean(double *V);
