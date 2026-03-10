@@ -9,6 +9,7 @@
 #include "tiny_expr/tinyexpr.h"
 
 #include "cube.h"
+#include "square.h"
 #include "logging.h"
 #include "mesh.h"
 #include "mesh_bounds.h"
@@ -37,7 +38,7 @@ int iter_per_frame = 1;
 
 /* RHS expression of the PDE */
 char rhs_expression[128] =
-	"cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
+	"8*pi^2*sin(2*pi*x)*sin(2*pi*y)"; /* Default RHS, can be set from command line */
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = { { "x", &rhs_x },	{ "y", &rhs_y },
@@ -166,9 +167,10 @@ static int load_mesh(Mesh &mesh, int argc, char **argv)
 		res = load_cube(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0) {
 		res = load_sphere(mesh, atoi(argv[2]));
+	} else if (argc > 2 && strcmp(argv[1], "square") == 0) {
+        res = load_square_grid(mesh, (uint32_t)atoi(argv[2]),(uint32_t)atoi(argv[2]));
 	} else if (argc > 1) {
-		res = load_obj(argv[1], mesh);
-	}
+		res = load_obj(argv[1], mesh);}
 	return res;
 }
 
