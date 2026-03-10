@@ -6,7 +6,7 @@
 
 #include "math_utils.h"
 #include "mesh.h"
-#include "mesh/square.h"
+#include "square.h"
 #include "vec3.h"
 
 
