@@ -13,19 +13,29 @@
  * Idea behind computation :
  * -------------------------
  *
- * Hiden for now.
+ * We denote by \Psi the affine map
+ *
+ *    \Psi(s,t) = sB + tC + (1-s-t)A.
+ *
+ * Then \Psi maps the reference simplex in R^2 (we denote it by A'B'C')
+ * onto ABC, and since \Psi is affine \phi_X = Psi \circ \phi_X' for
+ * any X in {A, B, C}. Moreover by the change of variable formula, for
+ * arbitrary X, Y in {A, B, C} :
+ *
+ *    \int_{ABC} \phi_X \phi_Y = \int_{A'B'C'} \phi_X' \phi_Y' |Jac(\Psi)|dsdt
+ *
+ * where the Jacobian |Jac(\Psi)| is constant equal to |ABC|/|A'B'C'| = 2|ABC|.
+ *
+ * Besides, elementary integration shows that
+ *
+ *               (2  1  1)
+ * M' = (1/24) * (1  2  1)
+ *               (1  1  2)
+ *
+ * We therefore only return |ABC|/6 and |ABC|/12, with |ABC| = |AB x AC| / 2.
  */
-void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M) {
-	double Area = 0.5 * std::sqrt(std::pow(norm(AB), 2)*std::pow(norm(AC), 2)-std::pow(dot(AB, AC), 2));
-
-	for (int i= 0; i < 3; i++) {
-		for (int j= 0; j < 3; j++) {
-			if (i != j) {
-				M[3*i + j] = Area/12;
-			}
-			else {
-				M[3*i + j] = Area/6;
-			}
-		}
-	}
+void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
+{
+	M[0] = norm(cross(AB, AC)) / 12;
+	M[1] = M[0] / 2;
 }
