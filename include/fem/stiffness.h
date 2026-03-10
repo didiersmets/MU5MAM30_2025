@@ -24,8 +24,8 @@
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S){
 	double Area = 0.5 * norm(cross(AB, AC));
 	S[0] = dot(AC-AB, AC-AB) / (4*Area);
-	S[1] = dot(-AC, AC-AB) / (4*Area);
-	S[2] = dot(AB, AC-AB) / (4*Area);
+	S[1] = dot(AC, AC-AB) / (4*Area);
+	S[2] = dot(AB, AB-AC) / (4*Area);
 	S[3] = dot(AC, AC) / (4*Area);
 	S[4] = dot(-AC, AB) / (4*Area);
 	S[5] = dot(AB, AB) / (4*Area);
