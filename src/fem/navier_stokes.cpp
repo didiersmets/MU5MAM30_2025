@@ -78,7 +78,7 @@ size_t NavierStokesSolver::compute_stream_function()
 	double rel_error;
 	iter = conjugate_gradient_solve(
 			S,
-			b.data,
+			Momega.data,
 			psi.data,
 			r.data,
 			p.data,
