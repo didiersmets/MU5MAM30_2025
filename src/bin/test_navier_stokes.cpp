@@ -147,10 +147,10 @@ int main(int argc, char **argv)
 	}
 	transfer_to_mesh(solver.omega, mesh);
 	get_attr_bounds(mesh, &scale_min, &scale_max);
-	if (!solver.use_fem_P2)
-		LOG_MSG("Prepared FEM P1 data.");
-	else
+	if (solver.use_fem_P2)
 		LOG_MSG("Prepared FEM P2 data.");
+	else
+		LOG_MSG("Prepared FEM P1 data.");
 
 	/* Get an OpenGL context through a viewer app. */
 	Viewer viewer;

@@ -20,7 +20,7 @@ ETAdjacency::ETAdjacency(const Mesh &m)
 	/* Build offset */
 	set_offset(ne);
 
-	/* Build vtri */
+	/* Build etri */
 	set_etri(m);
 }
 
@@ -54,43 +54,42 @@ void ETAdjacency::set_offset(size_t ne)
 
 void ETAdjacency::set_etri(const Mesh &m)
 {
-	size_t nt = m.triangle_count();
-	uint32_t k = 0;
-	uint32_t j = 0;
+	ETri zero;
+	zero.next.v0 = UINT32_MAX;
+	zero.prev.v0 = UINT32_MAX;
+	etri.set(zero);
 
-	/* Create a cursor to track the triangles that share a same edge */
-	TArray<uint32_t> offset_cursor(offset.size);
-	for (size_t i = 0; i < offset.size; ++i)
-		offset_cursor[i] = offset[i];
+	size_t nt = m.triangle_count();
+
+	ETri current_pair;
+	size_t k;
 
 	for (size_t tri = 0; tri < nt; tri++)
 	{
-		uint32_t a = m.indices[3 * tri];
-		uint32_t b = m.indices[3 * tri + 1];
-		uint32_t c = m.indices[3 * tri + 2];
+		uint32_t tri_verts[3] = {m.indices[3 * tri + 0], m.indices[3 * tri + 1], m.indices[3 * tri + 2]};
 
-		Edge ab = Edge(a, b);
-		Edge bc = Edge(b, c);
-		Edge ca = Edge(c, a);
+		for (size_t t = 0; t < 3; t++)
+		{
+			uint32_t a = tri_verts[t];
+			uint32_t b = tri_verts[(t + 1) % 3];
+			uint32_t c = tri_verts[(t + 2) % 3];
 
-		k = *m.edge_idx.get(ab);
-		j = offset_cursor[k]++;
-		etri[j].next = bc;
-		etri[j].prev = ca;
-		etri[j].tri = tri;
+			Edge ab = Edge(a, b);
+			Edge bc = Edge(b, c);
+			Edge ca = Edge(c, a);
 
-		/* Edge bc */
-		k = *m.edge_idx.get(bc);
-		j = offset_cursor[k]++;
-		etri[j].next = ca;
-		etri[j].prev = ab;
-		etri[j].tri = tri;
+			uint32_t ab_idx = *m.edge_idx.get(ab);
 
-		/* Edge ca */
-		k = *m.edge_idx.get(ca);
-		j = offset_cursor[k]++;
-		etri[j].next = ab;
-		etri[j].prev = bc;
-		etri[j].tri = tri;
+			k = offset[ab_idx];
+			while (k < offset[ab_idx] + degree[ab_idx] && etri[k].next.v0 != UINT32_MAX)
+				k++;
+
+			if (k < offset[ab_idx] + degree[ab_idx])
+			{
+				etri[k].next = bc;
+				etri[k].prev = ca;
+				etri[k].tri = tri;
+			}
+		}
 	}
 }

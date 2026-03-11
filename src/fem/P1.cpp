@@ -33,13 +33,12 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 	P.rows = nv;
 	P.cols = nv;
 
-	size_t nnz_non_symmetric = nv;
-	for (size_t k = 0; k < nv; k++)
-		nnz_non_symmetric += vt_adj.degree[k];
+    /* Non-sharp upper bound estimation for the number of non zeros */
+    size_t max_nnz = 9 * m.triangle_count();
 
 	/* Build row_start and col */
 	P.row_start.resize(nv + 1);
-	P.col.resize(nnz_non_symmetric);
+	P.col.resize(max_nnz);
 
 	VertexPairHasher hasher_vv{};
 	VertexPair current_vertex_pair;
@@ -51,7 +50,7 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 
 	for (uint32_t k = 0; k < nv; k++)
 	{
-		HashTable<VertexPair, uint32_t, VertexPairHasher> seen_vv(2 * vt_adj.degree[k] + 4, hasher_vv);
+		HashTable<VertexPair, uint32_t, VertexPairHasher> seen_vv(vt_adj.degree[k], hasher_vv);
 
 		P.row_start[k] = nnz;
 
@@ -297,11 +296,6 @@ void build_P1_mass_matrix_per(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 
 		mass_P1(AB, AC, mass_matrix);
 
-		// uint32_t indices[3] = {a_per, b_per, c_per};
-		// for (int i = 0; i < 3; i++)
-		// 	for (int j = i; j < 3; j++)
-		// 		M(indices[i], indices[j]) += mass_matrix[i * 3 + j];
-
 		M(a_per, a_per) += mass_matrix[0];
 		M(b_per, b_per) += mass_matrix[4];
 		M(c_per, c_per) += mass_matrix[8];
@@ -425,11 +419,6 @@ void build_P1_stiffness_matrix_per(const Mesh &m, const CSRPattern &P, CSRMatrix
 					(double)C[2] - (double)A[2]};
 
 		stiffness_P1(AB, AC, stiffness_matrix);
-
-		// uint32_t indices[3] = {a_per, b_per, c_per};
-		// for (int i = 0; i < 3; i++)
-		// 	for (int j = i; j < 3; j++)
-		// 		S(indices[i], indices[j]) += stiffness_matrix[i * 3 + j];
 
 		S(a_per, a_per) += stiffness_matrix[0];
 		S(b_per, b_per) += stiffness_matrix[4];

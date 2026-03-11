@@ -34,7 +34,7 @@ void build_P2_CSRPattern_vertex_rows(const Mesh &m, const VTAdjacency &vt_adj, s
 
     for (uint32_t k = 0; k < nv; k++)
     {
-        HashTable<VertexPair, uint32_t, VertexPairHasher> seen_vv(2 * vt_adj.degree[k] + 4, hasher_vv);
+        HashTable<VertexPair, uint32_t, VertexPairHasher> seen_vv(vt_adj.degree[k], hasher_vv);
 
         P.row_start[k] = nnz;
 
@@ -66,7 +66,6 @@ void build_P2_CSRPattern_vertex_rows(const Mesh &m, const VTAdjacency &vt_adj, s
             }
         }
     }
-    P.row_start[nv] = nnz;
 }
 
 /* Fill the edge rows of the sparsity pattern */
@@ -86,15 +85,15 @@ void build_P2_CSRPattern_edge_rows(const Mesh &m, const ETAdjacency &et_adj, siz
 
     for (size_t k = 0; k < ne; k++)
     {
-        HashTable<VertexEdgePair, uint32_t, VertexEdgePairHasher> seen_ve(2 * et_adj.degree[k] + 4, hasher_ve);
-        HashTable<EdgePair, uint32_t, EdgePairHasher> seen_ee(2 * et_adj.degree[k] + 4, hasher_ee);
+        HashTable<VertexEdgePair, uint32_t, VertexEdgePairHasher> seen_ve(et_adj.degree[k], hasher_ve);
+        HashTable<EdgePair, uint32_t, EdgePairHasher> seen_ee(et_adj.degree[k], hasher_ee);
 
         P.row_start[k + nv] = nnz;
 
         /* The edge is the current one */
         current_vertex_edge_pair.edge = m.edges[k];
 
-        /* Add the vertex-edge contributions */
+        /* Add the edge-vertex contributions */
         for (size_t j = et_adj.offset[k]; j < et_adj.offset[k] + et_adj.degree[k]; j++)
         {
             uint32_t tri = et_adj.etri[j].tri;
@@ -129,7 +128,7 @@ void build_P2_CSRPattern_edge_rows(const Mesh &m, const ETAdjacency &et_adj, siz
         /* Add the edge-edge contributions */
         for (size_t j = et_adj.offset[k]; j < et_adj.offset[k] + et_adj.degree[k]; j++)
         {
-            /* The second edge is either the current edge, or the two other edges */
+            /* The second edge is either the previous or the next edges */
             Edge second_edge[2] = {et_adj.etri[j].next, et_adj.etri[j].prev};
 
             for (size_t l = 0; l < 2; l++)
@@ -167,20 +166,17 @@ void build_P2_CSRPattern(const Mesh &m, CSRPattern &P)
     P.cols = nv + ne;
 
     size_t nnz = 0;
-    size_t nnz_non_symmetric = 2 * (nv + ne);
-    for (size_t k = 0; k < nv; k++)
-        nnz_non_symmetric += vt_adj.degree[k];
 
-    for (size_t k = 0; k < ne; k++)
-        nnz_non_symmetric += et_adj.degree[k];
+    /* Non-sharp upper bound estimation for the number of non zeros */
+    size_t max_nnz = 36 * m.triangle_count();
 
     P.row_start.resize(nv + ne + 1);
-    P.col.resize(2 * nnz_non_symmetric);
+    P.col.resize(max_nnz);
 
     /* Build the vertex rows (containing vertex-vertex interactions) */
     build_P2_CSRPattern_vertex_rows(m, vt_adj, nnz, P);
 
-    /* Build the bloc edge rows (containing edge-vertex and edge-edge interactions) */
+    /* Build the edge rows (containing edge-vertex and edge-edge interactions) */
     build_P2_CSRPattern_edge_rows(m, et_adj, nnz, P);
 
     P.col.resize(nnz);

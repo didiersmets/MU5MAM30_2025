@@ -13,15 +13,15 @@
 void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 {
 	/* Computation of ||AB x AC|| */
-	double K = norm(cross(AB, AC));
+	double K_12 = norm(cross(AB, AC)) / 12;
 
-	if (K == 0)
+	if (K_12 == 0)
 		throw std::runtime_error("The two vectors must be linearly independent.");
 	else
 	{
 		/* Computation of the coefficients */
 		for (int i = 0; i < 3; i++)
 			for (int j = 0; j < 3; j++)
-				M[3 * i + j] = (i == j) ? K / 12 : K / 24;
+				M[3 * i + j] = (i == j) ? K_12 : K_12 / 2;
 	}
 }

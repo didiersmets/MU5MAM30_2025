@@ -42,11 +42,7 @@ bool reset = false;
 int iter_per_frame = 1;
 
 /* RHS expression of the PDE */
-// char rhs_expression[128] = "cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
-// char rhs_expression[128] = "sin( 2 * 3.141492 * x) * sin( 2 * 3.141492 * y)";
-// char rhs_expression[128] = "2 * x";
-// char rhs_expression[128] = "6 * (x^2 - y^2)";
-char rhs_expression[128] = "6 * x * z";
+char rhs_expression[128] = "6 * (x^2 - y^2)";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x}, {"y", &rhs_y}, {"z", &rhs_z}, {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}};
@@ -153,10 +149,10 @@ int main(int argc, char **argv)
 	}
 	transfer_to_mesh(solver.f, mesh);
 	get_attr_bounds(mesh, &scale_min, &scale_max);
-	if (!solver.use_fem_P2)
-		LOG_MSG("Prepared FEM P1 data.");
-	else
+	if (solver.use_fem_P2)
 		LOG_MSG("Prepared FEM P2 data.");
+	else
+		LOG_MSG("Prepared FEM P1 data.");
 
 	/* Get an OpenGL context through a viewer app. */
 	Viewer viewer;
@@ -188,9 +184,9 @@ int main(int argc, char **argv)
 		draw_gui(solver);
 		viewer.end_frame();
 	}
-	// compute_error_x(solver);
-	// compute_error_x2my2(solver);
-	compute_error_xz(solver);
+
+	/* Compute the error in case of looking at p = x^2 - y^2 */
+	compute_error_x2my2(solver);
 
 	viewer.fini();
 	log_fini();

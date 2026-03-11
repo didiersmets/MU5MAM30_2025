@@ -23,27 +23,27 @@ PoissonSolver::PoissonSolver(Mesh &m, const bool &use_fem_P2)
 		build_P1_stiffness_matrix(m, A);
 	}
 #else
-	if (!use_fem_P2)
-	{
-		if (!m.is_periodic)
-		{
-			build_P1_CSRPattern(m, P);
-			build_P1_mass_matrix(m, P, M);
-			build_P1_stiffness_matrix(m, P, A);
-		}
-		else
-		{
-			build_P1_CSRPattern_per(m, P);
-			build_P1_mass_matrix_per(m, P, M);
-			build_P1_stiffness_matrix_per(m, P, A);
-		}
-	}
-	else
+	if (use_fem_P2)
 	{
 		m.build_edges();
 		build_P2_CSRPattern(m, P);
 		build_P2_mass_matrix(m, P, M);
 		build_P2_stiffness_matrix(m, P, A);
+	}
+	else
+	{
+		if (m.is_periodic)
+		{
+			build_P1_CSRPattern_per(m, P);
+			build_P1_mass_matrix_per(m, P, M);
+			build_P1_stiffness_matrix_per(m, P, A);
+		}
+		else
+		{
+			build_P1_CSRPattern(m, P);
+			build_P1_mass_matrix(m, P, M);
+			build_P1_stiffness_matrix(m, P, A);
+		}
 	}
 #endif
 

@@ -54,7 +54,5 @@ struct NavierStokesSolver
 	void precompute_phi_at_quad_points(double (&phi_at_quad)[7][6]);
 	void precompute_grad_phi_at_quad_points(Vec2d (&grad_phi_at_quad)[7][6]);
 
-	void compute_A_T_j(size_t tri);
-
 	void time_step(double dt, double nu);
 };

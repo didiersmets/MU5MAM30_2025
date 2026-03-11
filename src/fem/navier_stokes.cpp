@@ -90,7 +90,7 @@ void NavierStokesSolver::compute_transport_P1(double *T)
 
 		double omega_sum = OMEGA[a] + OMEGA[b] + OMEGA[c];
 
-		/* Compute Vertex_Vertex-Vertex contribution */
+		/* Compute the explicit contribution for each node of the triangle */
 		T[a] += (omega_sum * (PSI[c] - PSI[b])) / 6;
 		T[b] += (omega_sum * (PSI[a] - PSI[c])) / 6;
 		T[c] += (omega_sum * (PSI[b] - PSI[a])) / 6;
@@ -192,10 +192,10 @@ void NavierStokesSolver::compute_transport_P2(double *T)
 			Vec3d grad_phi_real_at_quad[6];
 			for (size_t i = 0; i < 6; i++)
 			{
-				/* Computation of A_T(x_q) */
+				/* Computation of A_K(\xi_q) */
 				A_K_at_q += OMEGA[nodes[i]] * phi_at_quad[q][i];
 
-				/* Computation of B_T(x_q) */
+				/* Computation of B_K(\xi_q) */
 				double ux = (1 / detG) * (G22 * grad_phi_at_quad[q][i].x - G12 * grad_phi_at_quad[q][i].y);
 				double uy = (1 / detG) * (-G12 * grad_phi_at_quad[q][i].x + G11 * grad_phi_at_quad[q][i].y);
 
@@ -204,11 +204,12 @@ void NavierStokesSolver::compute_transport_P2(double *T)
 				B_K_at_q += PSI[nodes[i]] * grad_phi_real_at_quad[i];
 			}
 
-			Vec3d n_cross_B_T = cross(n, B_K_at_q);
+			Vec3d n_cross_B_K = cross(n, B_K_at_q);
 
+			/* Assemble all the elements in T */
 			for (size_t i = 0; i < 6; i++)
 			{
-				T[nodes[i]] += w[q] * A_K_at_q * dot(n_cross_B_T, grad_phi_real_at_quad[i]) * sqrt_detG;
+				T[nodes[i]] += w[q] * A_K_at_q * dot(n_cross_B_K, grad_phi_real_at_quad[i]) * sqrt_detG;
 			}
 		}
 	}
@@ -265,7 +266,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	double *AP = Ap.data;
 
 	double *RHS = (double *)malloc(N * sizeof(double));
-	;
+	
 	blas_copy(MOMEGA, RHS, N);
 	blas_axpy(dt, T, RHS, N);
 

@@ -70,6 +70,7 @@ struct Mesh
 	size_t edge_count() const { return edges.size; }
 	size_t triangle_count() const { return indices.size / 3; }
 
+	/* Fills the edge tables in case of P2 FEM */
 	void build_edges();
 };
 
@@ -78,7 +79,7 @@ inline void Mesh::build_edges()
 	size_t nt = triangle_count();
 
 	edge_idx.clear();
-	edge_idx.reserve(3 * nt * 5);
+	edge_idx.reserve(3 * nt);
 	uint32_t *current_key;
 	uint32_t current_idx = 0;
 
