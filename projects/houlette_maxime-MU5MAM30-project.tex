@@ -137,9 +137,9 @@ $$(K, \, \mathcal{P}_K, \, \Sigma_K)$$
 such that : 
 
 \begin{itemize}
-    \item[$\bullet$] $K$ is a $d$-simplex
-    \item[$\bullet$] $\mathcal{P}_K$ is the set $\mathbb P_k(K)$ (polynomials of total degree $k$), which has the dimension $\binom{d+k}{d}$
-    \item[$\bullet$] $\Sigma_K$ is the set of the linear forms associated to the evaluation of an element of  $\mathcal{P}_K$ over the vertices of the principle lattice of order $k$.
+    \item[$\bullet$] $K$ is a $d$-simplex,
+    \item[$\bullet$] $\mathcal{P}_K$ is the space $\mathbb{P}_k(K)$ of polynomials of total degree at most $k$, which has dimension $\binom{d+k}{k}$ (or equivalently $\binom{d+k}{d}$),
+    \item[$\bullet$] $\Sigma_K$ is the set of linear forms associated with the evaluation of an element of $\mathcal{P}_K$ at the nodes of the principal lattice of order $k$.
 \end{itemize}
 
 We introduce the principal lattice of order $k$ associated to a simplex $K$
@@ -217,7 +217,9 @@ We are now interested in computing the $\varphi_i$. It is clear that the main ch
 
 \subsection{Shape functions}
 
-We compute the $\mathbb{P}_2$ shape functions associated with the triangle $K$ shown in Figure 1. We provide the computational details for the shape function associated with $\bm x_1$ in barycentric coordinates, denoted as $\tilde{\varphi}_{\bm x_1}$. \\
+We compute the $\mathbb{P}_2$ shape functions associated with the triangle $K$ shown in Figure 1. We provide the computational details for the shape function associated with $\bm x_1$ in barycentric coordinates, denoted as $\tilde{\varphi}_{\bm x_1}$. That is to say that, considering the reference triangle $\hat{K} := ((0, 0), \, (1, 0), \, (0, 1))$, and knowing that every $\bm x\in K$ can be uniquely represented with $(\lambda_1(\bm x), \lambda_2(\bm x)) \in \hat{K}$ (as $\lambda_3(\bm x) = 1 - \lambda_1(\bm x) - \lambda_2(\bm x)$), we can write 
+
+$$\forall \bm x \in K, \, \varphi_{\bm x_1}(\bm x) = \tilde{\varphi}_{\bm x_1}(\lambda_1(\bm x), \lambda_2(\bm x))$$
 
 By definition, $\tilde{\varphi}_{\bm x_1} \in \mathbb{P}_2(\hat{K})$ is uniquely determined by the following six constraints:
 
@@ -254,15 +256,13 @@ Given a triangle $K = (\bm x_1, \, \bm x_2, \, \bm x_3)$, we will extensively us
 
 $$\bm x\in K \Leftrightarrow \lambda_j(\bm x) \geq 0 \ \text{and} \ \sum_{i=1}^3\lambda_j(\bm x)=1$$
 
-Considering the reference triangle $\hat{K} := ((0, 0), \, (1, 0), \, (0, 1))$, every $\bm x\in K$ can be uniquely represented with $(\lambda_1(\bm x), \lambda_2(\bm x)) \in \hat{K}$ (as $\lambda_3(\bm x) = 1 - \lambda_1(\bm x) - \lambda_2(\bm x)$). \\
-
 For a function $f$ defined on a triangle $K$, the integral over $K$ can be computed using the change of variables $\bm x \in K \leftrightarrow (\lambda_1(\bm x), \lambda_2(\bm x)) \in \hat{K}$, which yields:
 
 \begin{equation}\label{eq:CV}
 \int_{\bm x \in K} f(\bm x) \, d\bm x = \Lambda \int_{(\lambda_1, \lambda_2) \in \hat{K}} \tilde{f}(\lambda_1, \lambda_2) \, d\lambda_1 d\lambda_2  = \Lambda \int_{\lambda_1 = 0} ^1 \int_{\lambda_2 = 0} ^{1-\lambda_1} \tilde{f}(\lambda_1, \lambda_2) \, d\lambda_2 d\lambda_1
 \end{equation}
 
-where, for $\bm x \in K$ and the corresponding $(\lambda_1(\bm x), \lambda_2(\bm x)) \in \hat{K}$, we have $f(\bm x) = \tilde{f}(\lambda_1(\bm x), \lambda_2(\bm x))$, and $\Lambda = \|\bm n \|$, with $\bm n = (\bm x_2 - \bm x_1) \times (\bm x_3 - \bm x_1)$, is related to the actual geometric shape of $K$. This last statement follows from the fact that any $\bm x \in K$ can be expressed as:
+where, for $\bm x \in K$ and the corresponding $(\lambda_1(\bm x), \lambda_2(\bm x)) \in \hat{K}$, we have $f(\bm x) = \tilde{f}(\lambda_1(\bm x), \lambda_2(\bm x))$ (as introduced before), and $\Lambda = \|\bm n \|$, with $\bm n = (\bm x_2 - \bm x_1) \times (\bm x_3 - \bm x_1)$, is related to the actual geometric shape of $K$. This last statement follows from the fact that any $\bm x \in K$ can be expressed as:
 
 $$\bm x = \lambda_1 \bm x_1 + \lambda_2 \bm x_2 + \lambda_3 \bm x_3 = \lambda_1(\bm x_1 - \bm x_3) + \lambda_2(\bm x_2 - \bm x_3) $$
 
@@ -439,7 +439,7 @@ $$\int_{K} p = \Lambda\int_{\hat K} \tilde p =  \Lambda \sum_{q = 1}^7 w_q p(\bm
 
 Thus, we have that
 
-$$T_j = \sum_{q =1}^7 \sum_{K\in \mathcal{T}_j}\sum_{i, k \in I_K}  \Omega_i\Psi_k w_q (\varphi_i( \bm \xi_q) \bm \nabla^{\perp} \varphi_k ( \bm \xi_q) \cdot \bm \nabla \varphi_j ( \bm \xi_q) \Lambda_K$$
+$$T_j = \sum_{q =1}^7 \sum_{K\in \mathcal{T}_j}\sum_{i, k \in I_K}  \Omega_i\Psi_k w_q \varphi_i( \bm \xi_q) \bm \nabla^{\perp} \varphi_k ( \bm \xi_q) \cdot \bm \nabla \varphi_j ( \bm \xi_q) \Lambda_K$$
 
 The final expression we will use is 
 
