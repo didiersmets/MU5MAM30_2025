@@ -34,20 +34,20 @@ PoissonSolver::PoissonSolver(const Mesh &m)
 	
 	for (size_t i = 0; i < N; ++i) {
 
-    double x = m.positions[i].x;
-    double y = m.positions[i].y;
+    	double x = m.positions[i].x;
+    	double y = m.positions[i].y;
 
-    // RHS
-    b[i] =0;
+    	// RHS
+    	b[i] =0;
 
-    // non_homogenenus boundary ( affine)
-    if (is_bnd[i]) {
-		//g[i] = 0.0;
-        g[i] = 1.0 + x + 2.0*y;
-    } else {
-        g[i] = 0.0;
-    }
-}
+    	// non_homogenenus boundary ( affine)
+    	if (is_bnd[i]) {
+			//g[i] = 0.0;
+        	g[i] = 1.0 + x + 2.0*y;
+    	} else {
+        	g[i] = 0.0;
+    	}
+	}
 }
 
 void PoissonSolver::clear_solution()
