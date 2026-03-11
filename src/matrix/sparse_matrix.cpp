@@ -105,6 +105,20 @@ void CSRMatrix::print(){
 		printf("\n");
 	}
 }
+void CSRMatrix::print_pattern(){
+	for (uint32_t r=0;r<rows;r++){
+		uint32_t non_zero_col = row_start[r];
+		for (uint32_t y=0; y<cols; y++){
+			if (non_zero_col<row_start[r+1] && y==col[non_zero_col]){
+				printf("* ");
+				non_zero_col++;
+			} else {
+				printf("  ");
+			}
+		}
+		printf("\n");
+	}
+}
 
 /* Visualisation of non zeros */
 void spy(const CSRPattern &P, uint32_t width, const char *fname){

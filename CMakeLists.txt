@@ -33,6 +33,7 @@ add_library(nanofem
 	# solutions/src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
 	#src/linalg/cholesky.cpp
+	src/linalg/sparse_cholesky.cpp
 	src/matrix/fem_matrix.cpp
 	src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
@@ -109,6 +110,13 @@ target_compile_options(main PRIVATE
 )
 target_link_libraries(main PRIVATE nanofem ) 
 ###############################################################################
+add_executable(test_sparse_cholesky
+	src/bin/test_sparse_cholesky.cpp
+)
+target_compile_options(test_sparse_cholesky PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_sparse_cholesky PRIVATE nanofem ) 
 
 ###############################################################################
 add_executable(test_NS

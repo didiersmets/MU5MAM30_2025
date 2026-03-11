@@ -38,6 +38,7 @@ struct CSRMatrix : public Matrix {
 	double sum() const;
 	double &operator()(uint32_t i, uint32_t j);
 	void print();
+	void print_pattern();
 };
 
 /* Visualisation of non zeros */
