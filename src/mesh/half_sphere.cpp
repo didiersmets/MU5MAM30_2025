@@ -2,6 +2,7 @@
 #include "math_utils.h"
 #include "mesh.h"
 #include "half_sphere.h"
+#include "half_cube.h"
 #include "vec3.h"
 #include <vector>
 #include <stdint.h>
