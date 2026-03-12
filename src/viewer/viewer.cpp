@@ -55,6 +55,19 @@ void Viewer::init(const char *name)
 	camera.set_aspect((float)width / height);
 	glfwSetWindowUserPointer(window, this);
 	glfwMakeContextCurrent(window);
+
+	/*Trying to fix the problem:
+	START*/
+	glewExperimental = GL_TRUE;
+	GLenum glew_err = glewInit();
+	if (glew_err != GLEW_OK) {
+    	printf("Failed to initialize GLEW: %s\n", glewGetErrorString(glew_err));
+    	exit(EXIT_FAILURE);
+	}
+
+	glfwSetKeyCallback(window, key_cb);
+	/*END*/
+
 	glfwSetKeyCallback(window, key_cb);
 	glfwSetFramebufferSizeCallback(window, resize_window_cb);
 	glfwSetCursorPosCallback(window, cursor_pos_cb);

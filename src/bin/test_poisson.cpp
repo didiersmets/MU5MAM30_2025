@@ -127,7 +127,9 @@ int main(int argc, char **argv)
 	const char *frag_shader = "./shaders/fem.frag";
 	int shader = create_shader(vert_shader, frag_shader);
 	if (!shader) {
-		exit(EXIT_FAILURE);
+    	printf("Shader creation failed!\n");
+    	getchar();
+    	exit(EXIT_FAILURE);
 	}
 	LOG_MSG("Shader initialized.");
 	GPUMesh gpu_mesh;
