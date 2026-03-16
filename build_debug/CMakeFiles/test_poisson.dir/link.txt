@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/test_poisson.dir/src/common/logging.cpp.o CMakeFiles/test_poisson.dir/src/bin/test_poisson.cpp.o -o test_poisson  libnanofem.a libnanoviewer.a libtiny_expr.a extern/glfw/src/libglfw3.a /usr/lib/x86_64-linux-gnu/librt.a -lm -ldl libimgui_glfw_opengl3.a /usr/lib/x86_64-linux-gnu/libGLX.so /usr/lib/x86_64-linux-gnu/libOpenGL.so 

@@ -1,2 +1,0 @@
-/usr/bin/ar qc libnanoviewer.a CMakeFiles/nanoviewer.dir/src/mesh/mesh_gpu.cpp.o CMakeFiles/nanoviewer.dir/src/viewer/viewer.cpp.o CMakeFiles/nanoviewer.dir/src/viewer/camera.cpp.o CMakeFiles/nanoviewer.dir/src/viewer/frustum.cpp.o CMakeFiles/nanoviewer.dir/src/viewer/mouse.cpp.o CMakeFiles/nanoviewer.dir/src/viewer/trackball.cpp.o CMakeFiles/nanoviewer.dir/src/viewer/shaders.cpp.o
-/usr/bin/ranlib libnanoviewer.a

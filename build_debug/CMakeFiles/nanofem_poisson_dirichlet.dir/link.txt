@@ -1,2 +1,0 @@
-/usr/bin/ar qc libnanofem_poisson_dirichlet.a CMakeFiles/nanofem_poisson_dirichlet.dir/src/fem/poisson_non_homogene_Dirichlet.cpp.o CMakeFiles/nanofem_poisson_dirichlet.dir/src/linalg/projected_conjugate_gradient.cpp.o
-/usr/bin/ranlib libnanofem_poisson_dirichlet.a

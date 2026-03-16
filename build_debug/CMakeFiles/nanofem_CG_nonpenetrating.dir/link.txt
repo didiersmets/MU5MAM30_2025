@@ -1,2 +1,0 @@
-/usr/bin/ar qc libnanofem_CG_nonpenetrating.a CMakeFiles/nanofem_CG_nonpenetrating.dir/src/fem/navier_stokes_CG_nonpenetrating.cpp.o CMakeFiles/nanofem_CG_nonpenetrating.dir/src/linalg/conjugate_gradient.cpp.o CMakeFiles/nanofem_CG_nonpenetrating.dir/src/linalg/projected_conjugate_gradient.cpp.o
-/usr/bin/ranlib libnanofem_CG_nonpenetrating.a
