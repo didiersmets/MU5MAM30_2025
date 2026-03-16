@@ -99,6 +99,7 @@ size_t NavierStokesSolver::compute_stream_function()
 		if (!is_bnd[i]) continue;
 
 
+
 		for (uint32_t k = rs[i]; k < rs[i + 1]; ++k) {
 			if (cc[k] == i) {
 				Sd[k] = 1.0;
