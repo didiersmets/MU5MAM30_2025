@@ -6,7 +6,6 @@
 	#include "sparse_matrix.h"
 #endif
 #include "mesh.h"
-
 #include "boundary.h"
 
 struct NavierStokesSolver {
