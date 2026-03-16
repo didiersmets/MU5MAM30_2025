@@ -6,7 +6,7 @@ static inline uint64_t edge_key(uint32_t a, uint32_t b)
 {
     uint32_t lo = std::min(a,b);
     uint32_t hi = std::max(a,b);
-    return (uint64_t(lo) << 32) | uint64_t(hi);
+    return (uint64_t(lo) << 32) | uint64_t(hi);//key=lo*2^32+hi, this way edge_key(a,b) and edge_key(b,a) are the same
 }
 
 void compute_boundary_vertices(const Mesh &m, TArray<uint8_t> &is_bnd)
@@ -21,7 +21,7 @@ void compute_boundary_vertices(const Mesh &m, TArray<uint8_t> &is_bnd)
 
     const uint32_t *idx = m.indices.data;
 
-    // Conta quante volte ogni edge appare
+    // count how many times each edge appears
     for (size_t t = 0; t < T; ++t)
     {
         uint32_t a = idx[3*t + 0];
@@ -33,7 +33,7 @@ void compute_boundary_vertices(const Mesh &m, TArray<uint8_t> &is_bnd)
         edge_count[edge_key(c,a)]++;
     }
 
-    // Edge con count=1 sono di bordo
+    // Edge with count=1 are boundary edges, mark their vertices as boundary vertices
     for (auto &kv : edge_count)
     {
         if (kv.second == 1)

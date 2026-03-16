@@ -23,7 +23,7 @@ PoissonSolver::PoissonSolver(const Mesh &m)
 	build_P1_mass_matrix(m, P, M);
 	build_P1_stiffness_matrix(m, P, A);
 #endif
-	//vol = M.sum();
+	
 	inited = false;
 	iterate = 0;
 	converged = false;
@@ -37,8 +37,7 @@ PoissonSolver::PoissonSolver(const Mesh &m)
     	double x = m.positions[i].x;
     	double y = m.positions[i].y;
 
-    	// RHS
-    	b[i] =0;
+    	
 
     	// non_homogenenus boundary ( affine)
     	if (is_bnd[i]) {
@@ -102,17 +101,10 @@ void PoissonSolver::init_cg()
 	uint32_t *cc = A.col;
 	double   *Ad = A.data.data;//It is A.data.data because A.data is a TArray<double> and I need a pointer to the data
 
-	// 1) I set Ug[i] = g[i] for boundary vertices, (rememebering U[i]=0 for internal vertices)
-	double *Ug = ug.data;   // new vector
-
+	// 1) I set Ug[i] = g[i] for boundary vertices, (rememebering Ug[i]=0 for internal vertices)
+	double *Ug = ug.data;   // new vector, Ug is pointing to the array contained in the TArray ug, used for storing the lifting of the solution due to non-homogenus BCs
 	for (size_t i = 0; i < N; ++i) {
-
-		if (is_bnd[i]) {
 			Ug[i] = g[i];
-		} else {
-			Ug[i] = 0.0;
-		}
-    	U[i]  = 0.0;   // incognita correttiva iniziale
 	}	
 
 	// 2) B = B - A*Ug
@@ -143,7 +135,7 @@ void PoissonSolver::init_cg()
 			if (cc[k] == i) {Ad[k] = 1.0;
 			break;}
 		}
-		B[i] = 0;// sto imponenndo u0=0 sul bordo.
+		B[i] = 0;// I'm imposing u0=0 on the boundary.
 	}
 
 // --- 5) initialize CG un A U = B
@@ -151,7 +143,6 @@ void PoissonSolver::init_cg()
     // b2 = ||B||^2 (for relative error)
     b2 = blas_dot(B, B, N);
 
-    
     blas_copy(B, R, N);   // perché U=0
   
     // P = R

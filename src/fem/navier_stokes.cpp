@@ -30,8 +30,6 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	build_P1_stiffness_matrix(m, P, S);
 #endif
 	compute_boundary_vertices(m,is_bnd);	
-	// ---- DEBUG: count boundary vertices ----
-	compute_boundary_vertices(m,is_bnd);
 
 	inited = false;
 	t = 0;
@@ -73,11 +71,11 @@ size_t NavierStokesSolver::compute_stream_function()
 
 	
 	// 0) we build S, we will modify it imposing boundary condition 
-
 	#if !USE_FEM_MATRIX
 	build_P1_stiffness_matrix(m, P,S);
 	#endif
 	//I rebuild S every time , otherwise after first temporal step the system is no longer the original one.
+	
 	M.mvp(Om, MOm);
 	// 1) B = M * omega
 	blas_copy(MOm, B, N);// B = M * omega;
@@ -85,10 +83,7 @@ size_t NavierStokesSolver::compute_stream_function()
 	uint32_t *rs = S.row_start;
 	uint32_t *cc = S.col;
 	double   *Sd = S.data.data;
-	//I set Psi[i] = 0 for boundary vertices, since i want to impose psi=0 on the boundary;
-	for (size_t i = 0; i < N; ++i) {
-    	if (is_bnd[i]) Psi[i] = 0.0;
-	}
+	
 	// 2) zero columns corresponding to boundary vertices, on internal rows
 	for (uint32_t i = 0; i < (uint32_t)N; ++i) {
 		if (is_bnd[i]) continue;
@@ -103,13 +98,13 @@ size_t NavierStokesSolver::compute_stream_function()
 	for (uint32_t i = 0; i < (uint32_t)N; ++i) {
 		if (!is_bnd[i]) continue;
 
-		for (uint32_t k = rs[i]; k < rs[i + 1]; ++k)
-			Sd[k] = 0.0;
 
 		for (uint32_t k = rs[i]; k < rs[i + 1]; ++k) {
 			if (cc[k] == i) {
 				Sd[k] = 1.0;
-				break;
+			}
+			else {
+				Sd[k] = 0.0;
 			}
 		}
 
@@ -176,9 +171,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 	/* Form rhs, saved in P */
 	compute_transport(Pv);
-	#if !USE_FEM_MATRIX
-		build_P1_stiffness_matrix(m, P, S);
-	#endif
+	
 	blas_axpby(1, MOm, dt, Pv, N); //Pi = 1 * Momi + dt * Pi M*omega(t) + dt * T(Omega,Psi)(t) on first N values of P
 	b2 = blas_dot(Pv, Pv, N);//compute the norm of the rhs, used for convergence check, on first N values of P
 
