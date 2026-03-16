@@ -164,7 +164,7 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n]\n", prg_name);
+	printf("Syntax : %s ($(obj_filename)| cube | cube2 | sphere) [n]\n", prg_name);
 	printf("         Subdivision number n must be provided in case of "
 	       "cube or sphere mesh.\n");
 }
@@ -172,7 +172,9 @@ static void syntax(char *prg_name)
 static int load_mesh(Mesh &mesh, int argc, char **argv)
 {
 	int res = -1;
-	if (argc > 2 && strncmp(argv[1], "cube", 4) == 0) {
+	if (argc > 2 && strncmp(argv[1], "cube2", 5) == 0) {
+		res = load_cube_nested_dissect(mesh, atoi(argv[2]));
+	} else if (argc > 2 && strncmp(argv[1], "cube", 4) == 0) {
 		res = load_cube(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0) {
 		res = load_sphere(mesh, atoi(argv[2]));

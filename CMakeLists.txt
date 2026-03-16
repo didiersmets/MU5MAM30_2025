@@ -31,6 +31,7 @@ add_library(nanofem
 	src/fem/poisson.cpp
 	src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
+	src/linalg/sparse_cholesky.cpp
 	#src/linalg/cholesky.cpp
 	src/matrix/fem_matrix.cpp
 	src/matrix/sparse_matrix.cpp
@@ -107,6 +108,100 @@ target_compile_options(test_NS PRIVATE
 	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 )
 target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+###############################################################################
+
+###############################################################################
+add_library(nanofem_chol
+	src/fem/P1.cpp
+	src/fem/poisson.cpp
+	src/fem/navier_stokes.cpp
+	src/linalg/conjugate_gradient.cpp
+	src/linalg/sparse_cholesky.cpp
+	src/matrix/fem_matrix.cpp
+	src/matrix/sparse_matrix.cpp
+	src/mesh/adjacency.cpp
+	src/mesh/cube.cpp
+	src/mesh/cube2.cpp
+	src/mesh/sphere.cpp
+	src/mesh/duplicate_verts.cpp
+	src/mesh/mesh_io.cpp
+	src/mesh/mesh_bounds.cpp
+)
+target_include_directories(nanofem_chol PUBLIC 
+	include/common 
+	include/fem
+	include/linalg
+	include/matrix 
+	include/mesh 
+	extern
+)
+target_compile_options(nanofem_chol PRIVATE 
+	-std=c++17 -Wall -Wextra -march=native -Wno-unknown-pragmas
+	-Wno-missing-field-initializers
+	-DNS_USE_DIRECT_SOLVER=1
+)
+if (USE_OPENMP AND OpenMP_CXX_FOUND)
+	target_compile_options(nanofem_chol PRIVATE -DUSE_OPENMP)
+	target_link_libraries(nanofem_chol PUBLIC OpenMP::OpenMP_CXX)
+endif()
+###############################################################################
+
+###############################################################################
+add_library(nanofem_cg
+	src/fem/P1.cpp
+	src/fem/poisson.cpp
+	src/fem/navier_stokes.cpp
+	src/linalg/conjugate_gradient.cpp
+	src/linalg/sparse_cholesky.cpp
+	src/matrix/fem_matrix.cpp
+	src/matrix/sparse_matrix.cpp
+	src/mesh/adjacency.cpp
+	src/mesh/cube.cpp
+	src/mesh/cube2.cpp
+	src/mesh/sphere.cpp
+	src/mesh/duplicate_verts.cpp
+	src/mesh/mesh_io.cpp
+	src/mesh/mesh_bounds.cpp
+)
+target_include_directories(nanofem_cg PUBLIC 
+	include/common 
+	include/fem
+	include/linalg
+	include/matrix 
+	include/mesh 
+	extern
+)
+target_compile_options(nanofem_cg PRIVATE 
+	-std=c++17 -Wall -Wextra -march=native -Wno-unknown-pragmas
+	-Wno-missing-field-initializers
+	-DNS_USE_DIRECT_SOLVER=0
+)
+if (USE_OPENMP AND OpenMP_CXX_FOUND)
+	target_compile_options(nanofem_cg PRIVATE -DUSE_OPENMP)
+	target_link_libraries(nanofem_cg PUBLIC OpenMP::OpenMP_CXX)
+endif()
+###############################################################################
+
+###############################################################################
+add_executable(benchmark_NS_chol
+	src/bin/benchmark_NS.cpp
+)
+target_compile_options(benchmark_NS_chol PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+	-DNS_USE_DIRECT_SOLVER=1
+)
+target_link_libraries(benchmark_NS_chol PRIVATE nanofem_chol)
+###############################################################################
+
+###############################################################################
+add_executable(benchmark_NS_cg
+	src/bin/benchmark_NS.cpp
+)
+target_compile_options(benchmark_NS_cg PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+	-DNS_USE_DIRECT_SOLVER=0
+)
+target_link_libraries(benchmark_NS_cg PRIVATE nanofem_cg)
 ###############################################################################
 
 ###############################################################################

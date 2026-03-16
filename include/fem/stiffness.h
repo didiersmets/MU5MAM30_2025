@@ -24,18 +24,18 @@
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
 	/* Your implementation goes here */
-	double ABAB = norm2(AB);
-	double ACAC = norm2(AC);
-	double ABAC = dot(AB,AC);
-	double mult = 0.5 / sqrt(ABAB * ACAC - ABAC * ABAC);
-	ABAB *= mult;
-	ACAC *= mult;
-	ABAC *= mult;
+    const double ab2 = dot(AB, AB);
+    const double ac2 = dot(AC, AC);
+    const double ab_ac = dot(AB, AC);
 
-	S[0] = ACAC - 2 * ABAC + ABAB;
-	S[1] = ACAC;
-	S[2] = ABAB;
-	S[3] = ABAC - ACAC;
-	S[4] = -ABAC;
-	S[5] = ABAC - ABAB;
+    const double jac = std::sqrt(ab2 * ac2 - ab_ac * ab_ac);
+    const double inv2A = 1.0 / jac;   
+    const double coeff = 0.5 * inv2A; 
+
+    S[0] = coeff * (ab2 - 2.0 * ab_ac + ac2);
+    S[1] = coeff * ac2;
+    S[2] = coeff * ab2;
+    S[3] = coeff * (ab_ac - ac2);
+    S[4] = coeff * (-ab_ac);
+    S[5] = coeff * (ab_ac - ab2);           
 }

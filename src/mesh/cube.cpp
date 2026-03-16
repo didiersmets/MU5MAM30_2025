@@ -42,55 +42,65 @@ int load_cube(Mesh &m, size_t subdiv)
 
 static void load_cube_vertices(Vec3 *pos, size_t subdiv)
 {
-	/* Your implementation goes here */
-	size_t n = subdiv + 1;
+    /* Your implementation goes here */
+	const size_t n = subdiv + 1;
 
-	/* First build vertices as six unattached faces of n^2 vertices each */
-	size_t voff[6];
-	for (int f = 0; f < 6; ++f) {
-		voff[f] = f * POW2(n);
-	}
-	float *dir = (float *)safe_malloc(n * sizeof(float));
-	float *rev = (float *)safe_malloc(n * sizeof(float));
-	for (size_t i = 0; i < n; ++i) {
-		dir[i] = (2 * (float)i - subdiv) / subdiv;
-	}
-	for (size_t i = 0; i < n; ++i) {
-		rev[i] = dir[subdiv - i];
-	}
-	for (size_t y = 0; y < n; ++y) {
-		for (size_t x = 0; x < n; ++x) {
-			pos[voff[0]++] = { dir[x], -1, dir[y] }; /* Front  */
-			pos[voff[1]++] = { rev[x], +1, dir[y] }; /* Back   */
-			pos[voff[2]++] = { -1, rev[x], dir[y] }; /* Left   */
-			pos[voff[3]++] = { +1, dir[x], dir[y] }; /* Right  */
-			pos[voff[4]++] = { dir[x], rev[y], -1 }; /* Bottom */
-			pos[voff[5]++] = { dir[x], dir[y], +1 }; /* Top    */
-		}
-	}
-	free(dir);
-	free(rev);
+    size_t face_offset[6];
+    for (size_t f = 0; f < 6; ++f) {
+        face_offset[f] = f * POW2(n);
+    }
+
+    float *coord = (float *)safe_malloc(n * sizeof(float));
+    for (size_t i = 0; i < n; ++i) {
+        coord[i] = (2.0f * (float)i - (float)subdiv) / (float)subdiv;
+    }
+
+    // Remplissage des 6 faces
+    for (size_t y = 0; y < n; ++y) {
+        for (size_t x = 0; x < n; ++x) {
+            const float dx = coord[x];
+            const float dy = coord[y];
+            const float rx = coord[subdiv - x];
+            const float ry = coord[subdiv - y];
+
+            pos[face_offset[0]++] = { dx, -1.0f, dy }; // Front
+            pos[face_offset[1]++] = { rx,  1.0f, dy }; // Back
+            pos[face_offset[2]++] = {-1.0f, rx,  dy }; // Left
+            pos[face_offset[3]++] = { 1.0f, dx,  dy }; // Right
+            pos[face_offset[4]++] = { dx,  ry, -1.0f}; // Bottom
+            pos[face_offset[5]++] = { dx,  dy,  1.0f}; // Top
+        }
+    }
+
+    free(coord);
 }
 
 static void load_cube_indices(uint32_t *idx, size_t subdiv)
 {
 	/* Your implementation goes here */
-	size_t n = subdiv + 1;
-	/* Build corresponding triangulation indices */
-	for (int f = 0; f < 6; f++) {
-		size_t offset = f * POW2(n);
-		for (size_t i = 0; i < subdiv; ++i) {
-			for (size_t j = 0; j < subdiv; ++j) {
-				uint32_t base = (uint32_t)(i * n + j + offset);
-				/* First tri */
-				*idx++ = base;
-				*idx++ = base + 1;
-				*idx++ = base + 1 + n;
-				/* Second tri */
-				*idx++ = base;
-				*idx++ = base + 1 + n;
-				*idx++ = base + n;
-			}
-		}
-	}
+    const size_t n = subdiv + 1;
+    size_t k = 0;
+
+    for (size_t f = 0; f < 6; ++f) {
+        const uint32_t face_offset = static_cast<uint32_t>(f * POW2(n));
+
+        for (size_t row = 0; row < subdiv; ++row) {
+            for (size_t col = 0; col < subdiv; ++col) {
+                const uint32_t v0 = face_offset + static_cast<uint32_t>(row * n + col);
+                const uint32_t v1 = v0 + 1;
+                const uint32_t v2 = v0 + static_cast<uint32_t>(n);
+                const uint32_t v3 = v2 + 1;
+
+                // Triangle 1
+                idx[k++] = v0;
+                idx[k++] = v1;
+                idx[k++] = v3;
+
+                // Triangle 2
+                idx[k++] = v0;
+                idx[k++] = v3;
+                idx[k++] = v2;
+            }
+        }
+    }
 }
