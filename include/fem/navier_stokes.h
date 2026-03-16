@@ -7,7 +7,7 @@
 #endif
 #include "mesh.h"
 
-
+#include "boundary.h"
 
 struct NavierStokesSolver {
 	NavierStokesSolver(const Mesh &m);
@@ -29,7 +29,7 @@ struct NavierStokesSolver {
 	TArray<double> r;  // current residue r = Mf - Su
 	TArray<double> p;  // internal for cg
 	TArray<double> Ap; // internal for cg
-	TArray<uint8_t> is_bnd;//is_bnd[i] is true if vertex i is a boundary vertex, false otherwise
+	TArray<uint32_t> is_bnd;//is_bnd[i] is true if vertex i is a boundary vertex, false otherwise
 	TArray<double> b;// right-hand side values at vertices
 	bool inited; // Initialization computes first residue and error
 
