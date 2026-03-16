@@ -412,75 +412,18 @@ void NavierStokesSolver::init_direct_solver(double dt, double nu)
     cholesky_factorize_rowwise(A, PL, L);
 
     // Debug numeric phase
-    // debug_check_cholesky_factorization(A, L);   
+    debug_check_cholesky_factorization(A, L);   
 
     // Build column adjacency for fast L^T solve
     build_col_adjacency_lower(L, col_adj);
 
     // debug solver
-    // debug_test_solver(A, L, col_adj);
+    debug_test_solver(A, L, col_adj);
 
     chol_ready = true;
 }
 #endif
 
-
-#if !USE_FEM_MATRIX
-#include <cmath>
-#include <cstdio>
-
-static void debug_check_solution_vector(const double* x, size_t n, const char* name)
-{
-    double xmin = x[0];
-    double xmax = x[0];
-    double norm2 = 0.0;
-    size_t bad = 0;
-
-    for (size_t i = 0; i < n; ++i) {
-        double v = x[i];
-
-        if (!std::isfinite(v)) {
-            ++bad;
-            continue;
-        }
-
-        if (v < xmin) xmin = v;
-        if (v > xmax) xmax = v;
-        norm2 += v * v;
-    }
-
-    std::printf("%s: min = %.6e, max = %.6e, ||.||2 = %.6e, bad = %zu\n",
-                name, xmin, xmax, std::sqrt(norm2), bad);
-}
-#endif
-
-#if !USE_FEM_MATRIX
-static void debug_check_linear_residual(const CSRMatrix& A,
-                                        const double* x,
-                                        const double* b,
-                                        size_t n)
-{
-    std::vector<double> Ax(n, 0.0);
-
-    A.mvp(x, Ax.data());
-
-    double r2 = 0.0;
-    double b2 = 0.0;
-    double max_abs = 0.0;
-
-    for (size_t i = 0; i < n; ++i) {
-        double ri = Ax[i] - b[i];
-        r2 += ri * ri;
-        b2 += b[i] * b[i];
-        double ari = std::fabs(ri);
-        if (ari > max_abs) max_abs = ari;
-    }
-
-    double rel = (b2 > 0.0) ? std::sqrt(r2 / b2) : 0.0;
-
-    std::printf("residual: rel = %.12e, max = %.12e\n", rel, max_abs);
-}
-#endif
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
