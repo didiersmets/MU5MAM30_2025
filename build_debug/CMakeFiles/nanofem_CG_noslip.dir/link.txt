@@ -1,0 +1,2 @@
+/usr/bin/ar qc libnanofem_CG_noslip.a CMakeFiles/nanofem_CG_noslip.dir/src/fem/navier_stokes_CG_noslip.cpp.o CMakeFiles/nanofem_CG_noslip.dir/src/linalg/conjugate_gradient.cpp.o CMakeFiles/nanofem_CG_noslip.dir/src/linalg/projected_conjugate_gradient.cpp.o
+/usr/bin/ranlib libnanofem_CG_noslip.a

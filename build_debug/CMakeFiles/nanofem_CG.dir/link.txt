@@ -1,0 +1,2 @@
+/usr/bin/ar qc libnanofem_CG.a CMakeFiles/nanofem_CG.dir/src/fem/navier_stokes_CG.cpp.o CMakeFiles/nanofem_CG.dir/src/linalg/conjugate_gradient.cpp.o
+/usr/bin/ranlib libnanofem_CG.a

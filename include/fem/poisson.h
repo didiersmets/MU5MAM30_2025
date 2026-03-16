@@ -1,6 +1,6 @@
 #include "array.h"
 
-#define USE_FEM_MATRIX true
+#define USE_FEM_MATRIX false //这里本来写的是true，到那时我们想要的是CSR的形式，所以改成false
 #if USE_FEM_MATRIX
 #include "fem_matrix.h"
 #else

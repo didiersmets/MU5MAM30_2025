@@ -1,0 +1,2 @@
+/usr/bin/ar qc libnanofem_cholesky.a CMakeFiles/nanofem_cholesky.dir/src/fem/navier_stokes_cholesky.cpp.o CMakeFiles/nanofem_cholesky.dir/src/linalg/cholesky.cpp.o CMakeFiles/nanofem_cholesky.dir/src/linalg/conjugate_gradient.cpp.o
+/usr/bin/ranlib libnanofem_cholesky.a
