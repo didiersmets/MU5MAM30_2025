@@ -61,9 +61,6 @@ int main(){
 	build_P1_mass_matrix(m,A);
 #endif
 	A.print();
-	double b[8] = {1,2,3,4,5,6,7,8};
-	uint32_t b_ind[8] = {0,1,2,3,4,5,6,7};
-	double x[8] = {0};
 
 	TArray<uint32_t> etree;
 	elimination_tree(A,etree);
@@ -73,15 +70,15 @@ int main(){
 		printf("%u : %u\n",i,etree[i]);
 	}
 	CSRPattern cho_patt {0};
-	cholesky_sparsity_pattern(A,etree,cho_patt);
-	CSRMatrix L(cho_patt,1);
+	CSRPattern cho_anti_diag_patt {0};
+	cholesky_sparsity_pattern(A,etree,cho_patt,cho_anti_diag_patt);
+	CSRMatrix L(cho_patt,0);
+	CSRMatrix L_antiT(cho_anti_diag_patt,0);
 	L.print_pattern();
-	sparse_tri_solve(L,b,b_ind,8,x,b_ind,8,2);
-	for (uint32_t i = 0; i<etree.size; i++){
-		printf("%u : %lf\n",i,x[i]);
-	}
-
-	CSRMatrix L2(cho_patt,0);
-	sparse_cholesky(A,L2);
-	L2.print();
+	L_antiT.print_pattern();
+	sparse_cholesky(A,L);
+	L.print();
+	printf("\n");
+	anti_transpose(L,L_antiT);
+	L_antiT.print();
 }

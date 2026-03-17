@@ -5,5 +5,6 @@
 #include "tiny_blas.h"
 
 void elimination_tree(const CSRMatrix &A,TArray<uint32_t> &parent);
-void cholesky_sparsity_pattern(const CSRMatrix &A,const TArray<uint32_t> &parent,CSRPattern &cho_patt);
+void cholesky_sparsity_pattern(const CSRMatrix &A,const TArray<uint32_t> &parent,CSRPattern &cho_patt,CSRPattern &cho_anti_diag_patt);
 void sparse_cholesky(CSRMatrix &A,CSRMatrix &L);
+void anti_transpose(CSRMatrix &L1, CSRMatrix &L2);
