@@ -157,10 +157,35 @@ void anti_transpose(CSRMatrix &L1, CSRMatrix &L2){
 	}
 }
 
-void reverse(double*x,size_t N){
+void reverse_buffer(double*x,size_t N){
 	for (size_t i = 0; i < N/2 ; i++){
 		double tmp = x[i];
 		x[i] = x[N-1-i];
 		x[N-1-i] = tmp;
 	}
 }
+
+CholeskySolver::CholeskySolver(CSRMatrix &M):
+	etree(M.rows),
+	tmp_buffer(M.rows)
+{
+	elimination_tree(M,etree);
+	cholesky_sparsity_pattern(M,etree,cho_patt,cho_anti_diag_patt);
+	L = std::move(CSRMatrix(cho_patt,0));
+	L_anti_transpose = std::move(CSRMatrix(cho_anti_diag_patt,0));
+	sparse_cholesky(M,L);
+	anti_transpose(L,L_anti_transpose);
+}
+void CholeskySolver::solve(double *b, double *x){
+	sparse_tri_solve(L,b,tmp_buffer.data);
+	reverse_buffer(tmp_buffer.data,L.rows);
+	sparse_tri_solve(L_anti_transpose,tmp_buffer.data,x);
+	reverse_buffer(x,L.rows);
+
+}
+void CholeskySolver::update_same_pattern(CSRMatrix &M){
+	sparse_cholesky(M,L);
+	anti_transpose(L,L_anti_transpose);
+}
+
+

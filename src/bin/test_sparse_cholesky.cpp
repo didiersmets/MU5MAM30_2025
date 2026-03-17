@@ -62,6 +62,7 @@ int main(){
 #endif
 	A.print();
 
+#if 0
 	TArray<uint32_t> etree;
 	elimination_tree(A,etree);
 	A.print_pattern();
@@ -81,4 +82,16 @@ int main(){
 	printf("\n");
 	anti_transpose(L,L_antiT);
 	L_antiT.print();
+#endif
+
+	CholeskySolver cho(A);
+	TArray<double> b(A.rows,1);
+	for (uint32_t i = 0; i<b.size; i++){
+		b[i] = (double) i;
+	}
+	TArray<double> x(A.rows,0);
+	cho.solve(b.data,x.data);
+	for (uint32_t i = 0; i<x.size; i++){
+		printf("%u : %lf\n",i,x[i]);
+	}
 }
