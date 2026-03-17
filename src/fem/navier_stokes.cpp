@@ -69,11 +69,11 @@ void NavierStokesSolver::compute_transport(double *T)
 		uint32_t j = m.indices[tri_index+1];
 		uint32_t k = m.indices[tri_index+2];
 
-		double tri_contribution = (psi[i]*omega[j]-psi[j]*omega[i] + psi[j]*omega[k]-psi[k]*omega[j] + psi[k]*omega[i]-psi[i]*omega[k]) / 6;
+		double tri_contribution = omega[i] + omega[j] + omega[k];
 
-		T[i] += tri_contribution;
-		T[j] += tri_contribution;
-		T[k] += tri_contribution;
+		T[i] += tri_contribution * (psi[j] - psi[k]);
+		T[j] += tri_contribution * (psi[k] - psi[i]);
+		T[k] += tri_contribution * (psi[i] - psi[j]);
 	}
 }
 
