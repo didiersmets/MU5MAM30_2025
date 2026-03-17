@@ -17,6 +17,7 @@ struct CholeskySolver {
 	CSRMatrix L_anti_transpose;
 	TArray<double> tmp_buffer;
 
+	CholeskySolver();
 	CholeskySolver(CSRMatrix &M);
 	void update_same_pattern(CSRMatrix &M);
 	void solve(double *b,double *x);

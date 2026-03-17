@@ -26,12 +26,17 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 	build_P1_CSRPattern(m, P);
 	M = std::move(CSRMatrix(P,0.0));
 	S = std::move(CSRMatrix(P,0.0));
+	MnudtS = std::move(CSRMatrix(P,0.0));
 	build_P1_mass_matrix(m, M);
 	build_P1_stiffness_matrix(m, S);
-	LOG_MSG("M :");
-	// M.print();
-	LOG_MSG("S :");
-	// S.print();
+
+	build_P1_stiffness_matrix(m, MnudtS);
+	blas_scal(nu*dt,MnudtS.data.data,MnudtS.data.size);
+	build_P1_mass_matrix(m, MnudtS);
+
+	S_chol = std::move(CholeskySolver(S));
+	MnudtS_chol = std::move(CholeskySolver(S));
+	
 #endif
 	vol = M.sum();
 	inited = true;
@@ -72,9 +77,6 @@ size_t NavierStokesSolver::compute_stream_function()
 	double Momega_norm = blas_dot(Momega.data,Momega.data,N);
 	LOG_MSG("compute_stream_function : ||Momega|| = %lf",Momega_norm);
 
-	TArray<double> b (N,0.0); // TODO : optmization possible
-	blas_copy(Momega.data,b.data,N);
-
 	double rel_error;
 	iter = conjugate_gradient_solve(
 			S,
@@ -111,28 +113,38 @@ void NavierStokesSolver::time_step(double dt, double nu)
 {
 	compute_stream_function(); // Momega computed here
 	compute_transport(p.data);
-
-	blas_axpby(1,Momega.data,dt,p.data,N);
-	// at this stage p = b = M * omega(t) + dt * T(Omega,Psi)(t)
-	double b2 = blas_dot(p.data,p.data,N);
-	// initialization x0 = Omega
-	// r0 = b - Ax0 = b - (M + dt * nu * S) Omega
-	S.mvp(omega.data,r.data);
-	blas_axpby(1.0,Momega.data,dt*nu,r.data,N);
-	blas_axpby(1.0,p.data,-1.0,r.data,N);
-	blas_copy(r.data,p.data,N);
-	// code bellow copied from conjugate_gradient.cpp
-	LOG_MSG("time step : b2 = %lf",b2);
-	double r2 = blas_dot(r.data,r.data,N);
-	double rel_error = sqrt(r2/b2);
-	size_t iter = 0;
-	while(iter<=iter_max && rel_error>tol){
-		r2 = cg_iterate_once(dt, nu, omega.data, r.data, p.data, Ap.data, r2);
-		rel_error = sqrt(r2/b2);
-		iter++;
+	if (dt != this->dt || nu != this->nu){
+		this->dt = dt;
+		this->nu = nu;
+		MnudtS = std::move(CSRMatrix(P,0.0));
+		build_P1_stiffness_matrix(m, MnudtS);
+		blas_scal(nu*dt,MnudtS.data.data,MnudtS.data.size);
+		build_P1_mass_matrix(m, MnudtS);
+		MnudtS_chol.update_same_pattern(MnudtS);
 	}
+	MnudtS_chol.solve(p.data,omega.data);
 
-	LOG_MSG("time step : %d iterations; %f relative error",iter,rel_error);
+	// blas_axpby(1,Momega.data,dt,p.data,N);
+	// // at this stage p = b = M * omega(t) + dt * T(Omega,Psi)(t)
+	// double b2 = blas_dot(p.data,p.data,N);
+	// // initialization x0 = Omega
+	// // r0 = b - Ax0 = b - (M + dt * nu * S) Omega
+	// S.mvp(omega.data,r.data);
+	// blas_axpby(1.0,Momega.data,dt*nu,r.data,N);
+	// blas_axpby(1.0,p.data,-1.0,r.data,N);
+	// blas_copy(r.data,p.data,N);
+	// // code bellow copied from conjugate_gradient.cpp
+	// LOG_MSG("time step : b2 = %lf",b2);
+	// double r2 = blas_dot(r.data,r.data,N);
+	// double rel_error = sqrt(r2/b2);
+	// size_t iter = 0;
+	// while(iter<=iter_max && rel_error>tol){
+	// 	r2 = cg_iterate_once(dt, nu, omega.data, r.data, p.data, Ap.data, r2);
+	// 	rel_error = sqrt(r2/b2);
+	// 	iter++;
+	// }
+
+	// LOG_MSG("time step : %d iterations; %f relative error",iter,rel_error);
 	set_zero_mean(omega.data);
 	t += dt;
 }

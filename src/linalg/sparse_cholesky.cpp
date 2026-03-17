@@ -165,6 +165,8 @@ void reverse_buffer(double*x,size_t N){
 	}
 }
 
+CholeskySolver::CholeskySolver(){}
+
 CholeskySolver::CholeskySolver(CSRMatrix &M):
 	etree(M.rows),
 	tmp_buffer(M.rows)

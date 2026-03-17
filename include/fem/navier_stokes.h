@@ -6,12 +6,16 @@
 	#include "sparse_matrix.h"
 #endif
 #include "mesh.h"
+#include "sparse_cholesky.h"
 
 struct NavierStokesSolver {
 	NavierStokesSolver(const Mesh &m);
 	const Mesh &m;
 	size_t N;   // DoF
 	double vol; // Surface(m), used for insuring zero mean to omega and psi
+	
+	double nu;
+	double dt;
 
 	TArray<double> omega;
 	TArray<double> Momega;
@@ -23,6 +27,9 @@ struct NavierStokesSolver {
 	CSRPattern P; // Pattern arrays
 	CSRMatrix S;  // Stiffness matrix
 	CSRMatrix M;  // Mass matrix
+	CSRMatrix MnudtS;
+	CholeskySolver S_chol;
+	CholeskySolver MnudtS_chol;
 #endif
 	TArray<double> r;  // current residue r = Mf - Su
 	TArray<double> p;  // internal for cg
