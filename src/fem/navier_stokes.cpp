@@ -75,6 +75,10 @@ void NavierStokesSolver::compute_transport(double *T)
 		T[j] += tri_contribution * (psi[k] - psi[i]);
 		T[k] += tri_contribution * (psi[i] - psi[j]);
 	}
+
+	for (size_t v = 0; v < N; v++) {
+		T[v] *= 1.0/6;
+	}
 }
 
 size_t NavierStokesSolver::compute_stream_function()
