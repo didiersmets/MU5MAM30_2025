@@ -32,8 +32,8 @@ add_library(nanofem
 	src/fem/navier_stokes.cpp
 	# solutions/src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
-	#src/linalg/cholesky.cpp
 	src/linalg/sparse_cholesky.cpp
+	src/linalg/sparse_tri_solve.cpp
 	src/matrix/fem_matrix.cpp
 	src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp

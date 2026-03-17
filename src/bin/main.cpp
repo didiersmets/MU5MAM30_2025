@@ -3,6 +3,7 @@
 #include "sphere.h"
 #include "P1.h"
 #include "conjugate_gradient.h"
+#include "sparse_tri_solve.h"
 
 int main(){
 	Mesh m;

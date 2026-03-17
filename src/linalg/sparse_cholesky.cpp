@@ -66,7 +66,6 @@ void cholesky_sparsity_pattern(const CSRMatrix &A,const TArray<uint32_t> &parent
 			while (mark[j] != i){
 				mark[j] = i;
 				rowL[i].push_back(j);
-				rowL[j].push_back(i);
 				j = parent[j];
 			}
 		}
@@ -82,4 +81,27 @@ void cholesky_sparsity_pattern(const CSRMatrix &A,const TArray<uint32_t> &parent
 		}
 	}
 	for(size_t i = 0;i<cho_patt.rows;i++) myqsort(cho_patt.col,cho_patt.row_start[i],cho_patt.row_start[i+1]);
+}
+void sparse_cholesky(CSRMatrix &A,CSRMatrix &L){
+	// TArray<uint32_t> etree;
+	// elimination_tree(A,etree);
+	// CSRPattern cho_patt;
+	// cholesky_sparsity_pattern(A,etree,cho_patt);
+	// CSRMatrix L(cho_patt,0);
+	L(0,0) = sqrt(A(0,0));
+	for (uint32_t i = 1; i<A.rows ;i++){
+		uint32_t b_start = A.row_start[i];
+		double *b = A.data.data + b_start;
+		uint32_t *b_ind = A.col + b_start;
+		size_t b_size = 0;
+		while (b_ind[b_size]<i && b_start + b_size < A.row_start[i+1]) b_size++;
+		uint32_t x_start = L.row_start[i];
+		double *x = L.data.data + x_start;
+		uint32_t *x_ind = L.col + x_start;
+		size_t x_size = 0;
+		while (x_ind[x_size]<i && x_start + x_size < L.row_start[i+1]) x_size++;
+		sparse_tri_solve(L,b,b_ind,b_size,x,x_ind,x_size,i);
+		double dot_product = blas_dot(x,x,x_size);
+		L.data[x_start+x_size] = sqrt(A.data[b_start+b_size] - dot_product);
+	}
 }

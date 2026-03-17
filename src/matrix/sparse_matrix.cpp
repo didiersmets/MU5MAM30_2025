@@ -95,7 +95,7 @@ void CSRMatrix::print(){
 	for (uint32_t r=0;r<rows;r++){
 		uint32_t non_zero_col = row_start[r];
 		for (uint32_t y=0; y<cols; y++){
-			if (y==col[non_zero_col]){
+			if (non_zero_col<row_start[r+1] && y==col[non_zero_col]){
 				printf("%lf ",data[non_zero_col]);
 				non_zero_col++;
 			} else {
