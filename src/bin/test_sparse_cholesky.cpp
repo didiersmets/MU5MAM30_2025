@@ -8,7 +8,7 @@
 
 int main(){
 	CSRPattern pattern {0};
-# if 1
+# if 0
 	CSRMatrix A;
 	A.rows = 5;
 	A.cols = 5;
@@ -52,11 +52,12 @@ int main(){
 	pattern.col.capacity = 24;
 	CSRMatrix A(pattern,1);
 #endif
-# if 0
+# if 1
 	Mesh m;
 	load_sphere(m,0);
 	build_P1_CSRPattern(m,pattern);
-	CSRMatrix A(pattern,1);
+	CSRMatrix A(pattern,0);
+	build_P1_stiffness_matrix(m,A);
 	build_P1_mass_matrix(m,A);
 #endif
 	A.print();

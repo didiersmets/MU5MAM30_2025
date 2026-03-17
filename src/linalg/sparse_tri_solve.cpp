@@ -1,5 +1,8 @@
 #include "sparse_tri_solve.h"
 
+/*
+ * Solve a lower triangular system were b and x are full vector
+ */
 void sparse_tri_solve(CSRMatrix &L, double *__restrict b,double *__restrict x){
 	for (size_t row = 0; row < L.rows; row++){
 		double sum = 0;
@@ -13,6 +16,11 @@ void sparse_tri_solve(CSRMatrix &L, double *__restrict b,double *__restrict x){
 		}
 	}
 }
+
+/*
+ * Solve a lower triangular system were b and x are sparse vector
+ * Assumes L has non-zero coeficients on its diagonal
+ */
 void sparse_tri_solve(CSRMatrix &L,
 		double *b, uint32_t *b_ind, size_t b_size,
 		double *x, uint32_t *x_ind, size_t x_size,
@@ -36,7 +44,7 @@ void sparse_tri_solve(CSRMatrix &L,
 				break;
 			}
 			while (x_ind[current_x_k]<col && current_x_k < x_size-1) current_x_k++;
-			if (x_ind[current_x_k == col]){
+			if (x_ind[current_x_k] == col){
 				sum += L.data[k] * x[current_x_k];
 			}
 		}

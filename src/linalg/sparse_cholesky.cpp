@@ -82,6 +82,11 @@ void cholesky_sparsity_pattern(const CSRMatrix &A,const TArray<uint32_t> &parent
 	}
 	for(size_t i = 0;i<cho_patt.rows;i++) myqsort(cho_patt.col,cho_patt.row_start[i],cho_patt.row_start[i+1]);
 }
+
+/*
+ * Sparse cholseky using the up-looking algorithm
+ * (c.f. Scott and Tuma, p.76)
+ */
 void sparse_cholesky(CSRMatrix &A,CSRMatrix &L){
 	// TArray<uint32_t> etree;
 	// elimination_tree(A,etree);
