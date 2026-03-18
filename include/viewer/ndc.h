@@ -25,8 +25,13 @@
 #include "vec3.h"
 
 #define NDC_REVERSED_Y 0
-#define NDC_REVERSED_Z 1
-#define NDC_Z_ZERO_ONE 1
+#ifndef __APPLE__
+	#define NDC_REVERSED_Z 1
+	#define NDC_Z_ZERO_ONE 1
+#else
+	#define NDC_REVERSED_Z 0
+	#define NDC_Z_ZERO_ONE 0
+#endif
 
 /* The various graphic API do NOT agree on the definition
  * of Normalized Device Coordinates (hereafter NDC).
@@ -88,14 +93,6 @@ inline Vec3 nwd_to_ndc(float x, float y, float depth)
 		ndc.y = 2.f * y - 1.f;
 	if constexpr (!reversed_y)
 		ndc.y = 1.f - 2.f * y;
-	// if constexpr (z_zero_one && reversed_z)
-	//	ndc.z = 1.f - depth;
-	// if constexpr (z_zero_one && !reversed_z)
-	//	ndc.z = depth;
-	// if constexpr (!z_zero_one && reversed_z)
-	//	ndc.z = 1.f - 2.f * depth;
-	// if constexpr (!z_zero_one && !reversed_z)
-	//	ndc.z = 2.f * depth - 1.f;
 	if constexpr (z_zero_one)
 		ndc.z = depth;
 	if constexpr (!z_zero_one)
@@ -106,10 +103,12 @@ inline Vec3 nwd_to_ndc(float x, float y, float depth)
 /*
 inline void set_up_opengl_for_ndc()
 {
+#ifndef __APPLE__
 	constexpr GLenum origin = reversed_y ? GL_UPPER_LEFT : GL_LOWER_LEFT;
 	constexpr GLenum depth =
 	    z_zero_one ? GL_ZERO_TO_ONE : GL_NEGATIVE_ONE_TO_ONE;
 	glClipControl(origin, depth);
+#endif
 	if constexpr (reversed_z) {
 		glDepthFunc(GL_GREATER);
 		glClearDepth(0.0f);
