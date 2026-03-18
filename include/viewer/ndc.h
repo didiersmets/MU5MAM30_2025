@@ -3,8 +3,24 @@
 #ifndef GL_GLEXT_PROTOTYPES
 	#define GL_GLEXT_PROTOTYPES 1
 #endif
-#include <GL/gl.h>
-#include <GL/glext.h>
+ #if defined(__APPLE__)
+
+  #if !defined(GLFW_INCLUDE_GLEXT)
+   #define GL_GLEXT_LEGACY
+  #endif
+  #include <OpenGL/gl.h>
+  #include <OpenGL/glext.h>
+
+
+ #else /*__APPLE__*/
+
+  #include <GL/gl.h>
+  #if defined(GLFW_INCLUDE_GLEXT)
+   #include <GL/glext.h>
+  #endif
+
+ #endif /*__APPLE__*/
+
 
 #include "vec3.h"
 
@@ -87,7 +103,7 @@ inline Vec3 nwd_to_ndc(float x, float y, float depth)
 
 	return (ndc);
 }
-
+/*
 inline void set_up_opengl_for_ndc()
 {
 	constexpr GLenum origin = reversed_y ? GL_UPPER_LEFT : GL_LOWER_LEFT;
@@ -99,4 +115,22 @@ inline void set_up_opengl_for_ndc()
 		glClearDepth(0.0f);
 	}
 }
+*/
 
+
+inline void set_up_opengl_for_ndc()
+{
+#if defined(GL_ARB_clip_control)
+    const GLenum origin = reversed_y ? GL_UPPER_LEFT : GL_LOWER_LEFT;
+    const GLenum depth  = z_zero_one ? GL_ZERO_TO_ONE : GL_NEGATIVE_ONE_TO_ONE;
+    glClipControl(origin, depth);
+
+    if constexpr (reversed_z) {
+        glDepthFunc(GL_GREATER);
+        glClearDepth(0.0f);
+    }
+#else
+    // macOS OpenGL typically has no glClipControl / GL_ZERO_TO_ONE
+    // Keep default OpenGL conventions (NDC z in [-1, 1]).
+#endif
+}

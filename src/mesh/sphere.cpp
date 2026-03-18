@@ -1,20 +1,27 @@
-#include <stdint.h>
-#include <stdio.h>
-
+#include "sphere.h"
 #include "cube.h"
-#include "mesh.h"
-#include "vec3.h"
+#include <cmath>
 
-int load_sphere(Mesh &m, size_t subdiv)
-{
-	if (int res = load_cube(m, subdiv))
-		return (res);
+int load_sphere(Mesh &m, size_t subdiv) {
+    // 1. Build a cube first
+    // This gives us the correct "Grid" topology wrapped around a center point
+    load_cube(m, subdiv);
 
-	Vec3 *pos = m.positions.data;
-	size_t vtx_count = m.positions.size;
-	for (size_t i = 0; i < vtx_count; ++i) {
-		pos[i] = normalized(pos[i]);
-	}
+    // 2. Inflate the cube
+    // Iterate over every vertex and normalize it (make length = 1)
+    for (size_t i = 0; i < m.positions.size; ++i) {
+        Vec3& p = m.positions[i];
 
-	return (0);
+        // Calculate current distance from center
+        float len = std::sqrt(p.x*p.x + p.y*p.y + p.z*p.z);
+
+        // Project onto unit sphere
+        if (len > 1e-6f) {
+            p.x /= len;
+            p.y /= len;
+            p.z /= len;
+        }
+    }
+
+    return 0;
 }

@@ -1,51 +1,58 @@
-#include <assert.h>
-#include <stdint.h>
-#include <stdio.h>
-
 #include "cube.h"
 #include "duplicate_verts.h"
-#include "math_utils.h"
-#include "mesh.h"
-#include "sys_utils.h"
-#include "vec3.h"
+#include <cmath>
 
-static void load_cube_vertices(Vec3 *pos, size_t subdiv);
-static void load_cube_indices(uint32_t *idx, size_t subdiv);
+static void add_face(Mesh &m, size_t subdiv, Vec3 origin, Vec3 u_dir, Vec3 v_dir) {
+    size_t start_idx = m.vertex_count();
 
-int load_cube(Mesh &m, size_t subdiv)
-{
-	/* Check subdiv is reasonable and return error if not */
-	if (subdiv <= 0 || subdiv > (1 << 14) /* 16K */) {
-		return (-1);
-	}
+    // 1. Generate Vertices
+    for (size_t y = 0; y <= subdiv; ++y) {
+        for (size_t x = 0; x <= subdiv; ++x) {
+            float u = (float)x / subdiv;
+            float v = (float)y / subdiv;
 
-	size_t n = subdiv + 1;
+            Vec3 p;
+            p.x = origin.x + (u_dir.x * u * 2.0f) + (v_dir.x * v * 2.0f);
+            p.y = origin.y + (u_dir.y * u * 2.0f) + (v_dir.y * v * 2.0f);
+            p.z = origin.z + (u_dir.z * u * 2.0f) + (v_dir.z * v * 2.0f);
 
-	/* Reserve memory for vertices and indices */
-	m.positions.resize(6 * POW2(n));
-	m.indices.resize(36 * POW2(subdiv));
+            m.positions.push_back(p); 
+        }
+    }
 
-	/* First build vertices as six unattached faces of n^2 vertices each */
-	/* See below for implementation */
-	load_cube_vertices(m.positions.data, subdiv);
+    // 2. Generate Indices
+    size_t row_len = subdiv + 1;
+    for (size_t y = 0; y < subdiv; ++y) {
+        for (size_t x = 0; x < subdiv; ++x) {
+            uint32_t bl = start_idx + (y * row_len) + x;
+            uint32_t br = start_idx + (y * row_len) + x + 1;
+            uint32_t tl = start_idx + ((y + 1) * row_len) + x;
+            uint32_t tr = start_idx + ((y + 1) * row_len) + x + 1;
 
-	/* Build corresponding triangulation indices */
-	/* See below for implementation */
-	load_cube_indices(m.indices.data, subdiv);
+            m.indices.push_back(bl);
+            m.indices.push_back(br);            
+            m.indices.push_back(tr);
 
-	/* Finally attach faces between themselves */
-	/* Implementation in src/duplicate_verts.cpp */
-	remove_duplicate_vertices(m);
-
-	return (0);
+            m.indices.push_back(bl);
+            m.indices.push_back(tr);
+            m.indices.push_back(tl);
+        }
+    }
 }
 
-static void load_cube_vertices(Vec3 *pos, size_t subdiv)
-{
-	/* Your implementation goes here */
-}
+int load_cube(Mesh &m, size_t subdiv) {
+    // If your TArray has a .clear() function, call it here:
+    // m.positions.clear();
+    // m.indices.clear();
 
-static void load_cube_indices(uint32_t *idx, size_t subdiv)
-{
-	/* Your implementation goes here */
+    add_face(m, subdiv, {-1, -1,  1}, { 1, 0, 0}, { 0, 1, 0});
+    add_face(m, subdiv, { 1, -1, -1}, {-1, 0, 0}, { 0, 1, 0});
+    add_face(m, subdiv, { 1, -1,  1}, { 0, 0,-1}, { 0, 1, 0});
+    add_face(m, subdiv, {-1, -1, -1}, { 0, 0, 1}, { 0, 1, 0});
+    add_face(m, subdiv, {-1,  1,  1}, { 1, 0, 0}, { 0, 0,-1});
+    add_face(m, subdiv, {-1, -1, -1}, { 1, 0, 0}, { 0, 0, 1});
+
+    remove_duplicate_vertices(m);
+
+    return 0;
 }

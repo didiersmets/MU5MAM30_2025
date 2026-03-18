@@ -161,7 +161,8 @@ static int load_mesh(Mesh &mesh, int argc, char **argv)
 {
 	int res = -1;
 	if (argc > 2 && strncmp(argv[1], "cube2", 5) == 0) {
-		res = load_cube_nested_dissect(mesh, atoi(argv[2]));
+		//res = load_cube_nested_dissect(mesh, atoi(argv[2]));
+		res = load_cube(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "cube", 4) == 0) {
 		res = load_cube(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0) {

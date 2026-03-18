@@ -24,6 +24,8 @@ Aabb compute_mesh_bounds(const Mesh &m)
 			max[j] = (pos[j] > max[j]) ? pos[j] : max[j];
 		}
 	}
-
+	// print the min and max values
+	//printf("Min: (%f, %f, %f)\n", min.x, min.y, min.z);
+	//printf("Max: (%f, %f, %f)\n", max.x, max.y, max.z);
 	return { min, max };
 }
