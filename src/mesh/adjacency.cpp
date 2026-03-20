@@ -6,17 +6,18 @@ VTAdjacency::VTAdjacency(const Mesh &m)
 {
 	// Computing the degrees
 	// Cost: O(n)
-	for ( uint32_t index : m.indices ) {
-		this->degree[index]++;
+	for ( int i = 0; i < m.indices.size; i++ ) {
+		this->degree[m.indices[i]]++;
 	}
 	// Computing the offsets
 	// Cost: O(n)
+	this->offset[0] = 0;
 	for ( uint32_t index = 1; index < m.vertex_count(); index++ ) {
-		this->offset[index] += this->offset[index-1];
+		this->offset[index] = this->offset[index-1] + this->degree[index-1];
 	}
 
 	// Tracks the first available position for storing next adiacent triangle to a certain vertex
-	TArray<uint32_t> filling(m.vertex_count, 0);
+	TArray<uint32_t> filling(m.vertex_count(), 0);
 
 	// Computing the vtri
 	// Cost: O(n)

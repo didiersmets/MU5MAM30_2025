@@ -16,7 +16,7 @@
  * Hiden for now.
  */
 template <typename T>
-void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
+void inline mass(const TVec3<T> &AB, const TVec3<T> &AC, T *__restrict M)
 {
     // 1. Passing from triangle in 3D to triangle in 2D
                                     // A = (0, 0)
@@ -24,6 +24,13 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
     T x_c = dot(AC, AB) / x_b;      // C = (AC . AB / ||AB||, 
     //                                      ||AC - (AC . AB / ||AB||^2) * AB ||)
     T y_c = norm(AC - (x_c / norm(AB)) * AB);
+
+    if ( x_b == 0 ) {
+        printf("x_b GENERATES A NAN\n");
+        printf("AB_x, AB_y, AB_z=(%f,%f,%f)\n", AB.x, AB.y, AB.z);
+    } else if ( norm(AB) == 0 ) {
+        printf("AB GENERATES A NAN\n");
+    }
 
     // 2. Passing from any-shape triangle in 2D to "canonic" 2D triangle:
     /*  C = (0, 1)

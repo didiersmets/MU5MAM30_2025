@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <cmath>
 
 #include "gl_utils.h"
 
@@ -91,6 +92,25 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 	}
 }
 
+void check_solution(const PoissonSolver& solver) {
+	double l2_norm = 0.0;
+	double linf_norm = 0.0;
+	double m = 2, n = 3;
+	double eigval = -m*(m + n - 2);
+	for ( size_t i=0; i<solver.u.size; i++ ) {
+		double diff = solver.u[i] - eigval*solver.f[i];
+		if ( diff < 0 ) {
+			diff *= -1;
+		}
+
+		l2_norm += diff * diff;
+		linf_norm = diff > linf_norm ? diff : linf_norm;
+	}
+	l2_norm = std::sqrt(l2_norm);
+	printf("L2 error norm: %e\n", l2_norm);
+	printf("Linf error norm: %e\n", linf_norm);
+}
+
 int main(int argc, char **argv)
 {
 	log_init(0);
@@ -123,8 +143,8 @@ int main(int argc, char **argv)
 	LOG_MSG("Viewer initialized.");
 
 	/* Prepare GPU data */
-	const char *vert_shader = "./shaders/fem.vert";
-	const char *frag_shader = "./shaders/fem.frag";
+	const char *vert_shader = "../shaders/fem.vert";
+	const char *frag_shader = "../shaders/fem.frag";
 	int shader = create_shader(vert_shader, frag_shader);
 	if (!shader) {
 		exit(EXIT_FAILURE);
@@ -138,6 +158,11 @@ int main(int argc, char **argv)
 	while (!viewer.should_close()) {
 		viewer.poll_events();
 		update_all(solver, mesh, gpu_mesh);
+
+		if ( solver.converged ) {
+			check_solution(solver);
+		}
+
 		viewer.begin_frame();
 		draw_scene(viewer, shader, gpu_mesh);
 		draw_gui(solver);
@@ -225,6 +250,7 @@ static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max)
 static void update_all(PoissonSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh)
 {
 	bool needs_upload = true;
+	// printf("Started=%d, one_step=%d\n", started, one_step);
 	if (started || one_step) {
 		solver.do_iterate(iter_per_frame, 1e-6);
 		if (one_step) {

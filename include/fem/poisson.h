@@ -1,6 +1,6 @@
 #include "array.h"
 
-#define USE_FEM_MATRIX true
+#define USE_FEM_MATRIX false
 #if USE_FEM_MATRIX
 #include "fem_matrix.h"
 #else

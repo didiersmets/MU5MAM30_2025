@@ -19,7 +19,23 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 {
-	/* Your implementation goes here */
+	uint32_t num_cols;		// num of nonzero cols in a row
+	uint32_t index_in_data;	// index of the matrix entry in data array
+	int j;					// column of the matrix entry and index input x
+	for ( int i = 0; i < this->rows; i++ ) {
+		y[i] = 0.0;
+		num_cols = this->row_start[i+1] - row_start[i];
+		for ( int j_index = 0; j_index < num_cols; j_index++ ) {
+			index_in_data = this->row_start[i]+j_index;
+			j = this->col[index_in_data];
+			y[i] += this->data[index_in_data] * x[j];
+			// printf("this->data[index_in_data]=%lf, x[j]=%lf\n", this->data[index_in_data], x[j]);
+			// printf("y[%d]=%lf\n", i, y[i]);
+		}
+	}
+	printf("mvp called\n");
+	// Note: last row is not handled separately because this->row_start[i+1] is well 
+	// 		 defined and it is equal to nnz
 }
 
 double CSRMatrix::sum() const
@@ -28,12 +44,13 @@ double CSRMatrix::sum() const
 	for (size_t k = 0; k < nnz; k++) {
 		res += data[k];
 	}
-	if (symmetric) {
-		res *= 2;
-		for (size_t k = 0; k < rows; k++) {
-			assert(col[row_start[k + 1] - 1] == k);
-			res -= data[row_start[k + 1] - 1];
-		}
-	}
+	// TODO: compress symmetric matrix such that only triangular matrix is stored
+	// if (symmetric) {
+	// 	res *= 2;
+	// 	for (size_t k = 0; k < rows; k++) {
+	// 		assert(col[row_start[k + 1] - 1] == k);
+	// 		res -= data[row_start[k + 1] - 1];
+	// 	}
+	// }
 	return res;
 }

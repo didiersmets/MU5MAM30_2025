@@ -22,7 +22,7 @@
  *
  */
 template <typename T>
-void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
+void inline stiffness(const TVec3<T> &AB, const TVec3<T> &AC, T *__restrict S)
 {
     // 1. Passing from triangle in 3D to triangle in 2D
                                     // A = (0, 0)
