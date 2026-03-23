@@ -8,6 +8,7 @@
 #include "tiny_blas.h"
 
 // this methode is for boundary conditions 
+//this function is to force a vector to be 0 on the boundary
 static inline void project_boundary(double *vec, size_t N, bool has_boundary, const std::vector<bool> *is_boundary) 
 {
     if (has_boundary && is_boundary != nullptr) {
@@ -22,26 +23,30 @@ static inline void project_boundary(double *vec, size_t N, bool has_boundary, co
 double projected_cg_iterate_once(const Matrix &A, double *__restrict x,
                                  double *__restrict r, double *__restrict p,
                                  double *__restrict Ap, double r2,
-                                 bool has_boundary, const std::vector<bool> *is_boundary)
+                                 bool has_boundary,
+                                 const std::vector<bool> *is_boundary)
 {
     size_t N = A.rows;
-
+ 
     A.mvp(p, Ap);
+ 
     double pAp = blas_dot(p, Ap, N);
     double alpha = r2 / pAp;
-
+ 
     blas_axpy(alpha, p, x, N);
     blas_axpy(-alpha, Ap, r, N);
-
-    // projection
+ 
+    //force r=0 on the boundary
     project_boundary(r, N, has_boundary, is_boundary);
-
+ 
     double r2_new = blas_dot(r, r, N);
+ 
     double beta = r2_new / r2;
     blas_axpby(1.0, r, beta, p, N);
-
+ 
+    //force p=0 on the boundary
     project_boundary(p, N, has_boundary, is_boundary);
-
+ 
     return r2_new;
 }
 

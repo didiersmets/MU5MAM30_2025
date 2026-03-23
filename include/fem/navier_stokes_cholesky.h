@@ -6,49 +6,40 @@
 	#include "sparse_matrix.h"
 #endif
 
-#include "cholesky.h"   /* CholeskySolver */
+#include "cholesky.h"
 #include "mesh.h"
 #include <string.h>
 
 struct NavierStokesSolver {
-	NavierStokesSolver(const Mesh &m);
+	NavierStokesSolver(const Mesh &m, double dt, double nu); // dt and nu now required at construction
 	const Mesh &m;
-	size_t N;   // DoF
-	double vol; // Surface(m), used for insuring zero mean to omega and psi
+	size_t N;
+	double vol;
 
 	TArray<double> omega;
 	TArray<double> Momega;
 	TArray<double> psi;
 #if USE_FEM_MATRIX
-	FEMatrix S; // Stiffness matrix
-	FEMatrix M; // Mass matrix
+	FEMatrix S;
+	FEMatrix M;
 #else
-	CSRPattern P; // Pattern arrays
-	CSRMatrix S;  // Stiffness matrix
-	CSRMatrix M;  // Mass matrix
+	CSRPattern P;
+	CSRMatrix S;
+	CSRMatrix M;
 #endif
 
-	TArray<double> r;  // scratch
-	TArray<double> p;  // scratch
-	TArray<double> Ap; // scratch
+	TArray<double> r;
+	TArray<double> p;
+	TArray<double> Ap;
 
-	/* Cholesky factorization of S (for stream function solve).
-	 * NOTE: S has a 1D kernel (constants); we handle this by
-	 * using set_zero_mean before and after the solve, exactly
-	 * as we did with CG.  The factorization itself ignores the
-	 * kernel — it will produce a valid solution modulo a constant,
-	 * which set_zero_mean then removes.                              */
+	/* Cholesky factorization of S (for stream function solve) */
 	CholeskySolver chol_S;
 
-	/* Cholesky factorization of  A_dt = M + nu*dt*S.
-	 * Must be rebuilt whenever dt or nu changes via setup_cholesky(). */
+	/* Cholesky factorization of A = M + nu*dt*S (for time step solve) */
 	CholeskySolver chol_A;
 
-	/* CSRMatrix wrapper for  M + nu*dt*S  (owns its data array).
-	 * row_start and col are shared with P (same sparsity pattern).  */
-	CSRMatrix A_dt;   /* M + nu*dt*S */
-	double    last_dt = -1.0;
-	double    last_nu = -1.0;
+	/* CSRMatrix for M + nu*dt*S */
+	CSRMatrix A_dt;
 
 	bool inited;
 
@@ -56,9 +47,6 @@ struct NavierStokesSolver {
 	double tol = 1e-6;
 
 	double t;
-
-	/* Call this once (or whenever dt/nu change) before starting the loop. */
-	void setup_cholesky(double dt, double nu);
 
 	void set_zero_mean(double *V);
 	size_t compute_stream_function();

@@ -117,7 +117,7 @@ int main(int argc, char **argv)
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	NavierStokesSolver solver(mesh);
+	NavierStokesSolver solver(mesh, dt, pow(10, lognu));
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
@@ -390,4 +390,3 @@ static void key_cb(int key, int action, int mods, void *args)
 		return;
 	}
 }
-
