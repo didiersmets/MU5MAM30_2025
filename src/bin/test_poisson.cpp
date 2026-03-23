@@ -36,6 +36,8 @@ bool one_step = false;
 bool reset = false;
 int iter_per_frame = 1;
 
+bool one_after_convergence = true;
+
 /* RHS expression of the PDE */
 char rhs_expression[128] =
 	"cos(35 * y * sin(27 + 13 * x^2 + 19 * z^2 - 13 * x * z))";
@@ -93,22 +95,22 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 }
 
 void check_solution(const PoissonSolver& solver) {
-	double l2_norm = 0.0;
-	double linf_norm = 0.0;
-	double m = 2, n = 3;
-	double eigval = -m*(m + n - 2);
-	for ( size_t i=0; i<solver.u.size; i++ ) {
-		double diff = solver.u[i] - eigval*solver.f[i];
-		if ( diff < 0 ) {
-			diff *= -1;
-		}
+    double l2 = 0.0;
+    double linf = 0.0;
+	constexpr double m = 2, n = 3;
+	constexpr double eigval = - m * (m + n - 2);
+    for (size_t i = 0; i < solver.u.size; i++) {
 
-		l2_norm += diff * diff;
-		linf_norm = diff > linf_norm ? diff : linf_norm;
-	}
-	l2_norm = std::sqrt(l2_norm);
-	printf("L2 error norm: %e\n", l2_norm);
-	printf("Linf error norm: %e\n", linf_norm);
+        double diff = std::abs(eigval *  solver.u[i] - solver.f[i]);
+
+        l2 += diff * diff;
+        linf = std::max(linf, diff);
+    }
+
+    l2 = std::sqrt(l2);
+
+    printf("L2 error norm: %e\n", l2);
+    printf("Linf error norm: %e\n", linf);
 }
 
 int main(int argc, char **argv)
@@ -160,7 +162,12 @@ int main(int argc, char **argv)
 		update_all(solver, mesh, gpu_mesh);
 
 		if ( solver.converged ) {
-			check_solution(solver);
+			if ( one_after_convergence ) {
+				check_solution(solver);
+				one_after_convergence = false;
+			}
+		} else {
+			one_after_convergence = true;
 		}
 
 		viewer.begin_frame();

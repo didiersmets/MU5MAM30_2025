@@ -21,56 +21,75 @@
  * Hiden for now.
  *
  */
-template <typename T>
-void inline stiffness(const TVec3<T> &AB, const TVec3<T> &AC, T *__restrict S)
+// template <typename T>
+// void inline stiffness(const TVec3<T> &AB, const TVec3<T> &AC, T *__restrict S)
+// {
+//     // 1. Passing from triangle in 3D to triangle in 2D
+//                                     // A = (0, 0)
+// 	T x_b = norm(AB);               // B = (||AB||, 0)
+//     T x_c = dot(AC, AB) / x_b;      // C = (AC . AB / ||AB||, 
+//     //                                      ||AC - (AC . AB / ||AB||^2) * AB ||)
+//     T y_c = norm(AC - (x_c / norm(AB)) * AB);
+
+//     // 2. Passing from any-shape triangle in 2D to "canonic" 2D triangle:
+//     /*  C = (0, 1)
+//      *  | \
+//      *  |   \
+//      *  A ---- B = (1, 0)   and A = (0, 0)
+//      *
+//      * This transformation is performed with the following matrix:
+//      *       | x_b   x_c |              | 1/x_b   -x_c/(x_b*y_c) |                         
+//      * tau = |           | and tau^-1 = |                        |   
+//      *       |  0    y_c |              |  0         1/y_c       |                         
+//      */
+
+//     T tau_det = x_b*y_c;    // Jacobian of the trasformation is the determinant of 
+//                                 // the matrix
+
+//     // Phi_A = -x -y -1  --> grad(Phi_A) = (-1, -1)
+//     // Phi_B = x         --> grad(Phi_B) = (1, 0)
+//     // Phi_C = y         --> grad(Phi_C) = (0, 1)
+
+//     // Finally, the integration:              | 1/x_b^2 * (1+(x_c/y_c)^2 - 2*x_c/y_c    -x_c/(x_b^2*y_c)) |   
+// 	// We need to build tau^(-1) * tau^(-T) = |                                                           | 
+// 	//										  |    -x_c/(x_b^2*y_c)                           1/y_c^2     |   
+//     //                                    
+//     //                                        | a     b |
+//     //                                      = |         |
+//     //                                        | b     c |
+// 	T a = 1/(x_b*x_b) * ( 1 + (x_c/y_c)*(x_c/y_c) - 2*x_c / y_c );
+// 	T b = -x_c / (x_b*y_c*y_c);
+// 	T c = 1/(y_c*y_c);
+
+//     // diagonal
+//     S[0*3 + 0] = (a+b+c) * tau_det / 2;  // int(grad(Phi_A) * grad(Phi_A))
+//     S[1*3 + 1] = a       * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_B))
+//     S[2*3 + 2] = c       * tau_det / 2;  // int(grad(Phi_C) * grad(Phi_C))
+//     // upper triangle
+//     S[0*3 + 1] = (-1) * (a+b) * tau_det / 2;  // int(grad(Phi_A) * grad(Phi_B))
+//     S[0*3 + 2] = (-1) * (b+c) * tau_det / 2;  // int(grad(Phi_A) * grad(Phi_C))
+//     S[1*3 + 2] = b            * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_C))
+//     // lower triangle (simmetric)
+//     S[1*3 + 0] = (-1) * (a+b) * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_A))
+//     S[2*3 + 0] = (-1) * (b+c) * tau_det / 2;  // int(grad(Phi_C) * grad(Phi_A))
+//     S[2*3 + 1] = b            * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_C))
+// }
+
+void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-    // 1. Passing from triangle in 3D to triangle in 2D
-                                    // A = (0, 0)
-	T x_b = norm(AB);               // B = (||AB||, 0)
-    T x_c = dot(AC, AB) / x_b;      // C = (AC . AB / ||AB||, 
-    //                                      ||AC - (AC . AB / ||AB||^2) * AB ||)
-    T y_c = norm(AC - (x_c / norm(AB)) * AB);
+	double ABAB = norm2(AB);
+	double ACAC = norm2(AC);
+	double ABAC = dot(AB, AC);
+	double mult = 0.5 / sqrt(ABAB * ACAC - ABAC * ABAC);
+	ABAB *= mult;
+	ACAC *= mult;
+	ABAC *= mult;
 
-    // 2. Passing from any-shape triangle in 2D to "canonic" 2D triangle:
-    /*  C = (0, 1)
-     *  | \
-     *  |   \
-     *  A ---- B = (1, 0)   and A = (0, 0)
-     *
-     * This transformation is performed with the following matrix:
-     *       | x_b   x_c |              | 1/x_b   -x_c/(x_b*y_c) |                         
-     * tau = |           | and tau^-1 = |                        |   
-     *       |  0    y_c |              |  0         1/y_c       |                         
-     */
-
-    T tau_det = x_b*y_c;    // Jacobian of the trasformation is the determinant of 
-                                // the matrix
-
-    // Phi_A = -x -y -1  --> grad(Phi_A) = (-1, -1)
-    // Phi_B = x         --> grad(Phi_B) = (1, 0)
-    // Phi_C = y         --> grad(Phi_C) = (0, 1)
-
-    // Finally, the integration:              | 1/x_b^2 * (1+(x_c/y_c)^2 - 2*x_c/y_c    -x_c/(x_b^2*y_c)) |   
-	// We need to build tau^(-1) * tau^(-T) = |                                                           | 
-	//										  |    -x_c/(x_b^2*y_c)                           1/y_c^2     |   
-    //                                    
-    //                                        | a     b |
-    //                                      = |         |
-    //                                        | b     c |
-	T a = 1/(x_b*x_b) * ( 1 + (x_c/y_c)*(x_c/y_c) - 2*x_c / y_c );
-	T b = -x_c / (x_b*y_c*y_c);
-	T c = 1/(y_c*y_c);
-
-    // diagonal
-    S[0*3 + 0] = (a+b+c) * tau_det / 2;  // int(grad(Phi_A) * grad(Phi_A))
-    S[1*3 + 1] = a       * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_B))
-    S[2*3 + 2] = c       * tau_det / 2;  // int(grad(Phi_C) * grad(Phi_C))
-    // upper triangle
-    S[0*3 + 1] = (-1) * (a+b) * tau_det / 2;  // int(grad(Phi_A) * grad(Phi_B))
-    S[0*3 + 2] = (-1) * (b+c) * tau_det / 2;  // int(grad(Phi_A) * grad(Phi_C))
-    S[1*3 + 2] = b            * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_C))
-    // lower triangle (simmetric)
-    S[1*3 + 0] = (-1) * (a+b) * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_A))
-    S[2*3 + 0] = (-1) * (b+c) * tau_det / 2;  // int(grad(Phi_C) * grad(Phi_A))
-    S[2*3 + 1] = b            * tau_det / 2;  // int(grad(Phi_B) * grad(Phi_C))
+	S[0] = ACAC - 2 * ABAC + ABAB;
+	S[1] = ACAC;
+	S[2] = ABAB;
+	S[3] = ABAC - ACAC;
+	/* Note the chosen order : (B,C)-> 4 and (C,A) -> 5 */
+	S[4] = -ABAC;
+	S[5] = ABAC - ABAB;
 }

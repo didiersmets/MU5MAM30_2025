@@ -40,11 +40,7 @@ void PoissonSolver::clear_solution()
 
 void PoissonSolver::set_zero_mean(double *V)
 {
-	// for (int j = 0; j < M.cols; j++ ) {
-	// 	printf("V[%d]=%lf\n", j, V[j]);
-	// }
 	M.mvp(V, Ap.data);
-
 	double s = blas_sum_in_place(Ap.data, N);
 	for (size_t i = 0; i < N; ++i) {
 		V[i] -= s / vol;
@@ -65,9 +61,6 @@ void PoissonSolver::init_cg()
 
 	/* r_0 = Mf - Au_0 */
 	/* Compute also b2 = ||Mf||^2  */
-	// for (int j = 0; j < M.cols; j++ ) {
-	// 	printf("F[%d]=%lf\n", j, F[j]);
-	// }
 	M.mvp(F, R);
 	b2 = blas_dot(R, R, N);
 	A.mvp(U, AP); /* AP used as temp storage */
@@ -91,15 +84,11 @@ void PoissonSolver::do_iterate(size_t max_iter, double tol)
 	double *P = p.data;
 	double *AP = Ap.data;
 
-	printf("Max_iter before: %ld\n", max_iter);
-	printf("rel_error: %lf, tol:%lf\n", rel_error, tol);
 	while (max_iter-- && rel_error > tol) {
 		r2 = cg_iterate_once(A, U, R, P, AP, r2);
 		iterate++;
 		rel_error = sqrt(r2 / b2);
 	}
-
-	printf("Max_iter after: %ld\n", max_iter);
 
 	if (rel_error <= tol)
 		converged = true;

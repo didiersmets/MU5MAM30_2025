@@ -66,3 +66,9 @@ void inline mass(const TVec3<T> &AB, const TVec3<T> &AC, T *__restrict M)
     M[2*3 + 0] = (1.0/24.0) * tau_det;  // int(Phi_C * Phi_A)
     M[2*3 + 1] = (1.0/24.0) * tau_det;  // int(Phi_B * Phi_C)
 }
+
+// void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
+// {
+// 	M[0] = norm(cross(AB, AC)) / 12;
+// 	M[1] = M[0] / 2;
+// }
