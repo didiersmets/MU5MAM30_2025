@@ -44,10 +44,14 @@ char rhs_expression[128] =
     "100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
+
+/* Aggregate Initialization of array of objects of class te_variables. See file tinyexpr.h/.c */
 te_variable rhs_vars[] = {{"x", &rhs_x},   {"y", &rhs_y},     {"z", &rhs_z},
-			  {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}};
+			  {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}}; 
 te_expr *te_rhs = NULL;
 
+
+/* Forward Declarations of functions (See below) */
 static void syntax(char *prg_name);
 static int load_mesh(Mesh &mesh, int argc, char **argv);
 static void rescale_and_recenter_mesh(Mesh &mesh);
@@ -66,7 +70,7 @@ void reset_solver(NavierStokesSolver &solver)
 		rhs_x = solver.m.positions[i].x;
 		rhs_y = solver.m.positions[i].y;
 		rhs_z = solver.m.positions[i].z;
-		rhs_p = atan2(rhs_y, rhs_x);
+		rhs_p = atan2(rhs_	y, rhs_x);
 		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
 		rhs_r = (double)rand() / RAND_MAX;
 		solver.omega[i] = te_eval(te_rhs);
@@ -131,6 +135,7 @@ int main(int argc, char **argv)
 	init_camera_for_mesh(mesh, viewer.camera);
 	viewer.init("Navier Stokes 2D solver (vorticity formulation)");
 	viewer.register_key_callback({key_cb, NULL});
+	/* We do not have the following line in the Poisson solver:*/
 	viewer.mouse.set_double_click_time(-1);
 	LOG_MSG("Viewer initialized.");
 
@@ -139,6 +144,8 @@ int main(int argc, char **argv)
 	const char *frag_shader = "./shaders/fem.frag";
 	int shader = create_shader(vert_shader, frag_shader);
 	if (!shader) {
+		/* Here are two lines missing that are 
+		included in the Poisson solver */
 		exit(EXIT_FAILURE);
 	}
 	LOG_MSG("Shader initialized.");
