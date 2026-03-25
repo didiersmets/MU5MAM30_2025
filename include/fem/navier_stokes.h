@@ -1,3 +1,5 @@
+#include <vector>
+
 #include "array.h"
 #define USE_FEM_MATRIX false
 #if USE_FEM_MATRIX
@@ -6,11 +8,16 @@
 	#include "sparse_matrix.h"
 #endif
 #include "mesh.h"
+#include "cholesky.h"
+
+enum class SolverType { CG, CHOLESKY };
 
 struct NavierStokesSolver {
-	NavierStokesSolver(const Mesh &m);
+	NavierStokesSolver(const Mesh &m, int degre = 1, SolverType solver = SolverType::CG, double nu = 1e-3, double dt = 0.002);/*ajout du degre pour P2*/
 	const Mesh &m;
+	int degre;
 	size_t N;   // DoF
+	std::vector<uint32_t> edge_ddls;
 	double vol; // Surface(m), used for insuring zero mean to omega and psi
 
 	TArray<double> omega;
@@ -27,6 +34,15 @@ struct NavierStokesSolver {
 	TArray<double> r;  // current residue r = Mf - Su
 	TArray<double> p;  // internal for cg
 	TArray<double> Ap; // internal for cg
+
+	// Cholesky solver fields
+	SolverType solver_type = SolverType::CG;
+	bool cholesky_ready = false;
+	CSRPattern cholesky_A_pattern;  // Pattern for matrix A = M + nu*dt*S
+	TArray<uint32_t> cholesky_perm;
+	TArray<uint32_t> cholesky_iperm;
+	CSRPattern cholesky_L_pattern;
+	CSRMatrix cholesky_L;
 
 	bool inited; // Initialization computes first residue and error
 

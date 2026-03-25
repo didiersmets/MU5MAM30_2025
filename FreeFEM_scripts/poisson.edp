@@ -1,0 +1,52 @@
+bool debug = true;
+
+real R = 1.0;
+int nx = 200;
+int ny = 300;
+
+// x = Longitude : 0 à 2*pi (Tour complet)
+// y = Latitude : 0 à pi (Nord vers Sud uniquement)
+mesh Th = square(nx, ny, [x*2*pi, y*pi]);
+
+// Paramétrisation de la sphère
+func fx = R * sin(y) * cos(x);
+func fy = R * sin(y) * sin(x);
+func fz = R * cos(y);
+
+func per = [[2, x], [4, x]]; 
+
+// Projection
+meshS ThS = movemesh23(Th, transfo=[fx, fy, fz]);
+
+plot(ThS, wait=1);
+
+//Poisson Solver
+
+fespace Vh(ThS,P1); //Finite functionnal space
+Vh u,v;
+
+//define rhs
+//func f = cos(x)*sin(y);
+func f = cos(35 * y * sin(27 + 13 * x*x + 19 * z*z - 13 * x * z));
+//func f = exp(cos(x))*sin(x*y*y);
+//func f = x*y;
+//func f = cos(x*y);
+
+real cpu = clock();
+
+macro grad(u) [dx(u), dy(u), dz(u)] //
+real eps = 1e-5;
+
+problem Poisson(u, v, solver=CG) = 
+      int2d(ThS)(grad(u)' * grad(v)) 
+    + int2d(ThS)(eps * u * v) 
+    - int2d(ThS)(f*v);
+//On ajoute un terme régularisant pour le CG
+Poisson;
+real mean = int2d(ThS)(u)/int2d(ThS)(1.0);
+u[] -= mean;
+
+//plot le résultat
+plot(u, value=1, fill=1);
+
+//cout << int2d(ThS)(1.0)<< endl;

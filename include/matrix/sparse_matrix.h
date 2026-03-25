@@ -20,6 +20,19 @@ struct CSRPattern {
 	 * Corresponding column indices are read into col(k). */
 	TArray<uint32_t> row_start; /* Size = nrows + 1 */
 	TArray<uint32_t> col; /* Size = nnz */
+
+	/* Opérateur d'affectation */
+	CSRPattern &operator=(const CSRPattern &other) {
+		if (this != &other) {
+			symmetric = other.symmetric;
+			rows = other.rows;
+			cols = other.cols;
+			nnz = other.nnz;
+			row_start = other.row_start;
+			col = other.col;
+		}
+		return *this;
+	}
 };
 
 struct CSRMatrix : public Matrix {

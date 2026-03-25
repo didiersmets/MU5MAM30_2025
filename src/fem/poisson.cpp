@@ -1,8 +1,10 @@
 #include "poisson.h"
 
+#include "adjacency_P2.h"
 #include "P1.h"
 #include "array.h"
 #include "conjugate_gradient.h"
+#include "P2.h"
 #if USE_FEM_MATRIX
 	#include "fem_matrix.h"
 #else
@@ -10,10 +12,11 @@
 #endif
 #include "mesh.h"
 #include "tiny_blas.h"
-
-PoissonSolver::PoissonSolver(const Mesh &m)
+/*ajout de la prise en compte du degré*/
+PoissonSolver::PoissonSolver(const Mesh &m, int degre)
     : m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
 {
+	if (degre == 1) {
 #if USE_FEM_MATRIX
 	build_P1_mass_matrix(m, M);
 	build_P1_stiffness_matrix(m, A);
@@ -22,6 +25,19 @@ PoissonSolver::PoissonSolver(const Mesh &m)
 	build_P1_mass_matrix(m, P, M);
 	build_P1_stiffness_matrix(m, P, A);
 #endif
+}
+	else if (degre == 2) {
+		EdgeAdjacency edge_adj(m);
+		build_P2_CSRPattern(m, P, edge_adj);
+
+		N = P.rows; // Mise à jour de la taille pour P2
+		f.resize(N); u.resize(N); r.resize(N); p.resize(N); Ap.resize(N);
+		for (size_t i = 0; i < N; ++i) u[i] = 0.0;
+
+		// Assemblage des matrices pareil que P1
+		build_P2_mass_matrix(m, P, M, edge_adj);
+		build_P2_stiffness_matrix(m, P, A, edge_adj);
+	}
 	vol = M.sum();
 	inited = false;
 	iterate = 0;

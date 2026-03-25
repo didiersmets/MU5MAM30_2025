@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
+#include <vector>
+#include "adjacency_P2.h"
 #include "gl_utils.h"
 
 #include "imgui/imgui.h"
@@ -59,13 +60,46 @@ static void draw_scene(const Viewer &viewer, int shader,
 static void draw_gui(NavierStokesSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
-
+//conceptuellement on fait la même chose que pour poisson
 void reset_solver(NavierStokesSolver &solver)
 {
+	//on fait l'inverse de edge_adj
+	std::vector<std::pair<uint32_t, uint32_t>> edge_nodes;
+	if (solver.degre == 2) {
+		EdgeAdjacency edge_adj(solver.m);
+		edge_nodes.resize(edge_adj.num_edges);
+		for (size_t a = 0; a < solver.m.vertex_count(); ++a) {
+			size_t start = edge_adj.offset[a];
+			size_t end = start + edge_adj.degree[a];
+			for (size_t k = start; k < end; ++k) {
+				uint32_t b = edge_adj.edges[k].neighbor;
+				if (a < b) {
+					edge_nodes[edge_adj.edges[k].edge_id] = {a, b};
+				}
+			}
+		}
+	}
+
+	// Évaluation du second membre pour chaque ddl
 	for (size_t i = 0; i < solver.N; ++i) {
-		rhs_x = solver.m.positions[i].x;
-		rhs_y = solver.m.positions[i].y;
-		rhs_z = solver.m.positions[i].z;
+		// Si c'est un sommet régulier
+		if (i < solver.m.vertex_count()) {
+			rhs_x = solver.m.positions[i].x;
+			rhs_y = solver.m.positions[i].y;
+			rhs_z = solver.m.positions[i].z;
+		}
+		// Si i dépasse vertex_count alors c'est une arête (P2)
+		else {
+			size_t edge_idx = i - solver.m.vertex_count();
+			uint32_t a = edge_nodes[edge_idx].first;
+			uint32_t b = edge_nodes[edge_idx].second;
+
+			// On calcule la valeur du milieu dans l'espace
+			rhs_x = (solver.m.positions[a].x + solver.m.positions[b].x) / 2.0;
+			rhs_y = (solver.m.positions[a].y + solver.m.positions[b].y) / 2.0;
+			rhs_z = (solver.m.positions[a].z + solver.m.positions[b].z) / 2.0;
+		}
+
 		rhs_p = atan2(rhs_y, rhs_x);
 		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
 		rhs_r = (double)rand() / RAND_MAX;
@@ -105,7 +139,28 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 int main(int argc, char **argv)
 {
 	log_init(0);
-
+	/* même changements pour intégrer P2 */
+	int degre = 1; // P1 par défaut
+	SolverType solver_type = SolverType::CG; // CG par défaut
+	
+	if (argc > 1) {
+		if (strcmp(argv[argc - 1], "-p2") == 0 || strcmp(argv[argc - 1], "P2") == 0) {
+			degre = 2;
+			argc--;
+		}
+		else if (strcmp(argv[argc - 1], "-p1") == 0 || strcmp(argv[argc - 1], "P1") == 0) {
+			degre = 1;
+			argc--;
+		}
+	}
+	
+	if (argc > 1) {
+		if (strcmp(argv[argc - 1], "-cholesky") == 0 || strcmp(argv[argc - 1], "--cholesky") == 0) {
+			solver_type = SolverType::CHOLESKY;
+			argc--;
+		}
+	}
+	
 	/* Load Mesh */
 	Mesh mesh;
 	if (load_mesh(mesh, argc, argv)) {
@@ -117,7 +172,8 @@ int main(int argc, char **argv)
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	NavierStokesSolver solver(mesh);
+	NavierStokesSolver solver(mesh, degre, solver_type, 1e-3, 0.002);
+	
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
@@ -135,8 +191,31 @@ int main(int argc, char **argv)
 	LOG_MSG("Viewer initialized.");
 
 	/* Prepare GPU data */
+	/* the shaders live in the top–level `shaders` directory.  during
+	 * development the executables are built in `build/` and the tests are
+	 * usually executed from that directory, so "./shaders" does not exist
+	 * unless we copy the assets (see CMakeLists.txt above).  we also
+	 * provide a small fallback search path to make things a bit more
+	 * robust when the binary is launched from a different working
+	 * directory (e.g. "build/bin/test_NS" or the project root). */
+
+	auto exists = [](const char *p) {
+		FILE *f = fopen(p, "rb");
+		if (f) fclose(f);
+		return f != NULL;
+	};
+
 	const char *vert_shader = "./shaders/fem.vert";
 	const char *frag_shader = "./shaders/fem.frag";
+	if (!exists(vert_shader)) {
+		/* try the sibling directory (build/bin usually) and up one level */
+		static const char *alt_vs = "../shaders/fem.vert";
+		static const char *alt_fs = "../shaders/fem.frag";
+		if (exists(alt_vs)) {
+			vert_shader = alt_vs;
+			frag_shader = alt_fs;
+		}
+	}
 	int shader = create_shader(vert_shader, frag_shader);
 	if (!shader) {
 		exit(EXIT_FAILURE);
@@ -164,9 +243,13 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n]\n", prg_name);
+	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n] [options]\n", prg_name);
 	printf("         Subdivision number n must be provided in case of "
 	       "cube or sphere mesh.\n");
+	printf("Options:\n");
+	printf("  -p1, P1              Use P1 finite elements (default)\n");
+	printf("  -p2, P2              Use P2 finite elements\n");
+	printf("  -cholesky, --cholesky  Use Cholesky solver instead of CG\n");
 }
 
 static int load_mesh(Mesh &mesh, int argc, char **argv)

@@ -1,23 +1,96 @@
 #include <assert.h>
-#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
+#include <algorithm>
+#include <cmath>
+#include <vector>
 
 #include "navier_stokes.h"
 
 #include "P1.h"
+#include "P2.h"
 #include "tiny_blas.h"
+#include "cholesky.h"
 
-NavierStokesSolver::NavierStokesSolver(const Mesh &m)
-	: m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
-{
-#if USE_FEM_MATRIX
-	build_P1_mass_matrix(m, M);
-	build_P1_stiffness_matrix(m, S);
-#else
-	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, S);
-#endif
+NavierStokesSolver::NavierStokesSolver(const Mesh &m, int degre, SolverType solver, double nu, double dt)
+    : m(m), degre(degre), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N), solver_type(solver) {
+	if (degre == 1) {
+		build_P1_CSRPattern(m, P);
+		build_P1_mass_matrix(m, P, M);
+		build_P1_stiffness_matrix(m, P, S);
+	}
+	else if (degre == 2) {
+		EdgeAdjacency edge_adj(m);
+		build_P2_CSRPattern(m, P, edge_adj);
+
+		N = P.rows; // La nouvelle taille totale
+		// On redimensionne tout à la bonne taille car on ne connaissait pas le nombre de DDL avant csr_pattern
+		omega.resize(N); Momega.resize(N); psi.resize(N); r.resize(N); p.resize(N); Ap.resize(N);
+
+		// On prépare un tableau de la taille (3 * nombre de triangles)
+		edge_ddls.resize(3 * m.triangle_count());
+
+		for (size_t t = 0; t < m.triangle_count(); ++t) {
+			uint32_t a = m.indices[3 * t + 0];
+			uint32_t b = m.indices[3 * t + 1];
+			uint32_t c = m.indices[3 * t + 2];
+
+			// Permet d'avoir un équivalent du mesh mais sur les 3 arêtes qui forment le triangle
+			edge_ddls[3 * t + 0] = m.vertex_count() + edge_adj.get_edge_id(a, b);
+			edge_ddls[3 * t + 1] = m.vertex_count() + edge_adj.get_edge_id(a, c);
+			edge_ddls[3 * t + 2] = m.vertex_count() + edge_adj.get_edge_id(b, c);
+		}
+
+		build_P2_mass_matrix(m, P, M, edge_adj);
+		build_P2_stiffness_matrix(m, P, S, edge_adj);
+	}
+
+	// Initialize Cholesky if requested
+	if (solver_type == SolverType::CHOLESKY) {
+		/* Create matrix A = M + nu*dt*S */
+		// First, store the sparsity pattern
+		cholesky_A_pattern.symmetric = S.symmetric;
+		cholesky_A_pattern.rows = S.rows;
+		cholesky_A_pattern.cols = S.cols;
+		cholesky_A_pattern.nnz = S.nnz;
+		cholesky_A_pattern.row_start = P.row_start;  // Copy from pattern P
+		cholesky_A_pattern.col = P.col;              // Copy from pattern P
+		
+		//Crée la matrice A avec le pattern stocké et les données calculées
+		//Il y avait une erreur dans la gestions des pointeurs qui pointaient vers les données de S et M, 
+		//on a du faire une copie pour éviter que les données soient modifiées.
+		//Cela causait par ailleurs l'erreur "double free or corruption (out)".
+		//Car les données de S et M étaient libérées deux fois : une fois par S et M, et une fois par A.
+		//Il faut donc faire une copie des donnees de S et M dans A pour éviter ce problème, et créer une matrice A indépendante de S et M.
+		CSRMatrix A;
+		A.symmetric = S.symmetric;
+		A.nnz = S.nnz;
+		A.rows = S.rows;
+		A.cols = S.cols;
+		A.row_start = cholesky_A_pattern.row_start.data;
+		A.col = cholesky_A_pattern.col.data;
+		A.data.resize(A.nnz);
+		
+		// Calcul A.data = M.data + nu*dt*S.data
+		for (size_t k = 0; k < A.nnz; k++)
+			A.data[k] = M.data[k] + nu * dt * S.data[k];
+
+		//Identity permutation (no reordering)
+		size_t n = N;
+		cholesky_perm.resize(n);
+		cholesky_iperm.resize(n);
+		for (size_t i = 0; i < n; i++) {
+			cholesky_perm[i] = (uint32_t)i;
+			cholesky_iperm[i] = (uint32_t)i;
+		}
+
+		etree T;
+		symbolic_cholesky(A, T);
+		L_pattern(A, T, cholesky_L_pattern);
+		cholesky_fact(A, cholesky_L, cholesky_L_pattern);
+		cholesky_ready = true;
+	}
+
 	vol = M.sum();
 	inited = false;
 	t = 0;
@@ -25,11 +98,9 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m)
 
 void NavierStokesSolver::set_zero_mean(double *V)
 {
-	/* Your implementation goes here*/
 	M.mvp(V, Ap.data);
 	double s = blas_sum_in_place(Ap.data, N);
-	for (size_t i = 0; i < N; ++i)
-	{
+	for (size_t i = 0; i < N; ++i) {
 		V[i] -= s / vol;
 	}
 }
@@ -37,104 +108,176 @@ void NavierStokesSolver::set_zero_mean(double *V)
 void NavierStokesSolver::compute_transport(double *T)
 {
 	memset(T, 0, N * sizeof(double));
-
-	// /* Your implementation goes here */
-	// for (size_t i = 0; i < m.triangle_count(); ++i)
-	// {
-	// 	// Get traingle vertex indices
-	// 	uint32_t i0 = m.indices[3 * i];
-	// 	uint32_t i1 = m.indices[3 * i + 1];
-	// 	uint32_t i2 = m.indices[3 * i + 2];
-	// 	// Get triangle vertex positions
-	// 	Vec3 p0 = m.positions[i0];
-	// 	Vec3 p1 = m.positions[i1];
-	// 	Vec3 p2 = m.positions[i2];
-	// 	// Compute the area of the triangle
-	// 	Vec3 e1 = p1 - p0;
-	// 	Vec3 e2 = p2 - p0;
-	// 	Vec3 cross = Vec3(e1.y * e2.z - e1.z * e2.y,
-	// 					  e1.z * e2.x - e1.x * e2.z,
-	// 					  e1.x * e2.y - e1.y * e2.x);
-	// 	double area = 0.5 * sqrt(cross.x * cross.x + cross.y * cross.y + cross.z * cross.z);
-	// 	// Compute gradients of basis functions
-	// 	Vec3 grad0 = Vec3(e2.y, -e2.x, 0);
-	// 	Vec3 grad1 = Vec3(-e1.y, e1.x, 0);
-	// 	Vec3 grad2 = Vec3(e1.y - e2.y, e2.x - e1.x, 0);
-	// 	grad0 /= (2 * area);
-	// 	grad1 /= (2 * area);
-	// 	grad2 /= (2 * area);
-	// 	// Commpute the transport terms
-	// 	T[i0] = area / 3.0 * (omega[i0] * psi[i1] * dot(grad0, grad1) + omega[i0] * psi[i2] * dot(grad0, grad2) + omega[i1] * psi[i1] * dot(grad1, grad0) + omega[i1] * psi[i2] * dot(grad2, grad0) + omega[i2] * psi[i1] * dot(grad1, grad0) + omega[i2] * psi[i2] * dot(grad2, grad0));
-
-	// 	T[i1] = area / 3.0 * (omega[i0] * psi[i0] * dot(grad0, grad0) + omega[i0] * psi[i2] * dot(grad2, grad1) + omega[i1] * psi[i0] * dot(grad0, grad1) + omega[i1] * psi[i2] * dot(grad2, grad1) + omega[i2] * psi[i0] * dot(grad0, grad1) + omega[i2] * psi[i1] * dot(grad1, grad1));
-
-	// 	T[i2] = area / 3.0 * (omega[i0] * psi[i0] * dot(grad0, grad2) + omega[i0] * psi[i1] * dot(grad1, grad2) + omega[i1] * psi[i0] * dot(grad0, grad2) + omega[i1] * psi[i1] * dot(grad1,grad2) + omega[i2] * psi[i0] * dot(grad0,grad2) + omega[i2] * psi[i1] * dot(grad1,grad2));
-	// }
-	
-	//C'était beaucoup trop lourd en terme de calcul pas besioin de calculer les gradients....
-
-	for (size_t t = 0; t < m.triangle_count(); t++) {
-		uint32_t a = m.indices[3 * t + 0];
-		uint32_t b = m.indices[3 * t + 1];
-		uint32_t c = m.indices[3 * t + 2];
-		assert(a < N && b < N && c < N);
-		double sum = omega[a] + omega[b] + omega[c];
-		T[a] += sum * (psi[b] - psi[c]);
-		T[b] += sum * (psi[c] - psi[a]);
-		T[c] += sum * (psi[a] - psi[b]);
+	if (degre == 1) {
+		for (size_t t = 0; t < m.triangle_count(); t++) {
+			uint32_t a = m.indices[3 * t + 0];
+			uint32_t b = m.indices[3 * t + 1];
+			uint32_t c = m.indices[3 * t + 2];
+			assert(a < N && b < N && c < N);
+			double sum = omega[a] + omega[b] + omega[c];
+			T[a] += sum * (psi[b] - psi[c]);
+			T[b] += sum * (psi[c] - psi[a]);
+			T[c] += sum * (psi[a] - psi[b]);
+		}
+		for (size_t v = 0; v < N; v++) {
+			T[v] *= 1.0 / 6;
+		}
 	}
+		else if (degre == 2) { //on va avoir besoin de l'intégration par quadrature de Gauss
+struct GaussPoint { double xi, eta, w; };
+        const GaussPoint gauss[6] = {
+            {0.091576213509771, 0.091576213509771, 0.054975871827661},
+            {0.816847572980459, 0.091576213509771, 0.054975871827661},
+            {0.091576213509771, 0.816847572980459, 0.054975871827661},
+            {0.445948490915965, 0.445948490915965, 0.111690794839005},
+            {0.108103018168070, 0.445948490915965, 0.111690794839005},
+            {0.445948490915965, 0.108103018168070, 0.111690794839005}
+        };
 
-	for (size_t v = 0; v < N; v++) {
-		T[v] *= 1.0 / 6;
-	}
+        for (size_t t = 0; t < m.triangle_count(); ++t) {
+            uint32_t ddls[6];
+            ddls[0] = m.indices[3 * t + 0]; // Sommet A
+            ddls[1] = m.indices[3 * t + 1]; // Sommet B
+            ddls[2] = m.indices[3 * t + 2]; // Sommet C
+            // On a en même temps la correspondance des arêtes grace au tableau
+            ddls[3] = edge_ddls[3 * t + 0]; // Arête AB
+            ddls[4] = edge_ddls[3 * t + 1]; // Arête AC
+            ddls[5] = edge_ddls[3 * t + 2]; // Arête BC
+			//On récupère les valeurs (psi et oméga) sur notre triangle
+            double psi_loc[6], omega_loc[6];
+            for (int i = 0; i < 6; ++i) {
+                psi_loc[i]   = psi[ddls[i]];
+                omega_loc[i] = omega[ddls[i]];
+            }
+			//Vecteur local du second membre
+            double T_loc[6] = {0.0};
+			//ici on intègre sur le triangle car on ne peut plus sommer directement comme en P1
+        	//pour cela on boucle sur les 6 points de gauss (car degré 4)
+            for (int q = 0; q < 6; ++q) {
+                double xi = gauss[q].xi;
+                double eta = gauss[q].eta;
+                double w = gauss[q].w;
+
+                //Valeur des fonctions de forme (polynômes) en ce point précis (xi, eta)
+                double phi[6] = {
+                    (1.0 - xi - eta) * (1.0 - 2.0*xi - 2.0*eta),
+                    xi * (2.0*xi - 1.0),
+                    eta * (2.0*eta - 1.0),
+                    4.0 * xi * (1.0 - xi - eta),
+                    4.0 * eta * (1.0 - xi - eta),
+                    4.0 * xi * eta
+                };
+
+                //Dérivées des fonctions de forme
+                double dphi_dxi[6] = {
+                    -3.0 + 4.0*xi + 4.0*eta,
+                     4.0*xi - 1.0,
+                     0.0,
+                     4.0 - 8.0*xi - 4.0*eta,
+                    -4.0*eta,
+                     4.0*eta
+                };
+
+                double dphi_deta[6] = {
+                    -3.0 + 4.0*xi + 4.0*eta,
+                     0.0,
+                     4.0*eta - 1.0,
+                    -4.0*xi,
+                     4.0 - 4.0*xi - 8.0*eta,
+                     4.0*xi
+                };
+
+            	// On utilise les valeurs aux noeuds (psi_loc) et les dérivées (dphi)
+            	// pour connaître le gradient exact du fluide à la coordonnée (xi, eta).
+                double dpsi_dxi = 0, dpsi_deta = 0, domega_dxi = 0, domega_deta = 0;
+                for (int i = 0; i < 6; ++i) {
+                    dpsi_dxi    += psi_loc[i]   * dphi_dxi[i];
+                    dpsi_deta   += psi_loc[i]   * dphi_deta[i];
+                    domega_dxi  += omega_loc[i] * dphi_dxi[i];
+                    domega_deta += omega_loc[i] * dphi_deta[i];
+                }
+
+                //Jacobien (le transport, terme convectif de navier stokes)
+                double transport_val = (dpsi_dxi * domega_deta) - (dpsi_deta * domega_dxi);
+
+            	// L'intégrale est la somme des valeurs calculées, multipliées
+            	// par le poids 'w' du point de Gauss et par la fonction test 'phi'.
+                for (int i = 0; i < 6; ++i) {
+                    T_loc[i] += w * phi[i] * transport_val;
+                }
+            }
+
+            // Assemblage global classique
+            for (int i = 0; i < 6; ++i) {
+                T[ddls[i]] += T_loc[i];
+            }
+        }
+		}
 }
 
 size_t NavierStokesSolver::compute_stream_function()
 {
-	double b2, r2, r2_temp, rel_error;
-	size_t iter = 0;
+	double b2, r2, rel_error;
+	size_t iter;
 
-	/* Your implementation goes here */
-	M.mvp(omega.data, Momega.data);
+	double *R = r.data;
+	double *P = p.data;
+	double *AP = Ap.data;
+	double *Om = omega.data;
+	double *MOm = Momega.data;
+	double *Psi = psi.data;
+
+	M.mvp(Om, MOm);
+
 	/* Compute rhs norm2 */
-	b2 = blas_dot(Momega.data, Momega.data, N);
+	b2 = blas_dot(MOm, MOm, N);
+
 	/* Form initial R and P */
-	S.mvp(psi.data, r.data);
-	blas_axpby(1, Momega.data, -1, r.data, N);
-	blas_copy(r.data, p.data, N);
-	r2 = blas_dot(r.data, r.data, N);
+	S.mvp(Psi, R);
+	blas_axpby(1, MOm, -1, R, N);
+	blas_copy(R, P, N);
+	r2 = blas_dot(R, R, N);
 	rel_error = sqrt(r2 / b2);
 
 	/* Iterate until convergence */
-	for(size_t i = 0; i < N; ++i)
-	{
-		S.mvp(p.data, Ap.data);
-		double alpha = r2 / blas_dot(p.data, Ap.data, N);
-		blas_axpy(alpha, p.data, psi.data, N); //Update psi
-		blas_axpy(-alpha, Ap.data, r.data, N); //Residual
+	iter = 0;
+	while ((rel_error > tol) && (iter++ < iter_max)) {
 
-		r2_temp = blas_dot(r.data, r.data, N);
-		double beta = r2_temp / r2;
-		blas_axpby(1, r.data, beta, p.data, N);
-		r2 = r2_temp;
+		/* Compute AP */
+		S.mvp(P, AP);
+
+		/* Update Psi */
+		double alpha = r2 / blas_dot(P, AP, N);
+		blas_axpy(alpha, P, Psi, N);
+
+		/* Update R */
+		blas_axpy(-alpha, AP, R, N);
+
+		/* Update r2 and P */
+		double beta = 1.0 / r2;
+		r2 = blas_dot(R, R, N);
 		rel_error = sqrt(r2 / b2);
-
-		if(rel_error < tol)
-		{
-			break;
-		}
+		beta *= r2;
+		blas_axpby(1, R, beta, P, N);
 	}
+
 	return iter;
 }
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
 	double b2, r2, rel_error;
-	size_t iter = 0;
-	compute_stream_function();
 
-	double* Mom = Momega.data;
-	
+	size_t iter1, iter2;
+
+	double *R = r.data;
+	double *P = p.data;
+	double *AP = Ap.data;
+	double *Om = omega.data;
+	double *MOm = Momega.data;
+
+	iter1 = compute_stream_function();
+
 	/**********************************************************************
 	 * Solve the system :
 	 *
@@ -142,44 +285,78 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	 *
 	 *********************************************************************/
 
-	/* Your implementation goes here */
-	
-	// Compute transport term
-	compute_transport(p.data);
-	//Compute rhs = M * omega(t) + dt * T(Omega,Psi)(t)
-	M.mvp(omega.data, Momega.data);
-	blas_axpy(dt, p.data, Momega.data, N);
-	b2 = blas_dot(Momega.data, Momega.data, N);
+	/* Form rhs, saved in P */
+	compute_transport(P);
+	blas_axpby(1, MOm, dt, P, N);
 
-	// Form initial residual and search direction
-	S.mvp(omega.data, r.data);
-	blas_axpy(1, Momega.data, r.data, N);
-	blas_copy(r.data, p.data, N);
-	r2 = blas_dot(r.data,r.data,N);
+	// Use Cholesky if available
+	if (solver_type == SolverType::CHOLESKY && cholesky_ready) {
+		TArray<double> rhs_perm(N);
+		TArray<double> omega_perm(N);
+		for (size_t i = 0; i < N; i++) {
+			uint32_t old_i = cholesky_iperm[i];
+			rhs_perm[i] = P[old_i];
+		}
+
+		cholesky_solve(cholesky_L, rhs_perm, omega_perm);
+
+		for (size_t i = 0; i < N; i++) {
+			uint32_t old_i = cholesky_iperm[i];
+			Om[old_i] = omega_perm[i];
+		}
+
+		M.mvp(Om, MOm);
+		set_zero_mean(omega.data);
+		t += dt;
+		(void)iter1;
+	}
+
+	else{
+	// Fall back to Conjugate Gradient solver
+	b2 = blas_dot(P, P, N);
+
+	/* Form initial R and P */
+	S.mvp(Om, R);
+	blas_axpby(1, MOm, dt * nu, R, N);
+	blas_axpby(1, P, -1, R, N);
+	blas_copy(R, P, N);
+	r2 = blas_dot(R, R, N);
 	rel_error = sqrt(r2 / b2);
 
-	//Ierate until convergence
-	for(size_t i = 0; i < iter_max; ++i){
-		S.mvp(p.data, Ap.data);
-		M.mvp(p.data, Mom); //Using a temporary for M*p to avoid overwriting p before computing Ap which caused errors
-		blas_axpby(1, Mom, nu * dt, Ap.data, N); //Ap = M*p + nu*dt*S*p
+	/* Iterate until convergence (and at least once) */
+	iter2 = 0;
+	do {
 
-		double alpha = r2 / blas_dot(p.data, Ap.data, N);
-		blas_axpy(alpha, p.data, omega.data, N); //Update omega
-		blas_axpy(-alpha, Ap.data, r.data, N); //Update residual
+		/* Compute AP (invalidates Mom) */
+		S.mvp(P, AP);
+		M.mvp(P, MOm); /* MOm used as temp storage */
+		blas_axpby(1, MOm, dt * nu, AP, N);
 
-		double r2_temp = blas_dot(r.data, r.data, N);
-		double beta = r2_temp / r2;
-		blas_axpby(1, r.data, beta, p.data, N);
-		r2 = r2_temp;
+		/* Update Om */
+		double alpha = r2 / blas_dot(P, AP, N);
+		blas_axpy(alpha, P, Om, N);
+
+		/* Update R */
+		blas_axpy(-alpha, AP, R, N);
+
+		/* Update r2 and P */
+		double beta = 1.0 / r2;
+		r2 = blas_dot(R, R, N);
 		rel_error = sqrt(r2 / b2);
+		beta *= r2;
+		blas_axpby(1, R, beta, P, N);
 
-		if(rel_error < tol){
-			break;
-		}
-	}
+		/* Update MOm */
+		M.mvp(Om, MOm);
+
+		iter2++;
+	} while ((rel_error > tol) && (iter2 <= iter_max));
 
 	set_zero_mean(omega.data);
 
 	t += dt;
+
+	(void)iter1;
+	//printf("Iter 1 : %zu, Iter2 : %zu\n", iter1, iter2);
+	}
 }
