@@ -20,7 +20,6 @@ inline void mass_P2(const Vec3d &AB, const Vec3d &AC, double M[6][6])
     double detJ = std::sqrt(nx*nx + ny*ny + nz*nz); // detJ = 2 * Aire
     double Aire = detJ / 2.0;
 
-    // Le facteur devant la matrice d'après ton LaTeX
     double C = Aire / 90.0;
 
     // Constantes de la matrice de masse de référence

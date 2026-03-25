@@ -11,7 +11,6 @@
 #include "adjacency_P2.h"
 
 /* CSR variants for P2 */
-// NOUVEAU : On ajoute EdgeAdjacency
 void build_P2_CSRPattern(const Mesh &m, CSRPattern &P, const EdgeAdjacency &edges);
 void build_P2_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M, const EdgeAdjacency &edges);
 void build_P2_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S, const EdgeAdjacency &edges);

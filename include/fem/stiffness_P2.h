@@ -25,9 +25,8 @@ inline void stiffness_P2(const Vec3d &AB, const Vec3d &AC, double S[6][6])
     // Calcul des coefficients c_ij = det(J) * g_ij
     double c11 =  dot(AC, AC) / detJ;
     double c22 =  dot(AB, AB) / detJ;
-    double c12 = -dot(AB, AC) / detJ; // Attention au signe moins issu du LaTeX
+    double c12 = -dot(AB, AC) / detJ;
 
-    // Matrices de référence (directement tirées de ton LaTeX)
     const double S_xx[6][6] = {
         {  1./2.,  1./6.,   0., -2./3.,   0.,     0.   },
         {  1./6.,  1./2.,   0., -2./3.,   0.,     0.   },
