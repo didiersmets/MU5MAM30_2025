@@ -9,6 +9,7 @@
 
 #include "tiny_expr/tinyexpr.h"
 
+#include "torus.h"
 #include "cube.h"
 #include "logging.h"
 #include "mesh.h"
@@ -151,7 +152,7 @@ int main(int argc, char **argv)
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	PoissonSolver solver(mesh, true);
+	PoissonSolver solver(mesh, usingP2(argc, argv));
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
@@ -197,7 +198,7 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n] -o [1|2]\n", prg_name);
+	printf("Syntax : %s ($(obj_filename)| cube | sphere | torus) [n] -o [1|2]\n", prg_name);
 	printf("         Subdivision number n must be provided in case of "
 	       "cube or sphere mesh.\n");
 }
@@ -211,6 +212,8 @@ static int load_mesh(Mesh &mesh, int argc, char **argv)
 		res = load_cube(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0) {
 		res = load_sphere(mesh, atoi(argv[2]));
+	} else if  (argc > 2 && strncmp(argv[1], "torus", 5) == 0) {
+		res = load_torus(mesh, atoi(argv[2]));
 	} else if (argc > 1) {
 		res = load_obj(argv[1], mesh);
 	}
