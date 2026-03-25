@@ -181,7 +181,4 @@ void PoissonSolver::do_iterate(size_t max_iter, double tol)
 			}
 		}
 	}
-
-	if (rel_error <= tol)
-		converged = true;
 }
