@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdexcept>
 
 #include "gl_utils.h"
 
@@ -56,31 +57,69 @@ static void draw_gui(PoissonSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
+static bool usingP2(int argc, char **argv) {
+    if (argc <= 4) {
+        return false; 
+    }
+
+    try {
+        int order = std::stoi(argv[4]);
+        return order == 2;
+    }
+    catch (const std::exception&) {
+        syntax(argv[0]);
+        return false;
+    }
+}
+
 bool new_rhs(PoissonSolver &solver)
 {
-	srand((int)time(NULL));
-	te_expr *test = te_compile(rhs_expression, rhs_vars,
-				   sizeof(rhs_vars) / sizeof(rhs_vars[0]),
-				   NULL);
-	if (!test)
-		return false;
+    srand((int)time(NULL));
+    te_expr *test = te_compile(rhs_expression, rhs_vars,
+                   sizeof(rhs_vars) / sizeof(rhs_vars[0]),
+                   NULL);
+    if (!test)
+        return false;
 
-	te_free(te_rhs);
-	te_rhs = test;
-	for (size_t i = 0; i < solver.N; ++i) {
-		rhs_x = solver.m.positions[i].x;
-		rhs_y = solver.m.positions[i].y;
-		rhs_z = solver.m.positions[i].z;
-		rhs_p = atan2(rhs_y, rhs_x);
-		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
-		rhs_r = (double)rand() / RAND_MAX;
-		solver.f[i] = te_eval(te_rhs);
-	}
+    te_free(te_rhs);
+    te_rhs = test;
+    
+    size_t vtx_count = solver.m.vertex_count();
 
-	solver.init_cg();
-	solver.iterate = 0;
+    for (size_t i = 0; i < solver.N; ++i) {
+        double px, py, pz;
 
-	return true;
+        if (i < vtx_count) {
+            // vertex
+            px = solver.m.positions[i].x;
+            py = solver.m.positions[i].y;
+            pz = solver.m.positions[i].z;
+        } else {
+            // Mid point
+            size_t edge_idx = i - vtx_count;
+            
+            uint32_t v1 = solver.out_edges[edge_idx].first; 
+            uint32_t v2 = solver.out_edges[edge_idx].second;
+
+            px = 0.5 * (solver.m.positions[v1].x + solver.m.positions[v2].x);
+            py = 0.5 * (solver.m.positions[v1].y + solver.m.positions[v2].y);
+            pz = 0.5 * (solver.m.positions[v1].z + solver.m.positions[v2].z);
+        }
+
+        rhs_x = px;
+        rhs_y = py;
+        rhs_z = pz;
+        rhs_p = atan2(rhs_y, rhs_x);
+        rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
+        rhs_r = (double)rand() / RAND_MAX;
+        
+        solver.f[i] = te_eval(te_rhs);
+    }
+
+    solver.init_cg();
+    solver.iterate = 0;
+
+    return true;
 }
 
 void transfer_to_mesh(const TArray<double> &V, Mesh &m)
@@ -94,19 +133,25 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 int main(int argc, char **argv)
 {
 	log_init(0);
-
 	/* Load Mesh */
 	Mesh mesh;
 	if (load_mesh(mesh, argc, argv)) {
 		syntax(argv[0]);
 		exit(EXIT_FAILURE);
 	}
+
+	if (usingP2(argc, argv)) {
+		LOG_MSG("Using P2 discretization.");
+	}
+	else {
+		LOG_MSG("Using P1 discretization.");
+	}
 	LOG_MSG("Loaded mesh.");
 	rescale_and_recenter_mesh(mesh);
 	LOG_MSG("Mesh rescaled and recentered.");
 
 	/* Prepare FEM data */
-	PoissonSolver solver(mesh);
+	PoissonSolver solver(mesh, true);
 	if (!new_rhs(solver)) {
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
@@ -152,7 +197,7 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n]\n", prg_name);
+	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n] -o [1|2]\n", prg_name);
 	printf("         Subdivision number n must be provided in case of "
 	       "cube or sphere mesh.\n");
 }

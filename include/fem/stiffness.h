@@ -23,25 +23,67 @@
  */
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-	/* Your implementation goes here */
-	double dot_ABAC = dot(AB,AC);
-	double dot_ABAB = norm2(AB);
-	double dot_ACAC = norm2(AC);
+	double ABAB = norm2(AB);
+	double ACAC = norm2(AC);
+	double ABAC = dot(AB, AC);
+	double mult = 0.5 / sqrt(ABAB * ACAC - ABAC * ABAC);
+	ABAB *= mult;
+	ACAC *= mult;
+	ABAC *= mult;
 
-	Vec3d cross_product = cross(AB,AC);
+	S[0] = ACAC - 2 * ABAC + ABAB;
+	S[1] = ACAC;
+	S[2] = ABAB;
+	S[3] = ABAC - ACAC;
+	/* Note the chosen order : (B,C)-> 4 and (C,A) -> 5 */
+	S[4] = -ABAC;
+	S[5] = ABAC - ABAB;
+}
+
+void inline stiffness_P2(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
+{
+	Vec3d cross_product = cross(AB, AC);
 	double cp_area = norm(cross_product);
+	double trig_area = cp_area * 0.5;
+	Vec3d n = cross_product * (1/cp_area);
 
-	double scaling = -0.5 / cp_area;
+	Vec3d BC = AC - AB;
+	Vec3d CA = -1.0 * AC;
 
-	double s_BC = scaling * dot_ABAC;
-	double s_CA = scaling * (dot_ABAB - dot_ABAC);
-	double s_AB = scaling * (dot_ACAC - dot_ABAC);
+	Vec3d grad_L1 = cross(n, BC) * (1/cp_area);
+	Vec3d grad_L2 = cross(n, CA) * (1/cp_area);
+	Vec3d grad_L3 = cross(n, AB) * (1/cp_area);
 
-	S[0] = -(s_AB + s_CA);
-	S[1] = -(s_AB + s_BC);
-	S[2] = -(s_BC + s_CA);
+	double dot_12 = dot(grad_L1, grad_L2);
+	double dot_13 = dot(grad_L1, grad_L3);
+	double dot_23 = dot(grad_L2, grad_L3);
 
-	S[3] = s_AB;
-	S[4] = s_BC;
-	S[5] = s_CA;
+	double dot_11 = norm2(grad_L1);
+	double dot_22 = norm2(grad_L2);
+	double dot_33 = norm2(grad_L3);
+
+	// Diag vertex
+	S[0] = dot_11 * trig_area;
+	S[1] = dot_22 * trig_area;
+	S[2] = dot_33 * trig_area;
+
+	// Diag mid-point
+	S[3] = 8 * (dot_11 + dot_12 + dot_22) * trig_area / 3.0;
+	S[4] = 8 * (dot_22 + dot_23 + dot_33) * trig_area / 3.0;
+	S[5] = 8 * (dot_11 + dot_13 + dot_33) * trig_area / 3.0;
+
+	// Upper trig vertex
+	S[6] = -1.0 * dot_12 * trig_area / 3.0;
+	S[7] = -1.0 * dot_23 * trig_area / 3.0;
+	S[8] = -1.0 * dot_13 * trig_area / 3.0;
+
+	// Upper trig mid-point
+	S[9] = 8 * dot_13 * trig_area / 3.0;
+	S[10] = 8 * dot_12 * trig_area / 3.0;
+	S[11] = 8 * dot_23 * trig_area / 3.0;
+
+	// Upper block
+	S[12] = 4 * dot_12 * trig_area / 3.0;
+	S[13] = 4 * dot_23 * trig_area / 3.0;
+	S[14] = 4 * dot_13 * trig_area / 3.0;
 }

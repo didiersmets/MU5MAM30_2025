@@ -19,12 +19,24 @@ double &CSRMatrix::operator()(uint32_t i, uint32_t j)
 
 void CSRMatrix::mvp(const double *__restrict x, double *__restrict y) const
 {
-	/* Your implementation goes here */
-	/* Let's iterate row by row */
 	for (size_t i = 0; i < rows; ++i) {
 		y[i] = 0;
-		for (size_t k = row_start[i]; k < row_start[i+1]; ++k) { /* We go through every nnz value on the row*/
+		size_t start = row_start[i];
+		size_t stop = row_start[i + 1];
+		for (size_t k = start; k < stop; ++k) {
+			assert(k < nnz);
+			assert(col[k] < cols);
 			y[i] += data[k] * x[col[k]];
+		}
+	}
+	if (symmetric) {
+		for (size_t i = 0; i < rows; ++i) {
+			size_t start = row_start[i];
+			/* stop before the diagonal */
+			size_t stop = row_start[i + 1] - 1;
+			for (size_t k = start; k < stop; ++k) {
+				y[col[k]] += data[k] * x[i];
+			}
 		}
 	}
 }

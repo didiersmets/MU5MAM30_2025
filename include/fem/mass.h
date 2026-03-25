@@ -24,3 +24,15 @@ void inline mass(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
 	M[0]= triangle_area / 6.0;
 	M[1] = triangle_area / 12.0;
 }
+
+void inline mass_P2(const Vec3d &AB, const Vec3d &AC, double *__restrict M)
+{
+	Vec3d cross_product = cross(AB, AC);
+	double triangle_area = 0.5 * norm(cross_product);
+
+	M[0] = triangle_area * (6.0/180.0);
+	M[1] = triangle_area * (-1.0/180.0);
+	M[2] = triangle_area * (32.0/180.0);
+	M[3] = triangle_area * (16.0/180.0);
+	M[4] = triangle_area * (-4.0/180.0);
+}

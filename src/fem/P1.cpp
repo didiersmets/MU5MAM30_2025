@@ -18,7 +18,7 @@
 /* CSRMatrix variants */
 
 // Auxiliary function
-bool is_in_first_idx(uint32_t target, uint32_t *array, size_t nb_idx_check)
+static bool is_in_first_idx(uint32_t target, uint32_t *array, size_t nb_idx_check)
 {
 	for (size_t i=0; i<nb_idx_check; i++) {
 		if (array[i]==target) {
@@ -41,6 +41,7 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 
 	/* Note that each vertex index i correspond to a line in the sparse matrix 
 	   therefore we build the pattern line by line */
+	P.row_start.resize(P.rows+1);
 	P.col.resize(3*m.triangle_count() + P.rows); // 3 sides per triangle + diag term
 
 	size_t nnz = 0;
@@ -58,19 +59,16 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 			uint32_t k = vtadj.vtri[tri_index].prev;
 
 			if (j<i && !is_in_first_idx(j, line_start, line_nnz)) { // Check if j was not already encounter
-				nnz++;
 				line_nnz++;
-				P.col[nnz] = j;
+				P.col[nnz++] = j;
 			}
 
 			if (k<i && !is_in_first_idx(k, line_start, line_nnz)) { // Check if k was not already encounter
-				nnz++;
 				line_nnz++;
-				P.col[nnz] = k;
+				P.col[nnz++] = k;
 			}
 		}
-		nnz++;
-		P.col[nnz] = i; // i is always connected to himself (diag term)
+		P.col[nnz++] = i; // i is always connected to himself (diag term)
 	}
 	P.row_start[P.rows] = nnz;
 	P.nnz = nnz;
@@ -81,7 +79,7 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 		size_t line_start = P.row_start[i];
 		size_t line_end = P.row_start[i+1];
 
-		std::sort(&P.col[line_start], &P.col[line_end]); // use a O(N*log(N)) sorting algorithm
+		std::sort(P.col.data + line_start, P.col.data + line_end); // use a O(N*log(N)) sorting algorithm
 	}
 }
 
@@ -106,10 +104,10 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 	/* Since we can compute the coefficients for each triangle, we will build M by
 	by additionning the contribution of each triangle */
 
-	for (size_t tri_index = 0; tri_index<tri_count; tri_index+=3) { // Triangle ABC d'indices i,j,k
-		uint32_t i = m.indices[tri_index];
-		uint32_t j = m.indices[tri_index+1];
-		uint32_t k = m.indices[tri_index+2];
+	for (size_t tri_index = 0; tri_index<tri_count; tri_index++) { // Triangle ABC d'indices i,j,k
+		uint32_t i = m.indices[3*tri_index];
+		uint32_t j = m.indices[3*tri_index+1];
+		uint32_t k = m.indices[3*tri_index+2];
 
 		Vec3 A = m.positions[i];
 		Vec3 B = m.positions[j];
@@ -123,7 +121,7 @@ void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
 		mass(AB, AC, tri_contribution);
 		M(i,i) += tri_contribution[0];
 		M(j,j) += tri_contribution[0];
-		M(j,j) += tri_contribution[0];
+		M(k,k) += tri_contribution[0];
 		M(MAX(i,j), MIN(i,j)) += tri_contribution[1];
 		M(MAX(j,k), MIN(j,k)) += tri_contribution[1];
 		M(MAX(k,i), MIN(k,i)) += tri_contribution[1];
@@ -151,10 +149,10 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 	/* Since we can compute the coefficients for each triangle, we will build M by
 	by additionning the contribution of each triangle */
 
-	for (size_t tri_index = 0; tri_index<tri_count; tri_index+=3) { // Triangle ABC d'indices i,j,k
-		uint32_t i = m.indices[tri_index];
-		uint32_t j = m.indices[tri_index+1];
-		uint32_t k = m.indices[tri_index+2];
+	for (size_t tri_index = 0; tri_index<tri_count; tri_index++) { // Triangle ABC d'indices i,j,k
+		uint32_t i = m.indices[3*tri_index];
+		uint32_t j = m.indices[3*tri_index+1];
+		uint32_t k = m.indices[3*tri_index+2];
 
 		Vec3 A = m.positions[i];
 		Vec3 B = m.positions[j];
@@ -162,13 +160,13 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 
 		/* We must convert float to double as mass() expect Vec3d*/
 		Vec3d AB = {(double)B[0] - (double)A[0], (double)B[1] - (double)A[1], (double)B[2] - (double)A[2]};
-		Vec3d AC = {(double)B[0] - (double)C[0], (double)B[1] - (double)C[1], (double)B[2] - (double)C[2]};
+		Vec3d AC = {(double)C[0] - (double)A[0], (double)C[1] - (double)A[1], (double)C[2] - (double)A[2]};
 
 		double tri_contribution[6];
-		mass(AB, AC, tri_contribution);
+		stiffness(AB, AC, tri_contribution);
 		S(i,i) += tri_contribution[0];
 		S(j,j) += tri_contribution[1];
-		S(j,j) += tri_contribution[2];
+		S(k,k) += tri_contribution[2];
 		S(MAX(i,j), MIN(i,j)) += tri_contribution[3];
 		S(MAX(j,k), MIN(j,k)) += tri_contribution[4];
 		S(MAX(k,i), MIN(k,i)) += tri_contribution[5];

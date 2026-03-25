@@ -83,22 +83,66 @@ void NavierStokesSolver::compute_transport(double *T)
 
 size_t NavierStokesSolver::compute_stream_function()
 {
-	size_t iter = 0;
+	double b2, r2, rel_error;
+	size_t iter;
 
-	/* Your implementation goes here */
+	double *R = r.data;
+	double *P = p.data;
+	double *AP = Ap.data;
+	double *Om = omega.data;
+	double *MOm = Momega.data;
+	double *Psi = psi.data;
 
-	/* We must solve S@psi = -M@omega 
-	 * One easy solution is to use conjugate gradient here
-	 * however pseudo-inverse is computationaly better as
-	 * S is the same for every time-step
-	 */
+	M.mvp(Om, MOm);
+
+	/* Compute rhs norm2 */
+	b2 = blas_dot(MOm, MOm, N);
+
+	/* Form initial R and P */
+	S.mvp(Psi, R);
+	blas_axpby(1, MOm, -1, R, N);
+	blas_copy(R, P, N);
+	r2 = blas_dot(R, R, N);
+	rel_error = sqrt(r2 / b2);
+
+	/* Iterate until convergence */
+	iter = 0;
+	while ((rel_error > tol) && (iter++ < iter_max)) {
+
+		/* Compute AP */
+		S.mvp(P, AP);
+
+		/* Update Psi */
+		double alpha = r2 / blas_dot(P, AP, N);
+		blas_axpy(alpha, P, Psi, N);
+
+		/* Update R */
+		blas_axpy(-alpha, AP, R, N);
+
+		/* Update r2 and P */
+		double beta = 1.0 / r2;
+		r2 = blas_dot(R, R, N);
+		rel_error = sqrt(r2 / b2);
+		beta *= r2;
+		blas_axpby(1, R, beta, P, N);
+	}
 
 	return iter;
 }
 
 void NavierStokesSolver::time_step(double dt, double nu)
 {
-	compute_stream_function();
+	double b2, r2, rel_error;
+
+	size_t iter1, iter2;
+
+	double *R = r.data;
+	double *P = p.data;
+	double *AP = Ap.data;
+	double *Om = omega.data;
+	double *MOm = Momega.data;
+
+	iter1 = compute_stream_function();
 
 	/**********************************************************************
 	 * Solve the system :
@@ -107,9 +151,52 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	 *
 	 *********************************************************************/
 
-	/* Your implementation goes here */
+	/* Form rhs, saved in P */
+	compute_transport(P);
+	blas_axpby(1, MOm, dt, P, N);
+	b2 = blas_dot(P, P, N);
+
+	/* Form initial R and P */
+	S.mvp(Om, R);
+	blas_axpby(1, MOm, dt * nu, R, N);
+	blas_axpby(1, P, -1, R, N);
+	blas_copy(R, P, N);
+	r2 = blas_dot(R, R, N);
+	rel_error = sqrt(r2 / b2);
+
+	/* Iterate until convergence (and at least once) */
+	iter2 = 0;
+	do {
+
+		/* Compute AP (invalidates Mom) */
+		S.mvp(P, AP);
+		M.mvp(P, MOm); /* MOm used as temp storage */
+		blas_axpby(1, MOm, dt * nu, AP, N);
+
+		/* Update Om */
+		double alpha = r2 / blas_dot(P, AP, N);
+		blas_axpy(alpha, P, Om, N);
+
+		/* Update R */
+		blas_axpy(-alpha, AP, R, N);
+
+		/* Update r2 and P */
+		double beta = 1.0 / r2;
+		r2 = blas_dot(R, R, N);
+		rel_error = sqrt(r2 / b2);
+		beta *= r2;
+		blas_axpby(1, R, beta, P, N);
+
+		/* Update MOm */
+		M.mvp(Om, MOm);
+
+		iter2++;
+	} while ((rel_error > tol) && (iter2 <= iter_max));
 
 	set_zero_mean(omega.data);
 
 	t += dt;
+
+	(void)iter1;
+	//printf("Iter 1 : %zu, Iter2 : %zu\n", iter1, iter2);
 }

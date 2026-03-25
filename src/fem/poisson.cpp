@@ -1,6 +1,7 @@
 #include "poisson.h"
 
 #include "P1.h"
+#include "P2.h"
 #include "array.h"
 #include "conjugate_gradient.h"
 #if USE_FEM_MATRIX
@@ -11,16 +12,35 @@
 #include "mesh.h"
 #include "tiny_blas.h"
 
-PoissonSolver::PoissonSolver(const Mesh &m)
-    : m(m), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
+PoissonSolver::PoissonSolver(const Mesh &m, const bool use_P2)
+    : m(m), use_P2(use_P2), N(m.vertex_count()), f(N), u(N, 0.0), r(N), p(N), Ap(N)
 {
 #if USE_FEM_MATRIX
 	build_P1_mass_matrix(m, M);
 	build_P1_stiffness_matrix(m, A);
 #else
-	build_P1_CSRPattern(m, P);
-	build_P1_mass_matrix(m, P, M);
-	build_P1_stiffness_matrix(m, P, A);
+	if (use_P2) {
+		build_P2_CSRPattern(m, P, out_edges);
+		build_P2_mass_matrix(m, P, M, out_edges);
+		build_P2_stiffness_matrix(m, P, A, out_edges);
+		
+		N += out_edges.size();
+		f.resize(N);
+		u.resize(N);
+		r.resize(N);
+		p.resize(N);
+		Ap.resize(N);
+
+		for (size_t t=m.vertex_count(); t<N; t++) {
+			u[t] = 0.0;
+		}
+
+	}
+	else {
+		build_P1_CSRPattern(m, P);
+		build_P1_mass_matrix(m, P, M);
+		build_P1_stiffness_matrix(m, P, A);
+	}
 #endif
 	vol = M.sum();
 	inited = false;

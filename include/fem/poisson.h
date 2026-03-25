@@ -1,17 +1,21 @@
 #include "array.h"
 
-#define USE_FEM_MATRIX true
+#define USE_FEM_MATRIX false
 #if USE_FEM_MATRIX
 #include "fem_matrix.h"
 #else
 #include "sparse_matrix.h"
 #endif
 #include "mesh.h"
+#include "edge.h"
+#include <vector>
 
 struct PoissonSolver {
-	PoissonSolver(const Mesh &m);
+	PoissonSolver(const Mesh &m, const bool use_P2);
 	const Mesh &m;
+	const bool use_P2;
 	size_t N; // DoF
+	std::vector<Edge> out_edges;
 	double vol; // Surface(m), used for insuring zero mean to f and u
 	TArray<double> f;
 	TArray<double> u;
