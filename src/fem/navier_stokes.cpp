@@ -51,7 +51,7 @@ void NavierStokesSolver::compute_transport(double *T)
 		T[c] += sum * (psi[a] - psi[b]);
 	}
 	for (size_t v = 0; v < N; v++) {
-		T[v] *= 1.0 / 6;
+		T[v] *= 1.0 / 6;//from quadrature rules
 	}
 }
 
@@ -62,7 +62,7 @@ size_t NavierStokesSolver::compute_stream_function()
 
 	double *R = r.data;
 	double *Pv = p.data;
-	double *AP = Ap.data;
+	double *SPv = Ap.data;
 	double *Om = omega.data;
 	double *MOm = Momega.data;
 	double *Psi = psi.data;
@@ -72,7 +72,7 @@ size_t NavierStokesSolver::compute_stream_function()
 	
 	// 0) we build S, we will modify it imposing boundary condition 
 	#if !USE_FEM_MATRIX
-	build_P1_stiffness_matrix(m, P,S);
+		build_P1_stiffness_matrix(m, P,S);
 	#endif
 	//I rebuild S every time , otherwise after first temporal step the system is no longer the original one.
 	
@@ -97,9 +97,6 @@ size_t NavierStokesSolver::compute_stream_function()
 	// 3) set boundary rows equal to identity
 	for (uint32_t i = 0; i < (uint32_t)N; ++i) {
 		if (!is_bnd[i]) continue;
-
-
-
 		for (uint32_t k = rs[i]; k < rs[i + 1]; ++k) {
 			if (cc[k] == i) {
 				Sd[k] = 1.0;
@@ -111,15 +108,13 @@ size_t NavierStokesSolver::compute_stream_function()
 
 		B[i] = 0.0;
 	}
-
-
 	/* Compute rhs norm2 */
 	b2 = blas_dot(B, B, N);
 
 	/* Form initial R and P */
 	S.mvp(Psi, R);
-	blas_axpby(1, B, -1, R, N);
-	blas_copy(R, Pv, N);
+	blas_axpby(1, B, -1, R, N);// R = B - S*Psi since in B I've the exct rhs, R is the initial residual
+	blas_copy(R, Pv, N);// Pv= R, initial search direction is the residual
 	r2 = blas_dot(R, R, N);
 	rel_error = (b2 > 0.0) ? sqrt(r2 / b2) : sqrt(r2);
 
@@ -127,14 +122,14 @@ size_t NavierStokesSolver::compute_stream_function()
 	iter = 0;
 	while ((rel_error > tol) && (iter++ < iter_max)) {
 
-		/* Compute AP */
-		S.mvp(Pv, AP);
+		/* Compute SPv */
+		S.mvp(Pv, SPv);// SPv = S * Pv
 
 		/* Update Psi */
-		double alpha = r2 / blas_dot(Pv, AP, N);
-		blas_axpy(alpha, Pv, Psi, N);
+		double alpha = r2 / blas_dot(Pv, SPv, N);
+		blas_axpy(alpha, Pv, Psi, N);// Psi = Psi + alpha * Pv
 		/* Update R */
-		blas_axpy(-alpha, AP, R, N);
+		blas_axpy(-alpha, SPv, R, N);
 
 		/* Update r2 and P */
 		double beta = 1.0 / r2;
@@ -163,17 +158,13 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	#if !USE_FEM_MATRIX
 		build_P1_stiffness_matrix(m, P, S);
 	#endif
-	/**********************************************************************
-	 * Solve the system :
-	 *
-	 *  (M + \nu * dt * S)omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
-	 *
-	 *********************************************************************/
-
-	/* Form rhs, saved in P */
+	
+	 //(M + \nu * dt * S)omega(t+dt) = M * omega(t) + dt * T(Omega,Psi)(t)
+	 
+	/* Form rhs, saved in Pv */
 	compute_transport(Pv);
 	
-	blas_axpby(1, MOm, dt, Pv, N); //Pi = 1 * Momi + dt * Pi M*omega(t) + dt * T(Omega,Psi)(t) on first N values of P
+	blas_axpby(1, MOm, dt, Pv, N); //Pi = 1 * Momi + dt * T(Omega,Psi)(t) on first N values of P
 	b2 = blas_dot(Pv, Pv, N);//compute the norm of the rhs, used for convergence check, on first N values of P
 
 	/* Form initial R and P */
@@ -212,7 +203,6 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 		iter2++;
 	} while ((rel_error > tol) && (iter2 <= iter_max));
-
 	
 
 	t += dt;
