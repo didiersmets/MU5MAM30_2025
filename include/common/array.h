@@ -36,6 +36,7 @@ struct TArray {
 	void reserve(size_t capacity);
 	void shrink_to_fit();
 	void clear();
+	void dump(const char *fname);
 };
 
 template <typename T>
@@ -154,4 +155,13 @@ template <typename T>
 inline void TArray<T>::clear()
 {
 	size = 0;
+}
+
+template <typename T>
+void TArray<T>::dump(const char *fname){
+	FILE *f = fopen(fname,"w");
+	for (size_t i = 0; i<size; i++){
+		fprintf(f,"%lf\n", data[i]);
+	}
+	fclose(f);
 }

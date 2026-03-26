@@ -15,11 +15,11 @@ int main(){
 	CSRMatrix A(pattern,0);
 
 	// we want to solve Mx = b
-	dump(A,"matrix0.txt");
+	A.dump("matrix0.txt");
 	build_P1_mass_matrix(m,A);
-	dump(A,"matrix1.txt");
+	A.dump("matrix1.txt");
 	build_P1_stiffness_matrix(m,A);
-	dump(A,"matrix2.txt");
+	A.dump("matrix2.txt");
 
 
 

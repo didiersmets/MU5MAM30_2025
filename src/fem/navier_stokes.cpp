@@ -116,21 +116,36 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	if (dt != this->dt || nu != this->nu){
 		this->dt = dt;
 		this->nu = nu;
-		MnudtS = std::move(CSRMatrix(P,0.0));
-		build_P1_stiffness_matrix(m, MnudtS);
-		blas_scal(nu*dt,MnudtS.data.data,MnudtS.data.size);
-		build_P1_mass_matrix(m, MnudtS);
-		MnudtS_chol.update_same_pattern(MnudtS);
-	}
-	MnudtS_chol.solve(p.data,omega.data);
+		// MnudtS = std::move(CSRMatrix(P,0.0));
+		// build_P1_stiffness_matrix(m, MnudtS);
+		blas_copy(S.data.data,MnudtS.data.data,MnudtS.data.size);
 
-	// blas_axpby(1,Momega.data,dt,p.data,N);
-	// // at this stage p = b = M * omega(t) + dt * T(Omega,Psi)(t)
+		// blas_scal(nu*dt,MnudtS.data.data,MnudtS.data.size);
+		// build_P1_mass_matrix(m, MnudtS);
+		blas_axpby(1.0,M.data.data,dt*nu,MnudtS.data.data,MnudtS.data.size);
+		MnudtS_chol.update_same_pattern(MnudtS);
+		LOG_MSG("Updated cholesky decomposition");
+		MnudtS.dump("A.txt");
+		MnudtS_chol.L.dump("L.txt");
+		MnudtS_chol.L_anti_transpose.dump("L_antitrans.txt");
+	}
+
+	blas_axpby(1,Momega.data,dt,p.data,N);
+	// at this stage p = b = M * omega(t) + dt * T(Omega,Psi)(t)
+	p.dump("p.txt");
+	TArray<double> myomega(N,0.0);
+	MnudtS_chol.solve(p.data,omega.data);
+	myomega.dump("myomega.txt");
+
+	// TArray<double> MnudtSomega(N,0.0);
+	// MnudtS.mvp(omega.data,MnudtSomega.data);
+	// MnudtSomega.dump("MnudtSomega.txt");
 	// double b2 = blas_dot(p.data,p.data,N);
 	// // initialization x0 = Omega
 	// // r0 = b - Ax0 = b - (M + dt * nu * S) Omega
 	// S.mvp(omega.data,r.data);
 	// blas_axpby(1.0,Momega.data,dt*nu,r.data,N);
+	// r.dump("MnudtSomega_true.txt");
 	// blas_axpby(1.0,p.data,-1.0,r.data,N);
 	// blas_copy(r.data,p.data,N);
 	// // code bellow copied from conjugate_gradient.cpp
@@ -145,6 +160,7 @@ void NavierStokesSolver::time_step(double dt, double nu)
 	// }
 
 	// LOG_MSG("time step : %d iterations; %f relative error",iter,rel_error);
+	omega.dump("omega.txt");
 	set_zero_mean(omega.data);
 	t += dt;
 }

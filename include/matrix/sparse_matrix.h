@@ -38,12 +38,12 @@ struct CSRMatrix : public Matrix {
 	double sum() const;
 	double &operator()(uint32_t i, uint32_t j);
 	void print();
+	void dump(const char *fname);
 	void print_pattern();
 };
 
 /* Visualisation of non zeros */
 void spy(const CSRPattern &P, uint32_t width, const char *fname);
-void dump(CSRMatrix &M, const char *fname);
 
 // /******************************************************************************
 //  *

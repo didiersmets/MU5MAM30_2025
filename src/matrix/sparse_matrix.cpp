@@ -134,13 +134,13 @@ void spy(const CSRPattern &P, uint32_t width, const char *fname){
 	stbi_write_png(fname, width, width, 1, (void *)img.data, width);
 }
 
-void dump(CSRMatrix &M, const char *fname){
+void CSRMatrix::dump(const char *fname){
 	FILE *f = fopen(fname,"w");
-	for (uint32_t r=0;r<M.rows;r++){
-		uint32_t non_zero_col = M.row_start[r];
-		for (uint32_t y=0; y<M.cols; y++){
-			if (y==M.col[non_zero_col]){
-				fprintf(f,"%lf ",M.data[non_zero_col]);
+	for (uint32_t r=0;r<rows;r++){
+		uint32_t non_zero_col = row_start[r];
+		for (uint32_t y=0; y<cols; y++){
+			if (non_zero_col<row_start[r+1] && y==col[non_zero_col]){
+				fprintf(f,"%lf ",data[non_zero_col]);
 				non_zero_col++;
 			} else {
 				fprintf(f,"%lf ",0.0);
