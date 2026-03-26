@@ -18,6 +18,24 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	 * implementations heavilly make use of specific hardware capabilities 
 	 * (instruction sets, parallelism, cache efficiency etc). 
 	 */
+	 /*look at CG5 from notes*/
+	A.mvp(p, Ap); /*Ap = A*p*/
+
+	const double pAp = blas_dot(p, Ap, A.rows);
+	if (!(pAp > 0.0) || !isfinite(pAp)) {
+    printf("[CG] pAp bad: %g\n", pAp);
+    return r2;
+	}
+	const double alpha=r2/pAp; /*A.rows = N */
+	 blas_axpy(alpha, p, x, A.rows); // x = x + alpha * p
+	blas_axpy(-alpha, Ap, r, A.rows); 
+
+	const double new_r2=blas_dot(r,r,A.rows);
+	const double beta=new_r2/r2; //compute new r2
+	// p = r + beta * p
+    // p *= beta
+     blas_axpby(1.0, r, beta, p, A.rows);
+	return new_r2;	
 }
 
 size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
@@ -29,7 +47,7 @@ size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
 	size_t N = A.rows;
 	assert(A.rows == A.cols);
 
-	double b2 = blas_dot(b, b, N);
+	double b2 = blas_dot(b, b, N);/*b norm using parallel code, N tells me how many processors do I want to use */
 
 	if (!inited) {
 		/* r_0 = b - Ax_0 */

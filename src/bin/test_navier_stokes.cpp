@@ -19,7 +19,7 @@
 #include "shaders.h"
 #include "sphere.h"
 #include "viewer.h"
-
+#include "half_sphere.h"
 /* Viewer config */
 float bgcolor[4] = {0.3, 0.3, 0.3, 1.0};
 bool draw_surface = true;
@@ -33,6 +33,7 @@ bool autoscale = true;
 bool started = false;
 bool one_step = false;
 bool reset = false;
+bool show_stream_function = true;
 
 /* Parameters */
 float lognu = -3.7;
@@ -41,7 +42,7 @@ double tol = 1e-6;
 
 /* RHS expression of the PDE */
 char rhs_expression[128] =
-    "100 * z * exp(-50*z^2) * (1 + 0.5 * cos(20 * theta))";
+    "exp(-5*((z-1)^2+(x)^2+y^2))";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x},   {"y", &rhs_y},     {"z", &rhs_z},
@@ -72,7 +73,7 @@ void reset_solver(NavierStokesSolver &solver)
 		solver.omega[i] = te_eval(te_rhs);
 	}
 
-	solver.set_zero_mean(solver.omega.data);
+	//solver.set_zero_mean(solver.omega.data);
 	memset(solver.psi.data, 0, solver.N * sizeof(double));
 	solver.t = 0;
 }
@@ -101,6 +102,13 @@ void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 		m.attr[i] = V[i];
 	}
 }
+static void transfer_current_field(NavierStokesSolver &solver, Mesh &mesh)
+{
+    if (show_stream_function)
+        transfer_to_mesh(solver.psi, mesh);
+    else
+        transfer_to_mesh(solver.omega, mesh);
+}
 
 int main(int argc, char **argv)
 {
@@ -122,7 +130,8 @@ int main(int argc, char **argv)
 		LOG_MSG("Error loading rhs (expression flawed ?).");
 		exit(EXIT_FAILURE);
 	}
-	transfer_to_mesh(solver.omega, mesh);
+	solver.compute_stream_function();
+	transfer_to_mesh(solver.psi, mesh);
 	get_attr_bounds(mesh, &scale_min, &scale_max);
 	LOG_MSG("Prepared FEM data.");
 
@@ -164,7 +173,7 @@ int main(int argc, char **argv)
 
 static void syntax(char *prg_name)
 {
-	printf("Syntax : %s ($(obj_filename)| cube | sphere) [n]\n", prg_name);
+	printf("Syntax : %s ($(obj_filename)| cube | sphere | half_sphere) [n]\n", prg_name);
 	printf("         Subdivision number n must be provided in case of "
 	       "cube or sphere mesh.\n");
 }
@@ -176,6 +185,8 @@ static int load_mesh(Mesh &mesh, int argc, char **argv)
 		res = load_cube(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "sphere", 5) == 0) {
 		res = load_sphere(mesh, atoi(argv[2]));
+	} else if (argc > 2 && strncmp(argv[1], "half_sphere", 5) == 0) {
+		res = load_half_sphere(mesh, atoi(argv[2]));
 	} else if (argc > 1) {
 		res = load_obj(argv[1], mesh);
 	}
@@ -241,13 +252,13 @@ static void update_all(NavierStokesSolver &solver, Mesh &mesh,
 		if (one_step) {
 			one_step = false;
 		}
-		transfer_to_mesh(solver.omega, mesh);
-		if (autoscale) {
-			get_attr_bounds(mesh, &scale_min, &scale_max);
-		}
-	} else if (reset) {
+		transfer_current_field(solver, mesh);
+    if (autoscale) {
+        get_attr_bounds(mesh, &scale_min, &scale_max);
+    }
+} else if (reset) {
 		reset_solver(solver);
-		transfer_to_mesh(solver.omega, mesh);
+		transfer_current_field(solver, mesh);
 		get_attr_bounds(mesh, &scale_min, &scale_max);
 		reset = false;
 	} else {
@@ -359,6 +370,7 @@ static void draw_gui(NavierStokesSolver &solver)
 	ImGui::SliderFloat("dt", &dt, 0.f, 0.01f, "%.4f");
 	ImGui::Checkbox("Autoscale colors to bounds", &autoscale);
 	ImGui::Checkbox("Show mesh edges", &draw_edges);
+	ImGui::Checkbox("Show stream function", &show_stream_function);
 	ImGui::Text("Artificially deform mesh according to omega :");
 	ImGui::Text("(may help visualize oscillations)");
 	ImGui::SliderFloat("  ", &mesh_deform, 0.f, 1.f);

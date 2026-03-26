@@ -23,5 +23,20 @@
  */
 void inline stiffness(const Vec3d &AB, const Vec3d &AC, double *__restrict S)
 {
-	/* Your implementation goes here */
+	double ABAB = norm2(AB);
+	double ACAC = norm2(AC);
+	double ABAC = dot(AB, AC);
+	double mult = 0.5 / sqrt(ABAB * ACAC - ABAC * ABAC);
+	ABAB *= mult;
+	ACAC *= mult;
+	ABAC *= mult;
+
+	S[0] = ACAC - 2 * ABAC + ABAB;
+	S[1] = ACAC;
+	S[2] = ABAB;
+	S[3] = ABAC - ACAC;
+	/* Note the chosen order : (B,C)-> 4 and (C,A) -> 5 */
+	S[4] = -ABAC;
+	S[5] = ABAC - ABAB;
+
 }

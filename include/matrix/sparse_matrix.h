@@ -25,7 +25,7 @@ struct CSRPattern {
 struct CSRMatrix : public Matrix {
 	bool symmetric = false;
 	size_t nnz; /* Number of (non zero) entries */
-	uint32_t *row_start; /* pointer to the corresponding data in pattern */
+	uint32_t *row_start; /* pointer to the corresponding data in pattern -->È un array di dimensione (n_righe + 1) */
 	uint32_t *col; /* pointer to the corresponding data in pattern */
 	TArray<double> data; /* Size = nnz  */
 	void mvp(const double *__restrict x, double *__restrict y) const;

@@ -37,8 +37,12 @@ add_library(nanofem
 	#src/matrix/spy.cpp
 	src/mesh/adjacency.cpp
 	src/mesh/cube.cpp
+	src/mesh/half_cube.cpp
+	src/mesh/half_sphere.cpp
+	src/mesh/boundary.cpp
 	src/mesh/cube2.cpp
 	src/mesh/sphere.cpp
+	src/mesh/square.cpp
 	src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
