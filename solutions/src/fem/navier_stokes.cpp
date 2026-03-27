@@ -9,22 +9,35 @@
 #include "tiny_blas.h"
 
 NavierStokesSolver::NavierStokesSolver(const Mesh &m)
+/* - List of initilisation of references, necessary since
+ references cannot be changed, once initilised with a defualt value.
+ Necessary, since the constructor is called with a reference &m.
+ - N is of type size_t, m.vertex_count() is of type size_t too
+ - The rest calls constructors of the respective types*/
     : m(m), N(m.vertex_count()), omega(N), Momega(N), psi(N), r(N), p(N), Ap(N)
 {
+	/* Filling P, M, and S with the right values.*/
 	build_P1_CSRPattern(m, P);
 	build_P1_mass_matrix(m, P, M);
 	build_P1_stiffness_matrix(m, P, S);
+
+	/* Since the sum of the functions phi is 1 on the sphere, the sum
+	 of all the matrix entries of the mass matrix is exactly the value
+	 of the integral of the 1 fct. over the whole approximated sphere.*/
 	vol = M.sum();
+
 	inited = false;
 	t = 0;
 }
 
+
+/* sum(M*V') = sum(M*V) - sum(M*ONES)*s/vol = s-vol*s/vol = s-s = 0 */
 void NavierStokesSolver::set_zero_mean(double *V)
 {
 	M.mvp(V, Ap.data);
 	double s = blas_sum_in_place(Ap.data, N);
 	for (size_t i = 0; i < N; ++i) {
-		V[i] -= s / vol;
+		V[i] -= s / vol; /* V' = V-s/vol*ONES */
 	}
 }
 

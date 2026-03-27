@@ -45,7 +45,7 @@ char rhs_expression[128] =
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 
-/* Aggregate Initialization of array of objects of class te_variables. See file tinyexpr.h/.c */
+/* Aggregate Initialization of array of objects of class te_variables. See files tinyexpr.h/.c */
 te_variable rhs_vars[] = {{"x", &rhs_x},   {"y", &rhs_y},     {"z", &rhs_z},
 			  {"phi", &rhs_p}, {"theta", &rhs_t}, {"rand", &rhs_r}}; 
 te_expr *te_rhs = NULL;
