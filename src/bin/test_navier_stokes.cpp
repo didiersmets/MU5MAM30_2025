@@ -41,7 +41,7 @@ double tol = 1e-6;
 
 /* RHS expression of the PDE */
 char rhs_expression[128] =
-    "100 * (z+x) * exp(-50*(z+x)^2) * (1 + 0.5 * cos(20 * theta))";
+    "100 * (z+x+y) * exp(-50*(z+x+y)^2) * (1 + 0.5 * cos(20 * theta))";
 bool rhs_show_error = false;
 double rhs_x, rhs_y, rhs_z, rhs_p, rhs_t, rhs_r;
 te_variable rhs_vars[] = {{"x", &rhs_x},   {"y", &rhs_y},     {"z", &rhs_z},
@@ -178,6 +178,8 @@ static int load_mesh(Mesh &mesh, int argc, char **argv)
 		res = load_sphere(mesh, atoi(argv[2]));
 	} else if (argc > 2 && strncmp(argv[1], "sphube", 6) == 0) {
 		res = load_spherical_cube(mesh, atoi(argv[2]));
+	} else if (argc > 2 && strncmp(argv[1], "disect_cube", 11) == 0) {
+		res = load_spherical_nested_cube(mesh, atoi(argv[2]));
 	} else if (argc > 1 && strncmp(argv[1], "tetra", 5) == 0) {
 		res = load_tetrahedron(mesh);
 	} else if (argc > 1) {
