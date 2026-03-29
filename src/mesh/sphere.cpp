@@ -25,6 +25,7 @@ void subdiv_step(Mesh &m){
 		Vec3 v[3] = {m.positions[i[0]],m.positions[i[1]],m.positions[i[2]]};
 		uint32_t childs[3];
 		for (size_t edge=0; edge<3; edge++){
+			// unordered hash function : h((i,j)) = h((j,i))
 			size_t mid_i = (i[edge]<=i[(edge+1)%3]) ? vertex_count*i[edge]+i[(edge+1)%3] : vertex_count*i[(edge+1)%3]+i[edge];
 			if (midpoint[mid_i] == -1){
 				// construct new child
