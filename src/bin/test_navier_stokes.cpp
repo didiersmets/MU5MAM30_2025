@@ -64,13 +64,14 @@ static void draw_gui(NavierStokesSolver &solver);
 static void key_cb(int key, int action, int mods, void *args);
 static void get_attr_bounds(const Mesh &m, float *attr_min, float *attr_max);
 
+/* Functionality of the reset button */
 void reset_solver(NavierStokesSolver &solver)
 {
 	for (size_t i = 0; i < solver.N; ++i) {
 		rhs_x = solver.m.positions[i].x;
 		rhs_y = solver.m.positions[i].y;
 		rhs_z = solver.m.positions[i].z;
-		rhs_p = atan2(rhs_	y, rhs_x);
+		rhs_p = atan2(rhs_y, rhs_x);
 		rhs_t = atan2(sqrt(rhs_x * rhs_x + rhs_y * rhs_y), rhs_z);
 		rhs_r = (double)rand() / RAND_MAX;
 		solver.omega[i] = te_eval(te_rhs);

@@ -10,6 +10,10 @@
  *
  *****************************************************************************/
 
+ /* Remark: A CSRMatrix does not have a CSRPattern pattern as an attribut, bit
+  * only pointers to the attributes of a CSRPattern, so multiple matrices can 
+  * easily have the same pattern.*/
+
 struct CSRPattern {
 	bool symmetric;
 	size_t rows;
@@ -22,6 +26,8 @@ struct CSRPattern {
 	TArray<uint32_t> col; /* Size = nnz */
 };
 
+/* CSRMatrix is a subclass of Matrix. An object of the class Matrix
+ * already has two attributes: the number of rows and the number of colums. */
 struct CSRMatrix : public Matrix {
 	bool symmetric = false;
 	size_t nnz; /* Number of (non zero) entries */

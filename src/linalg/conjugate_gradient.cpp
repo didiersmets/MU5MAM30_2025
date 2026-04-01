@@ -18,13 +18,16 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 	 * (instruction sets, parallelism, cache efficiency etc). 
 	 */
 
+	/* Ap = A*p */
+	A.mvp(p, Ap);
+
 	int N = A.rows;
 	double alpha = r2 / blas_dot(Ap, p, N);
 
 	/* x_{n+1} = x_n+alpha*p */
 	blas_axpy(alpha, p, x, N);
 
-	/* r_{n+1} = r_n - alpha*p */
+	/* r_{n+1} = r_n - alpha*Ap */
 	blas_axpy(-alpha, Ap, r, N);
 
 	double r2_new = blas_dot(r, r, N);
@@ -32,9 +35,6 @@ double cg_iterate_once(const Matrix &A, double *__restrict x,
 
 	/* p_{n+1} = r_{n+1} + beta*p_n */
 	blas_axpby(1, r, beta, p, N);
-
-	/* Ap = A*p */
-	A.mvp(p, Ap);
 
 	return(r2_new);
 
@@ -52,6 +52,8 @@ size_t conjugate_gradient_solve(const Matrix &A, const double *__restrict b,
 	double b2 = blas_dot(b, b, N);
 
 	if (!inited) {
+		/* x_0 = 0 */
+    memset(x, 0, N * sizeof(double));
 		/* r_0 = b - Ax_0 */
 		A.mvp(x, r);
 		blas_axpby(1, b, -1, r, N);
