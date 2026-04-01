@@ -53,7 +53,7 @@ void NavierStokesSolver::compute_transport(double *T)
 	memset(T, 0, N * sizeof(double));
 
 	//Rossby number Ro = 0.1 
-	double RoRec = 10.0;
+	double RoRec = 6.28;
 
 	for (size_t t = 0; t < m.triangle_count(); t++) {
 		/* indices contains all the indices of points that are contained
