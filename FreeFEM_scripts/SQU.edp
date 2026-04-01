@@ -1,0 +1,45 @@
+real R = 1.0;
+real h = 0.05;
+int nx = 10;
+int ny = 20;
+
+//Mesh 2D qui sera projeté sur une sphère
+// x = Longitude : 0 à 2*pi (Tour complet)
+// y = Latitude : 0 à pi (Nord vers Sud uniquement)
+mesh Th = square(nx, ny, [x*2*pi, y*pi]);
+
+//Paramétrisation de la sphère
+func fx = R*cos(x)*sin(y);
+func fy = R*sin(x)*sin(y);
+func fz = R*cos(y);
+
+//On calcule les dérivées partielles
+func dxf1 = -R*sin(x)*sin(y);
+func dyf1 = -R*cos(x)*cos(y);
+func dxf2 = R*cos(x)*sin(y);
+func dyf2 = -R*sin(x)*cos(y);
+func dxf3 = 0;
+func dyf3 = -R*sin(y);
+
+//On définit la métrique sur la sphère $Df^T DF$
+func m11 = dxf1^2 + dxf2^2 + dxf3^2;
+func m21 = dxf1*dyf1 + dxf2*dyf2 + dxf3*dyf3;
+func m22 = dyf1^2 + dyf2^2 + dyf3^2;
+
+//On définis aussi la périodicité du mesh 
+//1:Bottom, 2:Right, 3:Top, 4:Left
+//Donc on a une periodicité selon x pour 1 et 3
+//et une selon y pour 2 et 4
+func per = [[2,y],[4,y],[1,x],[3,x]];
+
+//On adapte le mesh avant transformation par rapport à cette métrique
+real hh = h;
+real vv = 1/square(hh);
+
+Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=per);
+Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=per);
+Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=per);
+Th=adaptmesh(Th,m11*vv,m21*vv,m22*vv,IsMetric=1,periodic=per);
+
+//Projection sur la sphère
+meshS ThS = movemesh23(Th, transfo=[fx,fy,fz]);

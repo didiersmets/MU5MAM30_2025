@@ -28,10 +28,11 @@ add_library(nanofem
 	#        header files, you should complete (or copy them from solutions)
 	#        before building the project.
 	src/fem/P1.cpp
+	src/fem/P2.cpp #ajoute de P2 Aurélien
 	src/fem/poisson.cpp
 	src/fem/navier_stokes.cpp
 	src/linalg/conjugate_gradient.cpp
-	#src/linalg/cholesky.cpp
+	src/linalg/cholesky.cpp #Ajout de cholesky
 	src/matrix/fem_matrix.cpp
 	src/matrix/sparse_matrix.cpp
 	#src/matrix/spy.cpp
@@ -42,6 +43,8 @@ add_library(nanofem
 	src/mesh/duplicate_verts.cpp
 	src/mesh/mesh_io.cpp
 	src/mesh/mesh_bounds.cpp
+    src/mesh/adjacency_P2.cpp
+	include/mesh/adjacency_P2.h
 )
 target_include_directories(nanofem PUBLIC 
 	include/common 
@@ -52,13 +55,14 @@ target_include_directories(nanofem PUBLIC
 	extern
 )
 target_compile_options(nanofem PRIVATE 
-	-std=c++17 -Wall -Wextra -ffast-math -march=native -Wno-unknown-pragmas
+	-std=c++17 -Wall -Wextra -march=native -Wno-unknown-pragmas
 	-Wno-missing-field-initializers
 )
 if (USE_OPENMP AND OpenMP_CXX_FOUND)
 	target_compile_options(nanofem PRIVATE -DUSE_OPENMP)
 	target_link_libraries(nanofem PUBLIC OpenMP::OpenMP_CXX)
 endif()
+target_link_libraries(nanofem PUBLIC m)
 ###############################################################################
 
 ###############################################################################
@@ -70,6 +74,8 @@ add_library(nanoviewer
 	src/viewer/mouse.cpp
 	src/viewer/trackball.cpp
 	src/viewer/shaders.cpp
+	src/viewer/glad.c #rajouté pour windows par Aurélien
+
 )
 target_include_directories(nanoviewer PUBLIC 
 	include/common 
@@ -107,6 +113,42 @@ target_compile_options(test_NS PRIVATE
 	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 )
 target_link_libraries(test_NS PRIVATE nanofem nanoviewer tiny_expr)
+
+###############################################################################
+add_executable(test_cholesky
+	src/bin/test_cholesky.cpp
+)
+target_compile_options(test_cholesky PRIVATE 
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_cholesky PRIVATE nanofem)
+###############################################################################
+
+#
+# copy the shaders directory to the build tree so that the hard-coded
+# relative paths used in the viewer programs ("./shaders/fem.vert" etc.)
+# actually resolve when the executables are launched from the build
+# directory.  Without this CMake command the project root is the only
+# place that contains the "shaders" folder which explains the runtime
+# error shown in the bug report:
+#
+#   ERROR: Vertex shader ./shaders/fem.vert not found!
+#
+# Two alternatives are possible: either change the sources to compute a
+# full path to the data from argv[0] / executable location, or make the
+# shaders available in the working directory.  the latter is simpler for
+# a student project so we copy the directory during the build.
+#
+set(SHADER_SRC_DIR ${CMAKE_SOURCE_DIR}/shaders)
+
+add_custom_target(copy_shaders ALL
+	COMMAND ${CMAKE_COMMAND} -E copy_directory
+			"${SHADER_SRC_DIR}" "${CMAKE_BINARY_DIR}/shaders"
+	COMMENT "copying shader assets to build directory"
+)
+
+add_dependencies(test_NS copy_shaders)
+add_dependencies(test_poisson copy_shaders)
 ###############################################################################
 
 ###############################################################################

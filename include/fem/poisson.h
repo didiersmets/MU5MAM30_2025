@@ -1,6 +1,5 @@
 #include "array.h"
-
-#define USE_FEM_MATRIX true
+#define USE_FEM_MATRIX false
 #if USE_FEM_MATRIX
 #include "fem_matrix.h"
 #else
@@ -9,8 +8,9 @@
 #include "mesh.h"
 
 struct PoissonSolver {
-	PoissonSolver(const Mesh &m);
+	PoissonSolver(const Mesh &m, int degre = 1); /*ajout du degre pour P2*/
 	const Mesh &m;
+	int degre;
 	size_t N; // DoF
 	double vol; // Surface(m), used for insuring zero mean to f and u
 	TArray<double> f;

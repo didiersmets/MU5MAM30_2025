@@ -24,8 +24,8 @@ struct TArray {
 	TArray();
 	TArray(size_t size);
 	TArray(size_t size, T val);
-	TArray(const TArray<T> &other) = delete;
-	TArray &operator=(const TArray<T> &other) = delete;
+	TArray(const TArray<T> &other);
+	TArray &operator=(const TArray<T> &other);
 	~TArray();
 	T &operator[](size_t i);
 	const T &operator[](size_t i) const;
@@ -123,4 +123,31 @@ template <typename T>
 inline void TArray<T>::clear()
 {
 	size = 0;
+}
+
+template <typename T>
+TArray<T>::TArray(const TArray<T> &other) : size{other.size}, capacity{other.capacity}
+{
+	data = static_cast<T *>(safe_malloc(capacity * sizeof(T)));
+	for (size_t i = 0; i < size; ++i) {
+		data[i] = other.data[i];
+	}
+}
+
+template <typename T>
+TArray<T> &TArray<T>::operator=(const TArray<T> &other)
+{
+	if (this != &other) {
+		clear();
+		if (capacity < other.size) {
+			free(data);
+			capacity = other.size;
+			data = static_cast<T *>(safe_malloc(capacity * sizeof(T)));
+		}
+		size = other.size;
+		for (size_t i = 0; i < size; ++i) {
+			data[i] = other.data[i];
+		}
+	}
+	return *this;
 }

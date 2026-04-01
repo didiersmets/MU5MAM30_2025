@@ -16,6 +16,8 @@
 	#define GL_SILENCE_DEPRECATION 1
 	#include <OpenGL/gl3.h>
 	#include <OpenGL/glext.h>
+#elif defined _WIN32
+	#include "glad/glad.h" // utilisation de glad pour windows
 #else
 	#error "This platform doesn't seem supported yet."
 #endif
