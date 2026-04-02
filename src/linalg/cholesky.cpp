@@ -22,14 +22,13 @@ void symbolic_cholesky(const CSRMatrix &A, etree &T)
             uint32_t j = A.col[k];
             if (j < i) {
                 uint32_t jroot = j;
-                while (ancestors[jroot] != INVALID && ancestors[jroot] != (uint32_t)i) {
+                while (jroot != INVALID && ancestors[jroot] != (uint32_t)i) {
                     uint32_t next = ancestors[jroot];
                     ancestors[jroot] = (uint32_t)i;
+                    if (next == INVALID) {
+                        T[jroot] = (uint32_t)i;
+                    }
                     jroot = next;
-                }
-                if (ancestors[jroot] == INVALID) {
-                    T[jroot] = (uint32_t)i;
-                    ancestors[jroot] = (uint32_t)i;
                 }
             }
         }
@@ -39,6 +38,7 @@ void symbolic_cholesky(const CSRMatrix &A, etree &T)
 void L_pattern(const CSRMatrix &A, etree &T, CSRPattern &L_Pattern)
 {
     size_t n = A.rows;
+    constexpr uint32_t INVALID = std::numeric_limits<uint32_t>::max();
     L_Pattern.rows = n;
     L_Pattern.cols = n;
     L_Pattern.row_start.resize(n + 1);
@@ -51,16 +51,17 @@ void L_pattern(const CSRMatrix &A, etree &T, CSRPattern &L_Pattern)
         for (size_t k = start; k < stop; ++k){
             if (A.col[k] < i){
                 uint32_t j = A.col[k];
-                while(mark[j] != i){
+                while(j != INVALID && mark[j] != i){
                     L_cols[i].push_back(j);
                     mark[j] = i;
                     j = T[j];
                 }
             }
         }
+        L_cols[i].push_back(i);
     }
 
-    uint32_t nnz = 0;               
+    uint32_t nnz = 0;
     for (size_t i = 0; i < n; ++i){
         L_Pattern.row_start[i] = nnz;
         nnz += L_cols[i].size;
@@ -98,7 +99,7 @@ void cholesky_fact(const CSRMatrix &A, CSRMatrix &L, const CSRPattern &L_Pattern
         size_t l_start = L.row_start[i];
         size_t l_stop = L.row_start[i + 1];
 
-        for (size_t k = l_start; k < l_stop; ++k){
+        for (size_t k = l_start; k < l_stop; ++k) {
             uint32_t j = L.col[k];
 
             if (j < i) {
@@ -110,17 +111,15 @@ void cholesky_fact(const CSRMatrix &A, CSRMatrix &L, const CSRPattern &L_Pattern
                     uint32_t col_m = L.col[m];
                     if (col_m < j) {
                         work[j] -= work[col_m] * L.data[m];
-                    } 
-                    else if (col_m == j) {
+                    } else if (col_m == j) {
                         l_jj = L.data[m];
                     }
                 }
                 
                 work[j] /= l_jj;
                 L.data[k] = work[j];
-            }
 
-            else if (j == i) {
+            } else if (j == i) {
                 double sum_sq = 0.0;
                 for (size_t m = l_start; m < k; ++m) {
                     sum_sq += L.data[m] * L.data[m];
@@ -182,4 +181,3 @@ void backward_sub(const CSRMatrix &L, const TArray<double> &y, TArray<double> &x
 void cholesky_solve(const CSRMatrix &L, const TArray<double> &b, TArray<double> &x){
     backward_sub(L, forward_sub(L,b), x);
 }
-
