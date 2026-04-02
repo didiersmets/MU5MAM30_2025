@@ -75,15 +75,7 @@ NavierStokesSolver::NavierStokesSolver(const Mesh &m, int degre, SolverType solv
 		for (size_t k = 0; k < A.nnz; k++)
 			A.data[k] = M.data[k] + nu * dt * S.data[k];
 
-		//Identity permutation (no reordering)
-		size_t n = N;
-		cholesky_perm.resize(n);
-		cholesky_iperm.resize(n);
-		for (size_t i = 0; i < n; i++) {
-			cholesky_perm[i] = (uint32_t)i;
-			cholesky_iperm[i] = (uint32_t)i;
-		}
-
+	
 		etree T;
 		symbolic_cholesky(A, T);
 		L_pattern(A, T, cholesky_L_pattern);
@@ -291,19 +283,9 @@ void NavierStokesSolver::time_step(double dt, double nu)
 
 	// Use Cholesky if available
 	if (solver_type == SolverType::CHOLESKY && cholesky_ready) {
-		TArray<double> rhs_perm(N);
 		TArray<double> omega_perm(N);
-		for (size_t i = 0; i < N; i++) {
-			uint32_t old_i = cholesky_iperm[i];
-			rhs_perm[i] = P[old_i];
-		}
 
-		cholesky_solve(cholesky_L, rhs_perm, omega_perm);
-
-		for (size_t i = 0; i < N; i++) {
-			uint32_t old_i = cholesky_iperm[i];
-			Om[old_i] = omega_perm[i];
-		}
+		cholesky_solve(cholesky_L, *P, omega_perm);
 
 		M.mvp(Om, MOm);
 		set_zero_mean(omega.data);
