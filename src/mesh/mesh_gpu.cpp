@@ -55,6 +55,16 @@ void GPUMesh::upload()
 	assert(!glGetError());
 }
 
+void GPUMesh::update_positions()
+{
+	glBindBuffer(GL_ARRAY_BUFFER, pos_vbo);
+	glBufferData(GL_ARRAY_BUFFER, m->positions.size * sizeof(m->positions[0]),
+		     NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, m->positions.size * sizeof(m->positions[0]),
+		     m->positions.data, GL_STATIC_DRAW);
+	assert(!glGetError());
+}
+
 void GPUMesh::draw() const
 {
 	glBindVertexArray(vao);

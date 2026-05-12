@@ -11,6 +11,7 @@ struct GPUMesh {
 	GLuint attr_vbo;
 	GLuint vao;
 	void upload();
+	void update_positions();
 	void update_attr();
 	void draw() const;
 };
