@@ -122,15 +122,25 @@ void build_disk_triangles(struct TVec3<size_t> *tri, size_t N){
         for (size_t j = 0; j < 6*i - 1; j++) {
 
             if (j % i != 0) {
-                tri[idx++] = {2 + 3*(i-2)*(i-1) + aux,1 + 3*(i-1)*(i-2) + aux, 1 + 3*(i-1)*i + j};
-                tri[idx++] = {2 + 3*(i-2)*(i-1) + aux,1 + 3*(i-1)*i + j, 2 + 3*(i-1)*i + j};
+                tri[idx++] = {2 + 3*(i-2)*(i-1) + aux,
+                                1 + 3*(i-1)*(i-2) + aux, 
+                                1 + 3*(i-1)*i + j};
+                tri[idx++] = {2 + 3*(i-2)*(i-1) + aux,
+                                1 + 3*(i-1)*i + j, 
+                                2 + 3*(i-1)*i + j};
                 ++aux;
             } else {
-                tri[idx++] = {1 + 3*(i-1)*i + j, 2 + 3*(i-1)*i + j, 1 + 3*(i-2)*(i - 1) + aux};
+                tri[idx++] = {1 + 3*(i-1)*i + j, 
+                                2 + 3*(i-1)*i + j, 
+                                1 + 3*(i-2)*(i - 1) + aux};
             }
         }
-        tri[idx++] = {1 + 3*(i-1)*i, 3*(i-1)*i + 6*i, 2 + aux + (i - 1)*(3*(i - 2) - 6)};
-        tri[idx++] = {2 + aux + (i - 1)*(3*(i - 2) - 6), 1 + 3*(i-2)*(i - 1) + aux, 3*(i-1)*i + 6*i};
+        tri[idx++] = {1 + 3*(i-1)*i, 
+                        3*(i-1)*i + 6*i, 
+                        2 + aux + (i - 1)*(3*(i - 2) - 6)};
+        tri[idx++] = {2 + aux + (i - 1)*(3*(i - 2) - 6), 
+                        1 + 3*(i-2)*(i - 1) + aux, 
+                        3*(i-1)*i + 6*i};
     }
     return;
 }

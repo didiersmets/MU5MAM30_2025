@@ -62,8 +62,8 @@ int main(int argc, char **argv)
 	}
 
 	Mesh mesh;
-	mymesh_to_mesh(input_mesh, mesh);
-	rescale_and_recenter_mesh(mesh);
+	mymesh_to_mesh(input_mesh, mesh); // convert MyMesh format to Mesh format, will be a plain 2D mesh with z=0
+	rescale_and_recenter_mesh(mesh); // rescale and recenter the mesh to fit in a unit cube centered at the origin
 
 	MyMinimalGraphSolver solver(input_mesh, test_f);
 	solver.clear_solution(true);
@@ -156,8 +156,8 @@ static void transfer_to_mesh(const TArray<double> &V, Mesh &m)
 {
 	m.attr.resize(m.vertex_count());
 	for (size_t i = 0; i < m.vertex_count(); ++i) {
-		m.attr[i] = static_cast<float>(V[i]);
-		m.positions[i].z = static_cast<float>(V[i]);
+		m.attr[i] = static_cast<float>(V[i]); // used for coloring the surface
+		m.positions[i].z = static_cast<float>(V[i]); // set solution to z coordinate for visualization
 	}
 }
 

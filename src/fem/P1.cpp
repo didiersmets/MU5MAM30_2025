@@ -12,14 +12,137 @@
 #include "mesh.h"
 #include "sparse_matrix.h"
 #include "stiffness.h"
+#include "vec2.h"
+
+using Vec2d = TVec2<double>;
+
+static bool find_u32(uint32_t x, uint32_t *start, size_t count)
+{
+	for (size_t i = 0; i < count; ++i) {
+		if (start[i] == x)
+			return true;
+	}
+	return false;
+}
+
+static void stiffness2d(const Vec2d &AB, const Vec2d &AC, double *__restrict S)
+{
+	double ABAB = dot(AB, AB);
+	double ACAC = dot(AC, AC);
+	double ABAC = dot(AB, AC);
+	double mult = 0.5 / sqrt(ABAB * ACAC - ABAC * ABAC);
+
+	ABAB *= mult;
+	ACAC *= mult;
+	ABAC *= mult;
+
+	S[0] = ACAC - 2 * ABAC + ABAB;
+	S[1] = ACAC;
+	S[2] = ABAB;
+	S[3] = ABAC - ACAC;
+	S[4] = -ABAC;
+	S[5] = ABAC - ABAB;
+}
+
+static void stiffness_NS(const Vec2d &AB, const Vec2d &AC, double *__restrict S,
+			 const double *u_loc, const double den)
+{
+	double S_start[6];
+	stiffness2d(AB, AC, S_start);
+
+	double GraduGradPhi[3];
+	GraduGradPhi[0] =
+	    u_loc[0] * S_start[0] + u_loc[1] * S_start[3] + u_loc[2] * S_start[5];
+	GraduGradPhi[1] =
+	    u_loc[0] * S_start[3] + u_loc[1] * S_start[1] + u_loc[2] * S_start[4];
+	GraduGradPhi[2] =
+	    u_loc[0] * S_start[5] + u_loc[1] * S_start[4] + u_loc[2] * S_start[2];
+
+	S[0] = S_start[0] - den * den * (GraduGradPhi[0] * GraduGradPhi[0]);
+	S[1] = S_start[1] - den * den * (GraduGradPhi[1] * GraduGradPhi[1]);
+	S[2] = S_start[2] - den * den * (GraduGradPhi[2] * GraduGradPhi[2]);
+	S[3] = S_start[3] - den * den * (GraduGradPhi[0] * GraduGradPhi[1]);
+	S[4] = S_start[4] - den * den * (GraduGradPhi[1] * GraduGradPhi[2]);
+	S[5] = S_start[5] - den * den * (GraduGradPhi[2] * GraduGradPhi[0]);
+}
 
 /* CSRMatrix variants */
 
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 {
-	/* Your implementation goes here.
-	 * Use a VTAdjacency structure (see include/matrix/adjacency.h)
-	 */
+	size_t vtx_count = m.vertex_count();
+	size_t tri_count = m.triangle_count();
+
+	P.symmetric = true;
+	P.rows = P.cols = vtx_count;
+	P.row_start.resize(vtx_count + 1);
+
+	/* Upper bound on lower-triangular non-zeros (including diagonal). */
+	size_t max_nnz = 3 * tri_count + vtx_count;
+	P.col.resize(max_nnz);
+
+	size_t nnz = 0;
+	for (size_t a = 0; a < vtx_count; ++a) {
+		P.row_start[a] = static_cast<uint32_t>(nnz);
+		uint32_t *start = &P.col[nnz];
+		size_t nnz_loc = 0;
+
+		for (size_t t = 0; t < tri_count; ++t) {
+			uint32_t i0 = m.indices[3 * t + 0];
+			uint32_t i1 = m.indices[3 * t + 1];
+			uint32_t i2 = m.indices[3 * t + 2];
+
+			if (i0 == a) {
+				if (i1 < a && !find_u32(i1, start, nnz_loc)) {
+					P.col[nnz++] = i1;
+					++nnz_loc;
+				}
+				if (i2 < a && !find_u32(i2, start, nnz_loc)) {
+					P.col[nnz++] = i2;
+					++nnz_loc;
+				}
+			} else if (i1 == a) {
+				if (i2 < a && !find_u32(i2, start, nnz_loc)) {
+					P.col[nnz++] = i2;
+					++nnz_loc;
+				}
+				if (i0 < a && !find_u32(i0, start, nnz_loc)) {
+					P.col[nnz++] = i0;
+					++nnz_loc;
+				}
+			} else if (i2 == a) {
+				if (i0 < a && !find_u32(i0, start, nnz_loc)) {
+					P.col[nnz++] = i0;
+					++nnz_loc;
+				}
+				if (i1 < a && !find_u32(i1, start, nnz_loc)) {
+					P.col[nnz++] = i1;
+					++nnz_loc;
+				}
+			}
+		}
+
+		P.col[nnz++] = static_cast<uint32_t>(a);
+	}
+
+	P.row_start[vtx_count] = static_cast<uint32_t>(nnz);
+	P.col.resize(nnz);
+	P.col.shrink_to_fit();
+	P.nnz = nnz;
+
+	for (size_t a = 0; a < vtx_count; ++a) {
+		uint32_t *to_sort = &P.col[P.row_start[a]];
+		size_t count = P.row_start[a + 1] - P.row_start[a];
+		for (size_t k = 1; k < count; ++k) {
+			size_t j = k - 1;
+			while (j && (to_sort[j] > to_sort[j + 1])) {
+				uint32_t tmp = to_sort[j];
+				to_sort[j] = to_sort[j + 1];
+				to_sort[j + 1] = tmp;
+				--j;
+			}
+		}
+	}
 }
 
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M)
@@ -58,6 +181,79 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 	}
 
 	/* Your implementation goes here */
+}
+
+void build_P1_stiffness_matrix_NS(const Mesh &m, const CSRPattern &P,
+				  CSRMatrix &S, const double *den,
+				  const double *u)
+{
+	size_t vtx_count = m.vertex_count();
+	size_t tri_count = m.triangle_count();
+	assert(P.row_start.size == vtx_count + 1);
+
+	S.symmetric = true;
+	S.rows = S.cols = vtx_count;
+	S.nnz = P.col.size;
+	S.row_start = P.row_start.data;
+	S.col = P.col.data;
+	S.data.resize(S.nnz);
+	for (size_t i = 0; i < S.nnz; ++i) {
+		S.data[i] = 0.0;
+	}
+
+	for (size_t t = 0; t < tri_count; ++t) {
+		uint32_t a = m.indices[3 * t + 0];
+		uint32_t b = m.indices[3 * t + 1];
+		uint32_t c = m.indices[3 * t + 2];
+
+		Vec2d A = { static_cast<double>(m.positions[a].x),
+			    static_cast<double>(m.positions[a].y) };
+		Vec2d B = { static_cast<double>(m.positions[b].x),
+			    static_cast<double>(m.positions[b].y) };
+		Vec2d C = { static_cast<double>(m.positions[c].x),
+			    static_cast<double>(m.positions[c].y) };
+		Vec2d AB = { B[0] - A[0], B[1] - A[1] };
+		Vec2d AC = { C[0] - A[0], C[1] - A[1] };
+
+		double u_loc[3] = { u[a], u[b], u[c] };
+		double Sloc[6];
+		stiffness_NS(AB, AC, Sloc, u_loc, den[t]);
+
+		S(a, a) += Sloc[0] * den[t];
+		S(b, b) += Sloc[1] * den[t];
+		S(c, c) += Sloc[2] * den[t];
+		S(a > b ? a : b, a > b ? b : a) += Sloc[3] * den[t];
+		S(b > c ? b : c, b > c ? c : b) += Sloc[4] * den[t];
+		S(c > a ? c : a, c > a ? a : c) += Sloc[5] * den[t];
+	}
+}
+
+void build_P1_rhs_NS(const Mesh &m, const double *den, const double *u,
+		     TArray<double> &rhs)
+{
+	memset(rhs.data, 0, m.vertex_count() * sizeof(double));
+
+	for (size_t t = 0; t < m.triangle_count(); ++t) {
+		uint32_t a = m.indices[3 * t + 0];
+		uint32_t b = m.indices[3 * t + 1];
+		uint32_t c = m.indices[3 * t + 2];
+
+		Vec2d A = { static_cast<double>(m.positions[a].x),
+			    static_cast<double>(m.positions[a].y) };
+		Vec2d B = { static_cast<double>(m.positions[b].x),
+			    static_cast<double>(m.positions[b].y) };
+		Vec2d C = { static_cast<double>(m.positions[c].x),
+			    static_cast<double>(m.positions[c].y) };
+		Vec2d AB = { B[0] - A[0], B[1] - A[1] };
+		Vec2d AC = { C[0] - A[0], C[1] - A[1] };
+
+		double S_loc[6];
+		stiffness2d(AB, AC, S_loc);
+
+		rhs[a] -= den[t] * (u[a] * S_loc[0] + u[b] * S_loc[3] + u[c] * S_loc[5]);
+		rhs[b] -= den[t] * (u[a] * S_loc[3] + u[b] * S_loc[1] + u[c] * S_loc[4]);
+		rhs[c] -= den[t] * (u[a] * S_loc[5] + u[b] * S_loc[4] + u[c] * S_loc[2]);
+	}
 }
 
 /* FEMatrix variants */

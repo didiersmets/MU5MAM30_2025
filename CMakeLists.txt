@@ -31,6 +31,7 @@ add_library(nanofem
 	src/fem/poisson.cpp
 	src/fem/navier_stokes.cpp
 	src/fem/my_minimal_graph.cpp
+	src/fem/minimal_graph.cpp
 	src/linalg/conjugate_gradient.cpp
 	src/linalg/my_conjugate_gradient.cpp
 	src/matrix/my_sparse_matrix.cpp
@@ -43,6 +44,8 @@ add_library(nanofem
 	src/mesh/cube.cpp
 	src/mesh/cube2.cpp
 	src/mesh/my_mesh.cpp
+	src/mesh/square.cpp
+	src/mesh/disk.cpp
 	src/mesh/sphere.cpp
 	src/mesh/duplicate_verts.cpp
 	src/mesh/my_adjacency.cpp
@@ -123,6 +126,15 @@ target_compile_options(test_minimal_surface PRIVATE
 	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
 )
 target_link_libraries(test_minimal_surface PRIVATE nanofem nanoviewer tiny_expr)
+###############################################################################
+add_executable(test_minimal_surface_new
+	src/common/logging.cpp
+	src/bin/test_minimal_surface_new.cpp
+)
+target_compile_options(test_minimal_surface_new PRIVATE 
+    -std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_minimal_surface_new PRIVATE nanofem nanoviewer tiny_expr)
 ###############################################################################
 
 ###############################################################################

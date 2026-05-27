@@ -7,10 +7,10 @@
 
 
 struct MyMesh {
-	size_t vtx_count;
+	size_t vtx_count; 
 	size_t tri_count;
-	struct TVec2<double> *vertices;
-	struct TVec3<size_t> *triangles;
+	struct TVec2<double> *vertices; // 2D vertex positions, stored as an array of TVec2<double> of size vtx_count
+	struct TVec3<size_t> *triangles; // triangle indices, stored as an array of TVec3<size_t> of size tri_count, each TVec3<size_t> contains the indices of the 3 vertices that form a triangle
 	size_t *boundary;
 	size_t boundary_count;
 };

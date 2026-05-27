@@ -50,12 +50,12 @@ size_t conjugate_gradient_solve(const MyCSRMatrix &A, const double *__restrict b
 		
 	}
 
-	double r2 = blas_dot(r, r, N);
-	*rel_error = sqrt(r2);
-
+	double r2 = blas_dot(r, r, N); // current residual squared norm
+	*rel_error = sqrt(r2); // relative error
+ 
 	int iter = 0;
 	while ((iter < max_iter) && (*rel_error > tol)) {
-		r2 = cg_iterate_once(A, x, r, p, Ap, r2);
+		r2 = cg_iterate_once(A, x, r, p, Ap, r2); // perform one iteration of the conjugate gradient method, update x, r, p, Ap and r2
 		*rel_error = sqrt(r2);
 		iter++;
 	}

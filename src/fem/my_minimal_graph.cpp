@@ -22,21 +22,24 @@ MyMinimalGraphSolver::MyMinimalGraphSolver(const MyMesh &m, std::function<double
     
     build_P1_CSRPattern(m, P); 
     
+    // assign values to f using the provided function func, which takes a Vec2d as input and returns a double
     for (size_t i = 0; i < N; i++) {
-        f[i] = func(m.vertices[i]);
+        f[i] = func(m.vertices[i]); // assign value of vertex i with 2D coordinates m.vertices[i] to f[i]
     }
 
 }
 
 void MyMinimalGraphSolver::clear_solution(bool Newton)
 {
-    memset(b.data, 0, N * sizeof(double));
-    memset(du.data, 0, N * sizeof(double));
+    memset(b.data, 0, N * sizeof(double)); // clear right hand side
+    memset(du.data, 0, N * sizeof(double)); // clear solution increment
+
+    // set boundary values b to f
     for (size_t i = 0; i < N_b; i++) {
         b[m.boundary[i]] = f[m.boundary[i]];
     }
-    memcpy(u.data, b.data, N * sizeof(double));
-    memcpy(uold.data, b.data, N * sizeof(double));
+    memcpy(u.data, b.data, N * sizeof(double)); // set initial solution u to boundary values, this will be used as the initial guess for the solver
+    memcpy(uold.data, b.data, N * sizeof(double)); // set uold to boundary values, this will be used to compute the residual for the stopping criterion
     converged = false;
     inited = true;
     if(Newton)
@@ -94,6 +97,7 @@ double MyMinimalGraphSolver::compute_denominator(TArray<double> &den, const TArr
 void MyMinimalGraphSolver::do_iterate_Newton(size_t max_iter, double tol, const double min_alpha, const double c, const double rho)
 {
 
+    // we have already cleared before calling this function, so we can start iterating directly
     if (!inited) {
         clear_solution(true);
     }
@@ -105,10 +109,15 @@ void MyMinimalGraphSolver::do_iterate_Newton(size_t max_iter, double tol, const 
     double prev_error = 1e30;  // Track previous error for stagnation detection
     int stagnant_count = 0;    // Count consecutive iterations without improvement
 
-    //memcpy(u.data,b.data ,N * sizeof(double));
+    // set initial guess to boundary values, this will be used as the initial guess for the solver
+    // we have already set u to boundary values in clear_solution, so we can skip this step
+    
+    //memcpy(u.data,b.data ,N * sizeof(double)); 
+    
+    
     //export_mesh_to_csv(m, u, "start.csv");
 
-    area = compute_denominator(q, u);
+    area = compute_denominator(q, u); // computes denominator q for the initial solution u
     if (iterate_N == 0) {
         printf("Starting Newton solver.... \n");
         printf("%-10s %-15s %-15s %-15s %-15s\n", "Iter", "ErrorNewton", "IterCG", "ErrorCG", "Area");
@@ -117,27 +126,34 @@ void MyMinimalGraphSolver::do_iterate_Newton(size_t max_iter, double tol, const 
     size_t target_iter = iterate_N + max_iter;
     while (iterate_N < target_iter){
         
-        build_P1_stiffness_matrix_NS(m, P, S_modified, q.data, u.data);
-        build_P1_rhs_NS(m, q.data, u.data, b);
+        build_P1_stiffness_matrix_NS(m, P, S_modified, q.data, u.data); // build the jacobian stiffness matrix S_modified for the current solution u, using the denominator q computed from u
+        build_P1_rhs_NS(m, q.data, u.data, b); // build the right hand side b for the current solution u, using the denominator q computed from u
 
         for (size_t i = 0; i < N_b; i++){
-            S_modified(m.boundary[i],m.boundary[i]) = HUGE;
-            b[m.boundary[i]] = 0;           
+            S_modified(m.boundary[i],m.boundary[i]) = HUGE; // set boundary values to a large number in the stiffness matrix, this will enforce the solution to be equal to the boundary values at the boundary vertices
+            b[m.boundary[i]] = 0; // set rhs boundary values to 0 in the right hand side, such that solution increment at boundary will be 0
         }
 
-        iterCG = conjugate_gradient_solve(S_modified, b.data, du.data, r.data, p.data, Ap.data , &errorCG, tolCG, 10000, false);
+        // solve the linear system S_modified * du = b 
+        // du is the solution increment, we will update the solution u by adding alpha * du, where alpha is a step size determined by a line search
+        iterCG = conjugate_gradient_solve(S_modified, b.data, du.data, r.data, p.data, Ap.data , &errorCG, tolCG, 10000, false); 
 
         area = compute_denominator(q,u);
-        error2 = blas_dot(du.data, du.data, N);
+        error2 = blas_dot(du.data, du.data, N); // compute the squared norm of the solution increment du, this will be used as the error for the stopping criterion
 
         flag = true;
         alpha = 1.0;
 
         while(flag){
+            // update each entry of u_tmp with the current solution u plus alpha times the solution increment du
             for (size_t i = 0; i < N; i++){
-                u_tmp[i] = u[i] + alpha*du[i];
+                // u_tmp[i] = u[i] + alpha*du[i]; // update with alpha times the solution increment, alpha could be removed, this option here seems to converge faster
+                u_tmp[i] = u[i] + du[i]; // update with alpha times the solution increment, alpha could be removed
+
             }
             energy_tmp = compute_denominator(q,u_tmp);
+            // this is the condition for alpha of the Armijo backtracking line search
+            // maybe we can remove that
             if (energy_tmp < area - c*alpha*error2 || alpha <= min_alpha){
                 flag = false;
             }
@@ -148,11 +164,6 @@ void MyMinimalGraphSolver::do_iterate_Newton(size_t max_iter, double tol, const 
         
         for (size_t i = 0; i < N; i++){
             u[i] += alpha*du[i];
-        }
-
-        // Enforce boundary conditions: keep boundary values fixed
-        for (size_t i = 0; i < N_b; i++) {
-            u[m.boundary[i]] = f[m.boundary[i]];
         }
 
         

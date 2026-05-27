@@ -2,10 +2,10 @@
 #include <string.h>
 #include <functional>
 
-#include "minimal_graph.h"
+#include "my_minimal_graph.h"
 #include "my_mesh.h"
 #include "tiny_blas.h"
-#include "P1.h"
+#include "my_P1.h"
 
 ////////////////////////////////////////////////
 //   Test function to be changed as needed    //
@@ -52,7 +52,7 @@ int main(int argc, char **argv){
         return 1;
     }
 
-    Mesh m;
+    MyMesh m;
     if (strcmp(mesh_type, "disk") == 0) {
         build_disk_mesh(&m, N, size1);
     } else if (strcmp(mesh_type, "square") == 0) {
@@ -64,7 +64,7 @@ int main(int argc, char **argv){
 
     printf("Number of DOF : %ld\n", m.vtx_count);
     
-    MinimalGraphSolver solver(m, test_f);
+    MyMinimalGraphSolver solver(m, test_f);
 
     solver.do_iterate_Newton(200,1e-12,0.1);
     solver.do_iterate_Picardi();    
