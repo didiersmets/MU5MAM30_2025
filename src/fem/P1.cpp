@@ -27,62 +27,72 @@ static bool find_u32(uint32_t x, uint32_t *start, size_t count)
 
 static void stiffness2d(const Vec2d &AB, const Vec2d &AC, double *__restrict S)
 {
+	// compute dot products
 	double ABAB = dot(AB, AB);
 	double ACAC = dot(AC, AC);
 	double ABAC = dot(AB, AC);
+
+	// compute multiplier = 1 / (4 * area of the triangle)
 	double mult = 0.5 / sqrt(ABAB * ACAC - ABAC * ABAC);
 
+	// scale the dot products by the multiplier
 	ABAB *= mult;
 	ACAC *= mult;
 	ABAC *= mult;
 
-	S[0] = ACAC - 2 * ABAC + ABAB;
-	S[1] = ACAC;
-	S[2] = ABAB;
-	S[3] = ABAC - ACAC;
-	S[4] = -ABAC;
-	S[5] = ABAC - ABAB;
+	// the entries of the local stiffness matrix S are computed from the scaled dot products
+	// S_ij = T_area * (grad phi_i . grad phi_j) = T_area * (1/(2*T_area) * (edge opposite to i) . (edge opposite to j)) = 1/4 * (edge opposite to i) . (edge opposite to j)
+	
+	S[0] = ACAC - 2 * ABAC + ABAB;  //S(A,A)= dot(grad phi_0, grad phi_0) = 1/(4*T_area) * (edge BC . edge BC) = 1/(4*T_area) * (AC - AB) . (AC - AB) = 1/(4*T_area) * (AB.AB + AC.AC - 2*AB.AC)
+	S[1] = ACAC; 					// S(B,B)= dot(grad phi_1, grad phi_1) = 1/(4*T_area) * (edge CA . edge CA) = 1/(4*T_area) * -AC . -AC
+	S[2] = ABAB; 					// S(C,C)= dot(grad phi_2, grad phi_2) = 1/(4*T_area) * (edge AB . edge AB) = 1/(4*T_area) * AB . AB
+	S[3] = ABAC - ACAC; 			// S(A,B)= dot(grad phi_0, grad phi_1) = 1/(4*T_area) * (edge BC . edge CA) = 1/(4*T_area) * (AC - AB) . AC = 1/(4*T_area) * (AC.AC - AB.AC)
+	/* Note the chosen order : (B,C)-> 4 and (C,A) -> 5 */
+	S[4] = -ABAC; 					// S(B,C)= dot(grad phi_1, grad phi_2) = 1/(4*T_area) * (edge CA . edge AB) = 1/(4*T_area) * -AC . AB = -1/(4*T_area) * AB.AC
+	S[5] = ABAC - ABAB; 			// S(C,A)= dot(grad phi_2, grad phi_0) = 1/(4*T_area) * (edge AB . edge BC) = 1/(4*T_area) * AB . (AC - AB) = 1/(4*T_area) * (AB.AB - AB.AC)
+
 }
 
 static void stiffness_NS(const Vec2d &AB, const Vec2d &AC, double *__restrict S,
-			 const double *u_loc, const double den)
+			 const double *u_loc, const double den, const double area)
 {
 	double S_start[6];
+
+	// get the standard stiffness matrix for the triangle defined by AB and AC
 	stiffness2d(AB, AC, S_start);
 
+	// compute the dot product of grad(u) and the basis gradients: (\nabla u \cdot \nabla \phi_i)
+	// compute grad(u) = sum u_loc[i] * grad(phi_i) and then compute the dot product with grad(phi_i) for i = 0,1,2
 	double GraduGradPhi[3];
-	GraduGradPhi[0] =
-	    u_loc[0] * S_start[0] + u_loc[1] * S_start[3] + u_loc[2] * S_start[5];
-	GraduGradPhi[1] =
-	    u_loc[0] * S_start[3] + u_loc[1] * S_start[1] + u_loc[2] * S_start[4];
-	GraduGradPhi[2] =
-	    u_loc[0] * S_start[5] + u_loc[1] * S_start[4] + u_loc[2] * S_start[2];
+	GraduGradPhi[0] = u_loc[0] * S_start[0] + u_loc[1] * S_start[3] + u_loc[2] * S_start[5];
+	GraduGradPhi[1] = u_loc[0] * S_start[3] + u_loc[1] * S_start[1] + u_loc[2] * S_start[4];
+	GraduGradPhi[2] = u_loc[0] * S_start[5] + u_loc[1] * S_start[4] + u_loc[2] * S_start[2];
 
-	S[0] = S_start[0] - den * den * (GraduGradPhi[0] * GraduGradPhi[0]);
-	S[1] = S_start[1] - den * den * (GraduGradPhi[1] * GraduGradPhi[1]);
-	S[2] = S_start[2] - den * den * (GraduGradPhi[2] * GraduGradPhi[2]);
-	S[3] = S_start[3] - den * den * (GraduGradPhi[0] * GraduGradPhi[1]);
-	S[4] = S_start[4] - den * den * (GraduGradPhi[1] * GraduGradPhi[2]);
-	S[5] = S_start[5] - den * den * (GraduGradPhi[2] * GraduGradPhi[0]);
+	S[0] = S_start[0] - den * den * (GraduGradPhi[0] * GraduGradPhi[0]) * 1.0 / area;
+	S[1] = S_start[1] - den * den * (GraduGradPhi[1] * GraduGradPhi[1]) * 1.0 / area;
+	S[2] = S_start[2] - den * den * (GraduGradPhi[2] * GraduGradPhi[2]) * 1.0 / area;
+	S[3] = S_start[3] - den * den * (GraduGradPhi[0] * GraduGradPhi[1]) * 1.0 / area;
+	S[4] = S_start[4] - den * den * (GraduGradPhi[1] * GraduGradPhi[2]) * 1.0 / area;
+	S[5] = S_start[5] - den * den * (GraduGradPhi[2] * GraduGradPhi[0]) * 1.0 / area;
 }
 
 /* CSRMatrix variants */
 
 void build_P1_CSRPattern(const Mesh &m, CSRPattern &P)
 {
-	size_t vtx_count = m.vertex_count();
-	size_t tri_count = m.triangle_count();
+	size_t vtx_count = m.vertex_count(); // number of vertices
+	size_t tri_count = m.triangle_count(); // number of triangles
 
-	P.symmetric = true;
+	P.symmetric = true; 
 	P.rows = P.cols = vtx_count;
-	P.row_start.resize(vtx_count + 1);
+	P.row_start.resize(vtx_count + 1); // row offsets --> index of the first non-zero entry in each row
 
 	/* Upper bound on lower-triangular non-zeros (including diagonal). */
 	size_t max_nnz = 3 * tri_count + vtx_count;
-	P.col.resize(max_nnz);
+	P.col.resize(max_nnz); // column indices
 
 	size_t nnz = 0;
-	for (size_t a = 0; a < vtx_count; ++a) {
+	for (size_t a = 0; a < vtx_count; ++a) { // iterate over vertices
 		P.row_start[a] = static_cast<uint32_t>(nnz);
 		uint32_t *start = &P.col[nnz];
 		size_t nnz_loc = 0;
@@ -185,8 +195,18 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &S)
 
 void build_P1_stiffness_matrix_NS(const Mesh &m, const CSRPattern &P,
 				  CSRMatrix &S, const double *den,
-				  const double *u)
+				  const double *u,
+				  double area
+				)
 {
+	/*
+	implements the computation of global stiffness matrix J(u)
+	S is global stiffness matrix only in CSR format
+	P is the pattern of the stiffness matrix S, built from the mesh m
+	m is the mesh of the problem, containing the vertices and triangles
+	u is the current solution, used to compute the local stiffness matrix for each triangle
+	den is the denominator of the energy functional, used to compute the local stiffness matrix for each triangle
+	*/
 	size_t vtx_count = m.vertex_count();
 	size_t tri_count = m.triangle_count();
 	assert(P.row_start.size == vtx_count + 1);
@@ -201,11 +221,15 @@ void build_P1_stiffness_matrix_NS(const Mesh &m, const CSRPattern &P,
 		S.data[i] = 0.0;
 	}
 
+	// for each triangle we compute local stiffness matrix and add it to the global stiffness matrix
 	for (size_t t = 0; t < tri_count; ++t) {
+
+		// get vertices of the triangle
 		uint32_t a = m.indices[3 * t + 0];
 		uint32_t b = m.indices[3 * t + 1];
 		uint32_t c = m.indices[3 * t + 2];
 
+		// get coordinates of the vertices and compute AB and AC
 		Vec2d A = { static_cast<double>(m.positions[a].x),
 			    static_cast<double>(m.positions[a].y) };
 		Vec2d B = { static_cast<double>(m.positions[b].x),
@@ -215,14 +239,22 @@ void build_P1_stiffness_matrix_NS(const Mesh &m, const CSRPattern &P,
 		Vec2d AB = { B[0] - A[0], B[1] - A[1] };
 		Vec2d AC = { C[0] - A[0], C[1] - A[1] };
 
+		// get local solution at the vertices of the triangle
 		double u_loc[3] = { u[a], u[b], u[c] };
 		double Sloc[6];
-		stiffness_NS(AB, AC, Sloc, u_loc, den[t]);
 
+		// compute local stiffnes matrix
+		stiffness_NS(AB, AC, Sloc, u_loc, den[t], area);
+
+		// add local stiffness matrix to global stiffness matrix based on the pattern P
+		// diagonal entries
 		S(a, a) += Sloc[0] * den[t];
 		S(b, b) += Sloc[1] * den[t];
 		S(c, c) += Sloc[2] * den[t];
-		S(a > b ? a : b, a > b ? b : a) += Sloc[3] * den[t];
+
+		// off-diagonal entries
+		// since CSR is upper triangular we only add the entries for (a, b), (b, c) and (c, a) if they are in the pattern P
+		S(a > b ? a : b, a > b ? b : a) += Sloc[3] * den[t]; 
 		S(b > c ? b : c, b > c ? c : b) += Sloc[4] * den[t];
 		S(c > a ? c : a, c > a ? a : c) += Sloc[5] * den[t];
 	}
@@ -233,11 +265,15 @@ void build_P1_rhs_NS(const Mesh &m, const double *den, const double *u,
 {
 	memset(rhs.data, 0, m.vertex_count() * sizeof(double));
 
+	// loop over all triangles
 	for (size_t t = 0; t < m.triangle_count(); ++t) {
+
+		// get vertices of the triangle
 		uint32_t a = m.indices[3 * t + 0];
 		uint32_t b = m.indices[3 * t + 1];
 		uint32_t c = m.indices[3 * t + 2];
 
+		// get coordinates of the vertices and compute AB and AC
 		Vec2d A = { static_cast<double>(m.positions[a].x),
 			    static_cast<double>(m.positions[a].y) };
 		Vec2d B = { static_cast<double>(m.positions[b].x),
@@ -248,8 +284,10 @@ void build_P1_rhs_NS(const Mesh &m, const double *den, const double *u,
 		Vec2d AC = { C[0] - A[0], C[1] - A[1] };
 
 		double S_loc[6];
+
 		stiffness2d(AB, AC, S_loc);
 
+		// scale by the denominator of the nonlinearity
 		rhs[a] -= den[t] * (u[a] * S_loc[0] + u[b] * S_loc[3] + u[c] * S_loc[5]);
 		rhs[b] -= den[t] * (u[a] * S_loc[3] + u[b] * S_loc[1] + u[c] * S_loc[4]);
 		rhs[c] -= den[t] * (u[a] * S_loc[5] + u[b] * S_loc[4] + u[c] * S_loc[2]);

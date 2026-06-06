@@ -12,7 +12,8 @@ void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P,
 /* Nonlinear minimal graph helpers (CSR variants) */
 void build_P1_stiffness_matrix_NS(const Mesh &m, const CSRPattern &P,
 				  CSRMatrix &S, const double *den,
-				  const double *u);
+				  const double *u,
+				  double area);
 void build_P1_rhs_NS(const Mesh &m, const double *den, const double *u,
 		     TArray<double> &rhs);
 

@@ -15,20 +15,20 @@ struct MinimalGraphSolver {
 	size_t N;
 	size_t N_b;
 
-	TArray<double> u;
-	TArray<double> uold;
-	TArray<double> du;
-	TArray<double> q;
+	TArray<double> u; // solution vector at current iteration
+	TArray<double> uold; // solution vector at previous iteration
+	TArray<double> du; // update of solution vector
+	TArray<double> q; // denominator of the nonlinearity at each triangle
 
-	TArray<double> f;
-	TArray<double> b;
+	TArray<double> f; // right hand side vector
+	TArray<double> b; // right hand side vector modified to account for boundary conditions
 
-	TArray<double> r;
-	TArray<double> p;
-	TArray<double> Ap;
+	TArray<double> r; // residual vector for CG solver
+	TArray<double> p; // search direction vector for CG solver
+	TArray<double> Ap; // temporary vector for CG solver
 
-	CSRPattern P;
-	CSRMatrix S, S_modified;
+	CSRPattern P; // sparsity pattern of the stiffness matrix
+	CSRMatrix S, S_modified; // S is the stiffness matrix, S_modified is the stiffness matrix modified to account for boundary conditions 
 
 	bool inited;
 	size_t iterate_N, iterate_P;

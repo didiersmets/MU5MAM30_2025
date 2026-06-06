@@ -33,12 +33,22 @@ bool one_step = false;
 bool reset = false;
 int iter_per_frame = 1;
 
+/*
 static double test_f(const Vec2d &pos)
 {
     double x = pos.x;
     double y = pos.y;
     return 1.0 / 3.0 * (pow(x - 2.0, 3) + 3.0 * (x - 2.0) * pow(y - 2.0, 2));
 }
+    */
+
+static double test_f(const Vec2d &pos)
+{
+    double x = pos.x;
+    double y = pos.y;
+    return 1.0 / 3.0 * (x * x * x - 3.0 * x * y * y);
+}
+
 
 static void syntax(char *prg_name)
 {
