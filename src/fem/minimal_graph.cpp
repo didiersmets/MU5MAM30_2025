@@ -251,54 +251,88 @@ void MinimalGraphSolver::do_iterate_Newton(size_t max_iter, double tol,
 
 
 
-void::MinimalGraphSolver::do_iterate_Picardi(size_t max_iter, double tol)
+void MinimalGraphSolver::do_iterate_Picardi(size_t max_iter, double tol)
 {   
-    clear_solution(false);
+
+	TArray<double> rhs(N, 0.0);
+	const bool first_call = !inited;
+	if (first_call) {
+		clear_solution(false);
+	}
     int iterCG;
     double error2 = 0.0, errorCG = 0.0, area;
 
    
-    for (size_t i = 0; i < N_b; i++){
-        b[m.boundary[i]] *= HUGE;
-    }
+	if (iterate_P == 0) {
+		for (size_t i = 0; i < N_b; i++){
+			b[m.boundary[i]] *= 1e8;
+		}
+	}
+
+	std::vector<bool> is_bnd(N, false);
+	for (size_t i = 0; i < m.boundary.size; ++i) is_bnd[m.boundary[i]] = true;
+
 
     area = compute_denominator(q,u);
+	constexpr double PENALTY = 1e8;
+
 
     printf("Starting Picardi Solver.... \n");
     printf("%-10s %-15s %-15s %-15s %-15s\n", "Iter", "ErrorPicardi", "IterCG", "ErrorCG", "Area");
     printf("%-10s %-15s %-15s %-15s %-15g \n", "-", "-", "-", "-", area);
-    while (iterate_P < max_iter){
+	size_t target_iter = iterate_P + max_iter;
+	while (iterate_P < target_iter){
         
         memcpy(uold.data, u.data, N * sizeof(double));
 
-        build_P1_stiffness_matrix(m, P, S, true, q.data);
+        build_P1_stiffness_matrix(m, P, S, q.data);
 
-        for (size_t i = 0; i < N_b; i++){
-            S(m.boundary[i],m.boundary[i]) = HUGE;           
-        }
+		/* Boundary penalty — must match the PENALTY used in b_picard */
+		for (size_t i = 0; i < m.boundary.size; ++i)
+            S(m.boundary[i], m.boundary[i]) = PENALTY;
 
         iterCG = conjugate_gradient_solve(S, b.data, u.data, r.data, p.data, Ap.data , &errorCG, tolCG, 10000, false);
 
         error2 = 0.0;
 
-        for(size_t i = 0; i < N; i++)
-            error2 += (u[i] - uold[i])*(u[i] - uold[i]);
-        
-        error2 = sqrt(error2);
+        // for(size_t i = 0; i < N; i++)
+        //     error2 += (u[i] - uold[i])*(u[i] - uold[i]);
+        // 
+        // error2 = sqrt(error2);
 
         area = compute_denominator(q,u);
 
+		/* measure MSE residual at the NEW iterate */
+        build_P1_rhs_NS(m, q.data, u.data, rhs);
+        double res_sq = 0.0;
+        for (size_t i = 0; i < N; ++i)
+            if (!is_bnd[i]) res_sq += rhs[i] * rhs[i];
+        double res_norm = std::sqrt(res_sq);
+        /* correction norm */
+        double corr_sq = 0.0;
+        for (size_t i = 0; i < N; ++i) {
+            double d = u[i] - uold[i];
+            corr_sq += d * d;
+        }
+		error2 = sqrt(corr_sq);
+
         printf("%-10ld %-15g %-15d %-15g %-15g\n", iterate_P, error2, iterCG, errorCG, area);
 
-        residual_P[iterate_P] = error2;
+		if (iterate_P < residual_P.size) {
+			residual_P[iterate_P] = error2;
+		}
 
         iterate_P++;
-        if (error2 < tol)
-            break;
+        //if (error2 < tol)
+        //    break;
+		if (error2 < tol) {
+			converged = true;
+			break;
+		}
         
     }
     residual_P.resize(iterate_P);
-    if (error2 <= tol) {
+	if (converged) {
         converged = true;
         printf("Converged after %ld iterations.\n", iterate_P);
     }

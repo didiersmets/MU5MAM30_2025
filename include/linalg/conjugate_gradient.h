@@ -52,7 +52,7 @@ struct SSORPrecond {
 
 template <typename Mat>
 struct IncompleteCholeskyPrecond {
-        uint32_t *row_start = nullptr;  /* same sparsity as upper(A) */
+        uint32_t *row_start = nullptr;  /* same sparsity as lower(A), diagonal last */
         uint32_t *col       = nullptr;
         double   *data      = nullptr;
         size_t    N         = 0;

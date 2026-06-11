@@ -32,6 +32,11 @@ bool started = false;
 bool one_step = false;
 bool reset = false;
 int iter_per_frame = 1;
+enum class SolverMode {
+    Newton,
+    Picardi
+};
+SolverMode solver_mode = SolverMode::Newton;
 
 /*
 static double test_f(const Vec2d &pos)
@@ -62,8 +67,21 @@ static double test_f(const Vec2d &pos)
 
 static void syntax(char *prg_name)
 {
-    printf("Syntax : %s (square | disk) [n] [size1] [size2]\n", prg_name);
-    printf("         Disk uses size1 as radius; square uses size1 and size2.\n");
+	printf("Syntax : %s (square | disk) [n] [size1] [size2] [newton|picardi]\n", prg_name);
+	printf("         Disk uses size1 as radius; square uses size1 and size2.\n");
+	printf("         The last optional argument selects the solver mode.\n");
+}
+
+static SolverMode parse_solver_mode(int argc, char **argv)
+{
+    const char *mode = argv[argc - 1];
+    if (strcmp(mode, "newton") == 0) {
+        return SolverMode::Newton;
+    }
+    if (strcmp(mode, "picardi") == 0 || strcmp(mode, "picard") == 0) {
+        return SolverMode::Picardi;
+    }
+    return SolverMode::Newton;
 }
 
 static int load_mesh(Mesh &mesh, int argc, char **argv)
@@ -194,7 +212,11 @@ static void update_all(MinimalGraphSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
 {
     bool needs_upload = true;
     if (started || one_step) {
-        solver.do_iterate_Newton(iter_per_frame, 1e-12, 0.1);
+		if (solver_mode == SolverMode::Newton) {
+			solver.do_iterate_Newton(iter_per_frame, 1e-12, 0.1);
+		} else {
+			solver.do_iterate_Picardi(iter_per_frame, 1e-12);
+		}
         transfer_to_mesh(solver.u, mesh);
         if (autoscale) {
             get_attr_bounds(mesh, &scale_min, &scale_max);
@@ -203,7 +225,7 @@ static void update_all(MinimalGraphSolver &solver, Mesh &mesh, GPUMesh &gpu_mesh
             one_step = false;
         }
     } else if (reset) {
-        solver.clear_solution(true);
+		solver.clear_solution(solver_mode == SolverMode::Newton);
         transfer_to_mesh(solver.u, mesh);
         get_attr_bounds(mesh, &scale_min, &scale_max);
         reset = false;
@@ -224,7 +246,8 @@ static void draw_gui(MinimalGraphSolver &solver)
     ImGui::Begin("Controls");
     ImGui::Text("Minimal graph solver");
     ImGui::Text("----------------------");
-    ImGui::Text("Iterate : %zu", solver.iterate_N);
+    ImGui::Text("Solver : %s", solver_mode == SolverMode::Newton ? "Newton" : "Picardi");
+    ImGui::Text("Iterate : %zu", solver_mode == SolverMode::Newton ? solver.iterate_N : solver.iterate_P);
     ImGui::Text("Converged : %s", solver.converged ? "yes" : "no");
     ImGui::Text("Number of DOF : %zu", solver.N);
     ImGui::Text("Scale min %.2f Scale max %.2f", scale_min, scale_max);
@@ -279,6 +302,8 @@ int main(int argc, char **argv)
 {
     log_init(0);
 
+    solver_mode = parse_solver_mode(argc, argv);
+
     Mesh mesh;
     if (load_mesh(mesh, argc, argv)) {
         syntax(argv[0]);
@@ -289,7 +314,7 @@ int main(int argc, char **argv)
     LOG_MSG("Mesh rescaled and recentered.");
 
     MinimalGraphSolver solver(mesh, test_f);
-	solver.clear_solution(true);
+	solver.clear_solution(solver_mode == SolverMode::Newton);
 	transfer_to_mesh(solver.u, mesh);
     get_attr_bounds(mesh, &scale_min, &scale_max);
 

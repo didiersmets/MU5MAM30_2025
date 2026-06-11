@@ -8,6 +8,8 @@ void build_P1_CSRPattern(const Mesh &m, CSRPattern &P);
 void build_P1_mass_matrix(const Mesh &m, const CSRPattern &P, CSRMatrix &M);
 void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P,
 			       CSRMatrix &S);
+void build_P1_stiffness_matrix(const Mesh &m, const CSRPattern &P,
+			       CSRMatrix &S, const double *den);
 
 /* Nonlinear minimal graph helpers (CSR variants) */
 void build_P1_stiffness_matrix_NS(const Mesh &m, const CSRPattern &P,

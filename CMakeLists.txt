@@ -138,6 +138,17 @@ target_link_libraries(test_minimal_surface_new PRIVATE nanofem nanoviewer tiny_e
 ###############################################################################
 
 ###############################################################################
+add_executable(test_minimal_surface_experiments
+	src/common/logging.cpp
+	src/bin/test_minimal_surface_experiments.cpp
+)
+target_compile_options(test_minimal_surface_experiments PRIVATE
+	-std=c++17 -Wall -Wextra -Wno-missing-field-initializers
+)
+target_link_libraries(test_minimal_surface_experiments PRIVATE nanofem)
+###############################################################################
+
+###############################################################################
 #add_executable(test_ordering
 #	src/common/logging.cpp
 #	src/common/chrono.cpp

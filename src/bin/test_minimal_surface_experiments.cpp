@@ -1244,6 +1244,284 @@ static void experiment_9()
 }
 
 /* =========================================================================
+ * EXPERIMENT 10 — Picard vs Newton convergence rate
+ *
+ * The Picard (lagged-coefficient) iteration freezes the nonlinear weight
+ * W_K = 1/sqrt(1+|grad u^k|^2) from the previous iterate and solves the
+ * resulting linear problem for u^{k+1} directly:
+ *
+ *   S(u^k) u^{k+1} = b,   S_ij(u^k) = sum_K W_K int_K grad phi_i . grad phi_j
+ *
+ * This is a fixed-point iteration on the nonlinear operator, and is
+ * expected to converge linearly with a rate that depends on the
+ * nonlinearity strength (i.e. on M = max|grad u|).
+ *
+ * Newton, by contrast, linearises the full residual including the
+ * derivative of W_K, and converges quadratically near the solution.
+ *
+ * Protocol (mirrors Experiment 2):
+ *   Phase 1 : converge Newton to U* (tight tolerance).
+ *   Phase 2 : restart both solvers from U* + eps*xi for eps in {1e-1,1e-2,1e-4}
+ *             and a single cold start (standard init, interior=0).
+ *   Diagnostics per iteration k:
+ *     residual_norm   |F(u^k)|_2   (interior residual of the MSE)
+ *     correction_norm |u^{k+1}-u^k|_2
+ *     lin_ratio       |F^{k+1}|/|F^k|         -> const for linear convergence
+ *     quad_ratio      |F^{k+1}|/|F^k|^2       -> const for quadratic
+ *     loglog_slope    log|F^{k+1}|/log|F^k|   -> 1 (Picard) or 2 (Newton)
+ *
+ * Both solvers write to the same CSV with a "solver" column ("newton"/"picard")
+ * so the plotting script can overlay them directly.
+ * ========================================================================= */
+static void experiment_10()
+{
+    printf("\n=== Experiment 10: Picard vs Newton Convergence Rate ===\n");
+
+    Mesh m; build_square_mesh(&m, 16, 1, 1);
+    rescale_and_recenter_mesh(m);
+    const size_t Nvtx = m.vertex_count();
+
+    auto u_scherk = [](const Vec2d &p) { return u_scherk_std(p); };
+
+    std::vector<bool> is_bnd(Nvtx, false);
+    for (size_t i = 0; i < m.boundary.size; ++i) is_bnd[m.boundary[i]] = true;
+    std::vector<size_t> interior;
+    for (size_t i = 0; i < Nvtx; ++i) if (!is_bnd[i]) interior.push_back(i);
+    const size_t Nint = interior.size();
+
+    /* ------------------------------------------------------------------ */
+    /* Phase 1: converge Newton tightly to U*                              */
+    /* ------------------------------------------------------------------ */
+    TArray<double> u_star(Nvtx);
+    make_standard_init(m, u_scherk, u_star);
+    {
+        std::vector<NewtonRecord> recs;
+        bool ok = run_newton_instrumented(m, u_scherk, u_star,
+                                          500, 1e-13, recs, 1.0);
+        printf("Phase 1 (converge to U*): %s in %zu iters, |F|=%.3e\n",
+               ok ? "OK" : "FAIL", recs.size(),
+               recs.empty() ? 0.0 : recs.back().residual_norm);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Instrumented Picard iteration                                        */
+    /*                                                                      */
+    /* At each step:                                                        */
+    /*   1. compute W_K = 1/sqrt(1+|grad u^k|^2) via compute_denominator  */
+    /*   2. assemble S(u^k) using the LINEAR stiffness (no rank-1 term)   */
+    /*   3. solve S(u^k) u^{k+1} = b  (b encodes boundary data via HUGE)  */
+    /*   4. record residual |F(u^{k+1})|  where F is the MSE residual     */
+    /* ------------------------------------------------------------------ */
+    auto run_picard_instrumented = [&](const TArray<double> &u_init,
+                                       size_t max_iter, double tol)
+        -> std::vector<NewtonRecord>
+    {
+        const size_t N = Nvtx;
+        CSRPattern P; build_P1_CSRPattern(m, P);
+        CSRMatrix S;  init_csr_from_pattern(P, S);
+
+        TArray<double> u(N), u_old(N), q(m.triangle_count());
+        TArray<double> rhs(N, 0.0);
+        TArray<double> r_cg(N, 0.0), p_cg(N, 0.0), Ap_cg(N, 0.0);
+
+        memcpy(u.data, u_init.data, N * sizeof(double));
+        /* enforce exact boundary values — the warm-start perturbation
+         * is interior-only; boundary nodes must satisfy u[bi] = g(x_i)
+         * so the penalty residual starts near zero at those rows */
+        for (size_t i = 0; i < m.boundary.size; ++i) {
+            uint32_t bi = m.boundary[i];
+            u[bi] = u_scherk(xy2d(m, bi));
+        }
+
+        /* Build the Picard RHS once: b_i = boundary penalty term.
+         * Interior nodes are zero; boundary nodes get PENALTY * g(x_i).
+         *
+         * NOTE: the penalty must NOT be 1e30 here.  Unlike the Newton system
+         * (whose RHS is zero at boundary nodes, keeping ||b|| moderate), the
+         * Picard RHS carries PENALTY*g at boundary nodes.  conjugate_gradient_
+         * solve uses the RELATIVE test ||r||/||b|| < tol, so an enormous ||b||
+         * makes the very first residual pass the test and CG returns after
+         * zero iterations — leaving u unchanged (the |du|=0 stall).
+         * A penalty of ~1e8 pins the boundary to ~8 digits while keeping
+         * ||b|| comparable to the interior scale. */
+        TArray<double> b_picard(N, 0.0);
+        constexpr double PENALTY = 1e8;
+        for (size_t i = 0; i < m.boundary.size; ++i) {
+            uint32_t bi = m.boundary[i];
+            b_picard[bi] = PENALTY * u_scherk(xy2d(m, bi));
+        }
+
+        MinimalGraphSolver helper(m, u_scherk);
+
+        /* Compute initial denominator from u_init so that S(u^0) uses
+         * the warm-start gradient, not the zero-solution gradient. */
+        double area = helper.compute_denominator(q, u);
+
+        std::vector<NewtonRecord> records;
+        const double tolCG = 1e-12;
+
+        for (size_t k = 0; k < max_iter; ++k) {
+            /* Save u^k for correction norm */
+            memcpy(u_old.data, u.data, N * sizeof(double));
+
+            /* Assemble S(u^k) from denominator q computed at u^k.
+             * build_P1_stiffness_matrix re-inits S internally. */
+            build_P1_stiffness_matrix(m, P, S, q.data);
+
+            /* Boundary penalty — must match the PENALTY used in b_picard */
+            for (size_t i = 0; i < m.boundary.size; ++i)
+                S(m.boundary[i], m.boundary[i]) = PENALTY;
+
+            /* Solve S(u^k) u^{k+1} = b.
+             * Pass u directly (warm-started from u^k). With inited=false the
+             * solver recomputes r = b - S(u^k) u^k.  Because the *weights*
+             * in S have just been refrozen at u^k, S(u^k) u^k != b in general
+             * (u^k solved the PREVIOUS weighted system, not this one), so the
+             * residual is nonzero and CG advances to the new u^{k+1}. */
+            double cg_err = 0.0;
+            conjugate_gradient_solve(S, b_picard.data, u.data,
+                                     r_cg.data, p_cg.data, Ap_cg.data,
+                                     &cg_err, tolCG, 10000, false);
+
+            /* Update denominator for next step using new u^{k+1} */
+            area = helper.compute_denominator(q, u);
+
+            /* measure MSE residual at the NEW iterate */
+            build_P1_rhs_NS(m, q.data, u.data, rhs);
+            double res_sq = 0.0;
+            for (size_t i = 0; i < N; ++i)
+                if (!is_bnd[i]) res_sq += rhs[i] * rhs[i];
+            double res_norm = std::sqrt(res_sq);
+
+            /* correction norm */
+            double corr_sq = 0.0;
+            for (size_t i = 0; i < N; ++i) {
+                double d = u[i] - u_old[i];
+                corr_sq += d * d;
+            }
+
+            records.push_back({k, res_norm, std::sqrt(corr_sq), area, 1.0});
+
+            if (std::sqrt(corr_sq) < tol) break;
+        }
+        return records;
+    };
+
+    /* ------------------------------------------------------------------ */
+    /* Diagnostics helper (identical to Experiment 2)                      */
+    /* ------------------------------------------------------------------ */
+    struct Row {
+        std::string solver;
+        std::string init;
+        double iter, res, corr, lin, quad, slope;
+    };
+    std::vector<Row> all_rows;
+
+    auto record_run = [&](const std::string &solver,
+                          const std::string &label,
+                          const std::vector<NewtonRecord> &recs)
+    {
+        for (size_t k = 0; k < recs.size(); ++k) {
+            double lin = 0, quad = 0, slope = 0;
+            if (k >= 1 && recs[k-1].residual_norm > 1e-16) {
+                lin  = recs[k].residual_norm / recs[k-1].residual_norm;
+                quad = recs[k].residual_norm /
+                       (recs[k-1].residual_norm * recs[k-1].residual_norm);
+            }
+            if (k >= 2 && recs[k].residual_norm   > 1e-16
+                       && recs[k-1].residual_norm  > 1e-16
+                       && recs[k-2].residual_norm  > 1e-16) {
+                double lc  = std::log(recs[k].residual_norm);
+                double lp  = std::log(recs[k-1].residual_norm);
+                double lpp = std::log(recs[k-2].residual_norm);
+                if (std::fabs(lp - lpp) > 1e-12) slope = (lc - lp) / (lp - lpp);
+            }
+            printf("%-8s %-12s  %3zu  |F|=%-12.4e  |du|=%-12.4e  "
+                   "lin=%-8.4f  quad=%-12.4e  slope=%-6.3f\n",
+                   solver.c_str(), label.c_str(),
+                   recs[k].iter, recs[k].residual_norm, recs[k].correction_norm,
+                   lin, quad, slope);
+            all_rows.push_back({solver, label,
+                                 (double)recs[k].iter,
+                                 recs[k].residual_norm, recs[k].correction_norm,
+                                 lin, quad, slope});
+        }
+    };
+
+    std::mt19937 rng(42);
+    std::normal_distribution<double> nd(0.0, 1.0);
+
+    /* ------------------------------------------------------------------ */
+    /* Cold start                                                           */
+    /* ------------------------------------------------------------------ */
+    printf("\n--- Cold start ---\n");
+    printf("%-8s %-12s  %-3s  %-14s  %-14s  %-8s  %-14s  %-6s\n",
+           "solver","init","k","|F|","|du|","lin","quad","slope");
+    {
+        TArray<double> u0(Nvtx);
+        make_standard_init(m, u_scherk, u0);
+
+        TArray<double> u_n(Nvtx), u_p(Nvtx);
+        memcpy(u_n.data, u0.data, Nvtx * sizeof(double));
+        memcpy(u_p.data, u0.data, Nvtx * sizeof(double));
+
+        std::vector<NewtonRecord> rN, rP;
+        run_newton_instrumented(m, u_scherk, u_n, 60, 1e-13, rN, 1.0);
+        rP = run_picard_instrumented(u_p, 200, 1e-13);
+
+        record_run("newton", "cold", rN);
+        record_run("picard", "cold", rP);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Warm starts from U* + eps*xi                                        */
+    /* ------------------------------------------------------------------ */
+    for (double eps : {1e-1, 1e-2, 1e-4}) {
+        char label[32];
+        std::snprintf(label, sizeof(label), "warm_%.0e", eps);
+        printf("\n--- Warm start eps=%.0e ---\n", eps);
+
+        /* generate perturbation */
+        std::vector<double> xi(Nint);
+        double norm2 = 0;
+        for (double &v : xi) { v = nd(rng); norm2 += v * v; }
+        double inv_n = 1.0 / std::sqrt(norm2);
+
+        TArray<double> u_pert(Nvtx);
+        for (size_t i = 0; i < Nvtx; ++i) u_pert[i] = u_star[i];
+        for (size_t k = 0; k < Nint; ++k)
+            u_pert[interior[k]] += eps * xi[k] * inv_n;
+
+        /* Newton */
+        TArray<double> u_n(Nvtx);
+        memcpy(u_n.data, u_pert.data, Nvtx * sizeof(double));
+        std::vector<NewtonRecord> rN;
+        run_newton_instrumented(m, u_scherk, u_n, 30, 1e-13, rN, 1.0);
+        record_run("newton", std::string(label), rN);
+
+        /* Picard — use same perturbation */
+        TArray<double> u_p(Nvtx);
+        memcpy(u_p.data, u_pert.data, Nvtx * sizeof(double));
+        auto rP = run_picard_instrumented(u_p, 200, 1e-13);
+        record_run("picard", std::string(label), rP);
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Write CSV                                                            */
+    /* ------------------------------------------------------------------ */
+    FILE *fp = fopen("experiment_10_picard_vs_newton.csv", "w");
+    fprintf(fp, "solver,init,iter,residual_norm,correction_norm,"
+                "lin_ratio,quad_ratio,loglog_slope\n");
+    for (const auto &r : all_rows) {
+        fprintf(fp, "%s,%s,%.0f,%.10e,%.10e,%.10e,%.10e,%.10f\n",
+                r.solver.c_str(), r.init.c_str(),
+                r.iter, r.res, r.corr, r.lin, r.quad, r.slope);
+    }
+    fclose(fp);
+    printf("\nWrote experiment_10_picard_vs_newton.csv\n");
+}
+
+/* =========================================================================
  * main
  * ========================================================================= */
 int main(int argc, char **argv)
@@ -1267,8 +1545,9 @@ int main(int argc, char **argv)
     case 7: experiment_7(); break;
     case 8: experiment_8(); break;
     case 9: experiment_9(); break;
+    case 10: experiment_10(); break;
     default:
-        fprintf(stderr,"Unknown experiment %d (must be 1–9)\n",experiment);
+        fprintf(stderr,"Unknown experiment %d (must be 1–10)\n",experiment);
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
