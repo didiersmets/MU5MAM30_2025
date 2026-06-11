@@ -2,7 +2,6 @@
 #include <cmath>
 #include <cassert>
 #include "mesh.h"
-#include "sphere.h"
 
 // --- Helper: Save Mesh to OBJ format ---
 // This allows you to view your mesh in Blender/MeshLab
@@ -40,32 +39,6 @@ int main() {
     // 1. Generate the Sphere
     // subdiv = 10 gives a reasonably smooth sphere (10x10 grids per face)
     printf("Generating sphere...\n");
-    load_sphere(sphereMesh, 10);
-
-    // 2. Validation Check: Radius
-    // Every single vertex should be distance 1.0 from origin
-    float max_error = 0.0f;
-    for (size_t i = 0; i < sphereMesh.vertex_count(); ++i) {
-        Vec3 v = sphereMesh.positions.data[i];
-        float radius = std::sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
-        
-        float error = std::abs(radius - 1.0f);
-        if (error > max_error) max_error = error;
-    }
-
-    printf("Stats:\n");
-    printf("  Vertices: %zu\n", sphereMesh.vertex_count());
-    printf("  Triangles: %zu\n", sphereMesh.triangle_count());
-    printf("  Max Radius Error: %f\n", max_error);
-
-    if (max_error < 1e-5) {
-        printf("[PASS] Geometry is spherical.\n");
-    } else {
-        printf("[FAIL] Vertices are not on the unit sphere!\n");
-    }
-
-    // 3. Export for Visual Check
-    save_obj(sphereMesh, "test_sphere.obj");
 
     return 0;
 }

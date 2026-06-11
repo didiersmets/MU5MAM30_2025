@@ -6,7 +6,6 @@
 #include "gl_utils.h"
 #include "imgui/imgui.h"
 #include "logging.h"
-#include "cube.h"
 #include "mesh.h"
 #include "square.h"
 #include "disk.h"
@@ -15,7 +14,6 @@
 #include "mesh_bounds.h"
 #include "ndc.h"
 #include "shaders.h"
-#include "sphere.h"
 #include "viewer.h"
 
 /* Viewer config */
