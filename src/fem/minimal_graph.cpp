@@ -121,13 +121,22 @@ double MinimalGraphSolver::compute_denominator(TArray<double> &den,
 		S_loc[4] = -ABAC;
 		S_loc[5] = ABAC - ABAB;
 
-		den[t] = 1.0 / sqrt(1 
-			+ u[a] * u[a] * S_loc[0] 
-			+ u[b] * u[b] * S_loc[1] 
-			+ u[c] * u[c] * S_loc[2] 
-			+ 2 * (u[a] * u[b] * S_loc[3] 
-			+ u[b] * u[c] * S_loc[4] 
-			+ u[c] * u[a] * S_loc[5]));
+		// den[t] = 1.0 / sqrt(1 
+		// 	+ u[a] * u[a] * S_loc[0] 
+		// 	+ u[b] * u[b] * S_loc[1] 
+		// 	+ u[c] * u[c] * S_loc[2] 
+		// 	+ 2 * (u[a] * u[b] * S_loc[3] 
+		// 	+ u[b] * u[c] * S_loc[4] 
+		// 	+ u[c] * u[a] * S_loc[5]));
+
+		double grad_sq = (  u[a] * u[a] * S_loc[0]
+              + u[b] * u[b] * S_loc[1]
+              + u[c] * u[c] * S_loc[2]
+              + 2.0 * (  u[a] * u[b] * S_loc[3]
+                        + u[b] * u[c] * S_loc[4]
+                        + u[c] * u[a] * S_loc[5])) / tri_area;
+
+		den[t] = 1.0 / sqrt(1.0 + grad_sq);
 		area += tri_area / den[t];
 	}
 	return area;
@@ -170,7 +179,7 @@ void MinimalGraphSolver::do_iterate_Newton(size_t max_iter, double tol,
 		for (size_t i = 0; i < N_b; ++i) {
 			uint32_t bi = m.boundary[i];
 			S_modified(bi, bi) = HUGE_DIAG;
-			b[bi] = 0;
+			b[bi] = 0; // set rhs boundary values to 0 in the right hand side, such that solution increment at boundary will be 0
 		}
 
 		iterCG = conjugate_gradient_solve(S_modified, b.data, du.data, r.data,
@@ -240,9 +249,61 @@ void MinimalGraphSolver::do_iterate_Newton(size_t max_iter, double tol,
 	}
 }
 
-void MinimalGraphSolver::do_iterate_Picardi(size_t max_iter, double tol)
-{
-	(void)max_iter;
-	(void)tol;
-	/* Initial skeleton: Picard iteration is intentionally left as a follow-up. */
+
+
+void::MinimalGraphSolver::do_iterate_Picardi(size_t max_iter, double tol)
+{   
+    clear_solution(false);
+    int iterCG;
+    double error2 = 0.0, errorCG = 0.0, area;
+
+   
+    for (size_t i = 0; i < N_b; i++){
+        b[m.boundary[i]] *= HUGE;
+    }
+
+    area = compute_denominator(q,u);
+
+    printf("Starting Picardi Solver.... \n");
+    printf("%-10s %-15s %-15s %-15s %-15s\n", "Iter", "ErrorPicardi", "IterCG", "ErrorCG", "Area");
+    printf("%-10s %-15s %-15s %-15s %-15g \n", "-", "-", "-", "-", area);
+    while (iterate_P < max_iter){
+        
+        memcpy(uold.data, u.data, N * sizeof(double));
+
+        build_P1_stiffness_matrix(m, P, S, true, q.data);
+
+        for (size_t i = 0; i < N_b; i++){
+            S(m.boundary[i],m.boundary[i]) = HUGE;           
+        }
+
+        iterCG = conjugate_gradient_solve(S, b.data, u.data, r.data, p.data, Ap.data , &errorCG, tolCG, 10000, false);
+
+        error2 = 0.0;
+
+        for(size_t i = 0; i < N; i++)
+            error2 += (u[i] - uold[i])*(u[i] - uold[i]);
+        
+        error2 = sqrt(error2);
+
+        area = compute_denominator(q,u);
+
+        printf("%-10ld %-15g %-15d %-15g %-15g\n", iterate_P, error2, iterCG, errorCG, area);
+
+        residual_P[iterate_P] = error2;
+
+        iterate_P++;
+        if (error2 < tol)
+            break;
+        
+    }
+    residual_P.resize(iterate_P);
+    if (error2 <= tol) {
+        converged = true;
+        printf("Converged after %ld iterations.\n", iterate_P);
+    }
+
+    else {
+        printf("Did not converge after %ld iterations.\n", iterate_P);
+    }
 }

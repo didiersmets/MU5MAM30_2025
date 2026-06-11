@@ -42,11 +42,21 @@ static double test_f(const Vec2d &pos)
 }
     */
 
+/*
 static double test_f(const Vec2d &pos)
 {
     double x = pos.x;
     double y = pos.y;
     return 1.0 / 3.0 * (x * x * x - 3.0 * x * y * y);
+}
+*/
+
+static double test_f(const Vec2d &pos)
+{
+    constexpr double alpha = M_PI / 4.0;
+    double x = pos.x;
+    double y = pos.y;
+    return (1.0 / alpha) * std::log(std::cos(alpha * x) / std::cos(alpha * y));
 }
 
 
